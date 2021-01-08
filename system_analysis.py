@@ -9,7 +9,6 @@ import elephant as el
 
 # Builtin
 import os
-import zlib
 import pickle
 
 # Current repo

@@ -1,22 +1,27 @@
-import zlib
-import pickle
+# Analysis
 import numpy as np
-from matplotlib import pyplot as plt
-from scipy import sparse
 import scipy.io as sio
-import os
-import sys
-from cxsystem2.core.tools import write_to_file as wtf
-import brian2.units as b2u
-import datetime
+from matplotlib import pyplot as plt
 import pandas as pd
+
+# Computational neuroscience
+# from cxsystem2.core.tools import write_to_file as wtf
+import brian2.units as b2u
 import elephant as el
 from neo.core import AnalogSignal
 import quantities as pq
+
+# Builtin
+import zlib
+import pickle
+import os
+import sys
+
+# Develop
 import pdb
 
 '''
-Module on basic utilities
+Module on basic utilities. Base class for other system modules in the same repo.
 
 Developed by Simo Vanni 2020-2021
 '''

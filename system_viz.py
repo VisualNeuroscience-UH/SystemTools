@@ -1,9 +1,18 @@
+# Visualization
 import seaborn as sns
 import matplotlib.pyplot as plt
+
+# Analysis
 import numpy as np
 import pandas as pd
+
+# Builtin
 import os
 
+# Current repo
+from system_utilities import SystemUtilities
+
+# Develop
 import pdb
 
 '''
@@ -11,7 +20,8 @@ Module on visualization
 
 Developed by Simo Vanni 2020-2021
 '''
-class SystemViz():
+
+class SystemViz(SystemUtilities):
     pass
 
     def unpivot_dataframe(self, wide_df, index_column=None, kw_sub_to_unpivot=None):
