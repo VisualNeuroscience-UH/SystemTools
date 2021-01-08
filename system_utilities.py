@@ -7,13 +7,19 @@ import scipy.io as sio
 import os
 import sys
 from cxsystem2.core.tools import write_to_file as wtf
-from brian2.units import *
+import brian2.units as b2u
 import datetime
 import pandas as pd
 import elephant as el
 from neo.core import AnalogSignal
 import quantities as pq
 import pdb
+
+'''
+Module on basic utilities
+
+Developed by Simo Vanni 2020-2021
+'''
 
 def parsePath(path,filename, type='results'):
     filename_out = None
@@ -195,34 +201,6 @@ def buildSchwabePositions(ndims=1,group_keys=None,group_values=None):
     coord_dict={'w_coord':positions_w, 'z_coord':positions_z}
     data_positions={'positions_all':coord_dict}
     return data_positions
-
-'''def buildSchwabeConnections(data):
-
-    # Replace id only connections
-    connection_strengths = 7e-10
-    data['relay_vpm__to__SS_L2_soma']['data'] = connection_strengths * sparse.csr_matrix(
-                                                np.identity(np.asarray(data['positions_all']['w_coord']['NG1_SS_L2']).size))
-    data['SS_L2__to__L2_SS_autoconn_L2_soma']['data'] = connection_strengths * sparse.csr_matrix(
-                                                np.identity(np.asarray(data['positions_all']['w_coord']['NG1_SS_L2']).size))
-    data['L2_SS_autoconn_L2__to__SS_L2_soma']['data'] = connection_strengths * sparse.csr_matrix(
-                                                np.identity(np.asarray(data['positions_all']['w_coord']['NG1_SS_L2']).size))
-    data['MC_L2__to__SS_L2_soma']['data'] = connection_strengths * sparse.csr_matrix(
-                                                np.identity(np.asarray(data['positions_all']['w_coord']['NG1_SS_L2']).size))
-    data['MC_L2__to__MC_L2_soma']['data'] = connection_strengths * sparse.csr_matrix(
-                                                np.identity(np.asarray(data['positions_all']['w_coord']['NG2_MC_L2']).size))
-
-
-    Add id to id + lambda connections
-    data['SS_L4__to__SS_L4_soma']['data'] = data['SS_L4__to__SS_L4_soma']['data'] + \
-                                                connection_strengths * sparse.csr_matrix(
-                                                np.identity(np.asarray(data['positions_all']['w_coord']['NG1_SS_L4']).size))
-    
-    This covers both local as well as lateral excitation of inhibitory neurons. They have the same value in Schwabe 2006 model.
-    data['SS_L2__to__MC_L2_soma']['data'] = data['SS_L2__to__MC_L2_soma']['data'] + \
-                                                connection_strengths * sparse.csr_matrix(
-                                                np.identity(np.asarray(data['positions_all']['w_coord']['NG2_MC_L2']).size))
-
-    return data'''
 
 def saveSchwabeData(data, base_filename,dir_name=None):
     filename = base_filename + '.gz'
@@ -558,7 +536,7 @@ def showLatestSpectra(path='./',filename=None, savefigname=''):
 
     for ax1, results in zip(axs[0:-1:2],list_of_results):
         # im = ax1.scatter(data['spikes_all'][results]['t'], data['spikes_all'][results]['i'],s=1)
-        counts, bins = np.histogram(data['spikes_all'][results]['t']/second, range=[0,duration], bins=nbins)
+        counts, bins = np.histogram(data['spikes_all'][results]['t']/b2u.second, range=[0,duration], bins=nbins)
         Nneurons = data['number_of_neurons'][results]
         firing_rates = counts * (nbins / (duration * Nneurons))
         im = ax1.bar(bins[:-1], firing_rates, width=bar_width)

@@ -8,6 +8,12 @@ import pandas as pd
 # import elephant as el
 import pdb
 
+'''
+Module on analysis of simulated electrophysiology data
+
+Developed by Simo Vanni 2020-2021
+'''
+
 class SystemAnalysis():
 
     def __init__(self, path='./'):

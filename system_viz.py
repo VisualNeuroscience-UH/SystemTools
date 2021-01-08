@@ -6,7 +6,11 @@ import os
 
 import pdb
 
+'''
+Module on visualization
 
+Developed by Simo Vanni 2020-2021
+'''
 class SystemViz():
     pass
 
