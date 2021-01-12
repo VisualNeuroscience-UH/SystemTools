@@ -32,12 +32,12 @@ class SystemUtilities():
 
         self.path=path
 
-    def _parsePath(self, filename, type='results'):
+    def _parsePath(self, filename, data_type='results'):
 
         data_fullpath_filename = None
 
         if filename is None:
-            data_fullpath_filename = self._newest(type=type)
+            data_fullpath_filename = self._most_recent(data_type=data_type)
         
         if not data_fullpath_filename:
             path = self.path
@@ -47,10 +47,16 @@ class SystemUtilities():
 
         return data_fullpath_filename
 
-    def _newest(self, type='results'):
+    def _most_recent(self, data_type='results'):
 
         path = self.path
-        files = [f for f in os.listdir(path) if type in f]
+        # pdb.set_trace()
+        # files = [f for f, t in zip(os.listdir(path), data_type) if t in f]
+        files = []
+        for f in os.listdir(path):
+            if data_type in f:
+                files.append(f)
+
         paths = [os.path.join(path, basename) for basename in files]
         data_fullpath_filename = max(paths, key=os.path.getctime)
 
@@ -82,10 +88,10 @@ class SystemUtilities():
             transparent=False, bbox_inches=None, pad_inches=0.1,
             metadata=None)
 
-    def getData(self, filename=None, type='results'):
+    def getData(self, filename=None, data_type='results'):
 
-        # Explore which is the newest file in path of type and add full path to filename 
-        data_fullpath_filename = self._parsePath(filename, type=type)
+        # Explore which is the most recent file in path of data_type and add full path to filename 
+        data_fullpath_filename = self._parsePath(filename, data_type=data_type)
 
         # If extension is .gz, open pickle, else assume .mat
         filename_root, filename_extension = os.path.splitext(data_fullpath_filename)
@@ -103,6 +109,7 @@ class SystemUtilities():
         else:
             raise TypeError('U r trying to input unknown filetype, aborting...')
 
+        # print(f'Acquiring data from {data_fullpath_filename}')
         return data
 
     def close(self):
@@ -111,7 +118,7 @@ class SystemUtilities():
     def showVm(self, filename=None, savefigname=''):
         # Shows data on filename. If filename remains None, shows the most recent data.
 
-        data = self.getData(filename, type='results')
+        data = self.getData(filename, data_type='results')
 
         # Visualize
         # Extract connections from data dict
@@ -202,7 +209,7 @@ class SystemUtilities():
 
     def showConnections(self, filename=None, hist_from=None, savefigname=''):
 
-        data = self.getData(filename, type='connections')
+        data = self.getData(filename, data_type='connections')
 
         # Visualize
         # Extract connections from data dict
@@ -232,7 +239,7 @@ class SystemUtilities():
 
     def showG(self, filename=None, savefigname=''):
 
-        data = self.getData(filename, type='results')
+        data = self.getData(filename, data_type='results')
         # Visualize
         # Extract connections from data dict
         list_of_results_ge = [n for n in data['ge_soma_all'].keys() if 'NG' in n]
@@ -269,7 +276,7 @@ class SystemUtilities():
 
     def showI(self, filename=None, savefigname=''):
 
-        data = self.getData(filename, type='results')
+        data = self.getData(filename, data_type='results')
         # Visualize
         # Extract connections from data dict
         list_of_results_ge = [n for n in data['ge_soma_all'].keys() if 'NG' in n]
@@ -374,7 +381,7 @@ class SystemUtilities():
 
     def showSpectra(self, filename=None, savefigname=''):
 
-        data = self.getData(filename, type='results')
+        data = self.getData(filename, data_type='results')
 
         # Visualize
         coords='w_coord'

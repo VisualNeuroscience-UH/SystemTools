@@ -12,18 +12,20 @@ import os
 import pickle
 
 # Current repo
-from system_utilities import SystemUtilities
+from system_viz import SystemViz
 
 # Develop
 import pdb
 
 '''
-Module on analysis of simulated electrophysiology data
+Module on analysis of simulated electrophysiology data.
+
+Inherits SystemViz which inherits SystemUtilities
 
 Developed by Simo Vanni 2020-2021
 '''
 
-class SystemAnalysis(SystemUtilities):
+class SystemAnalysis(SystemViz):
 
     def __init__(self, path='./'):
 
@@ -36,7 +38,7 @@ class SystemAnalysis(SystemUtilities):
 
     def showSpikes(self, filename=None, savefigname=''):
 
-        data = self.getData(filename, type='results')
+        data = self.getData(filename, data_type='results')
 
         # Visualize
         # Extract connections from data dict
@@ -59,7 +61,6 @@ class SystemAnalysis(SystemUtilities):
             self._figsave(figurename=savefigname)
 
         plt.show()
-
 
     def getMeanFR(self, data_df, time_start=0, time_end=None):
     
@@ -96,7 +97,9 @@ class SystemAnalysis(SystemUtilities):
         return data_df
 
     def printMeanFR(self, filename=None, time_start=0, time_end=None):
-
+        '''
+        Print mean firing rate for array run. Needs a metadata file.
+        '''
         data_df = self.getData(filename, type='metadata')
     
         data_df = self.getMeanFR(data_df, time_start=time_start, time_end=time_end)
@@ -108,7 +111,7 @@ class SystemAnalysis(SystemUtilities):
         self.pp_df_full(mean_df)
 
         # Replace meatadata with MeanFR
-        metadata_fullpath_filename = self._parsePath(filename, type='metadata')
+        metadata_fullpath_filename = self._parsePath(filename, data_type='metadata')
         metadataroot, metadataextension = os.path.splitext(metadata_fullpath_filename)
         filename_out = metadataroot.replace('metadata', 'MeanFR')
         csv_name_out = filename_out + '.csv'
@@ -116,8 +119,10 @@ class SystemAnalysis(SystemUtilities):
 
 if __name__=='__main__':
 
-    path = r'C:\Users\Simo\Laskenta\SimuOut\Tomas_021220\oP'
+    path = r'C:\Users\Simo\Laskenta\SimuOut\Deneve\Replica_test'
 
     analysis = SystemAnalysis(path=path)
 
-    analysis.printMeanFR(filename=None, time_start=0, time_end=None)
+    # analysis.printMeanFR(filename=None, time_start=0, time_end=None)
+
+    analysis.readout_on_input()
