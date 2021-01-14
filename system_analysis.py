@@ -124,6 +124,7 @@ if __name__=='__main__':
     analysis = SystemAnalysis(path=path)
     NG_name = 'NG3_L4_SS2_L4'
 
-    analysis.plot_readout_on_input(NG_name, normalize=True)    
-    analysis.show_spikes()
+    analysis.plot_readout_on_input(NG_name, normalize=False, filename='Replica_test_results_20210114_1750000.gz')    
+    analysis.show_spikes(filename='Replica_test_results_20210114_1750000.gz')
+    
     plt.show()

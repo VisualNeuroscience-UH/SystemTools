@@ -72,7 +72,8 @@ class SystemViz(SystemUtilities):
         '''
         # Get data and input
         data = self.getData(filename, data_type='results')
-        analog_input = self.getData(filename, data_type='input')
+        # analog_input = self.getData(filename, data_type='input')
+        analog_input = self.getData(None, data_type='input')
 
         analog_signal = analog_input['stimulus']
         assert analog_signal.ndim == 2, 'input is not a 2-dim vector, aborting...'
