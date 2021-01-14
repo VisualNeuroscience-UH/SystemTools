@@ -36,7 +36,7 @@ class SystemAnalysis(SystemViz):
             np.logical_and(data_by_group['t'] > time_start * b2u.second, data_by_group['t'] < time_end * b2u.second)]
         return spikes
 
-    def showSpikes(self, filename=None, savefigname=''):
+    def show_spikes(self, filename=None, savefigname=''):
 
         data = self.getData(filename, data_type='results')
 
@@ -122,8 +122,8 @@ if __name__=='__main__':
     path = r'C:\Users\Simo\Laskenta\SimuOut\Deneve\Replica_test'
 
     analysis = SystemAnalysis(path=path)
+    NG_name = 'NG3_L4_SS2_L4'
 
-    # analysis.printMeanFR(filename=None, time_start=0, time_end=None)
-
-    # analysis.readout_on_input()    
-    analysis.showSpikes()
+    analysis.plot_readout_on_input(NG_name, normalize=True)    
+    analysis.show_spikes()
+    plt.show()

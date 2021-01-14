@@ -90,9 +90,10 @@ class SystemViz(SystemUtilities):
             Vcut = data['Neuron_Groups_Parameters'][NG_name]['namespace']['Vcut']
             # Check that values of reset, threshold and vm are reasonable
             reasonable = np.array([-100,0]) * b2u.mvolt
+            # pdb.set_trace()
             assert all( [(reasonable[0] < V_res) & (V_res < reasonable[1]), \
                         (reasonable[0] < VT) & (VT < reasonable[1]), \
-                        all(reasonable[0] < data_vm[:]) &  all(data_vm[:]< Vcut)]), \
+                        (reasonable[0] < np.min(data_vm)) & (np.max(data_vm)< Vcut)]), \
                         'Assumption about reset, threshold and vm values does not hold, aborting'
             # data_vm = (data_vm - np.min(data_vm)) / np.ptp(data_vm)
             data_vm[data_vm > VT] = VT 
@@ -125,8 +126,12 @@ class SystemViz(SystemUtilities):
                                         var_name='units', 
                                         value_name='data')
 
-        return df_from_arr_unpivot
+        # return df_from_arr_unpivot
 
+        sns.lineplot(   x="t", y='data', hue='units',
+                data=df_from_arr_unpivot)
+
+        # plt.show()
 
 if __name__=='__main__':
 
