@@ -85,7 +85,21 @@ class SystemViz(SystemUtilities):
         data_vm = data['vm_all'][NG_name]['vm']
 
         if normalize==True:
-            data_vm = (data_vm - np.min(data_vm)) / np.ptp(data_vm)
+            V_res = data['Neuron_Groups_Parameters'][NG_name]['namespace']['V_res']
+            VT = data['Neuron_Groups_Parameters'][NG_name]['namespace']['VT']
+            Vcut = data['Neuron_Groups_Parameters'][NG_name]['namespace']['Vcut']
+            # Check that values of reset, threshold and vm are reasonable
+            reasonable = np.array([-100,0]) * b2u.mvolt
+            assert all( [(reasonable[0] < V_res) & (V_res < reasonable[1]), \
+                        (reasonable[0] < VT) & (VT < reasonable[1]), \
+                        all(reasonable[0] < data_vm[:]) &  all(data_vm[:]< Vcut)]), \
+                        'Assumption about reset, threshold and vm values does not hold, aborting'
+            # data_vm = (data_vm - np.min(data_vm)) / np.ptp(data_vm)
+            data_vm[data_vm > VT] = VT 
+            data_vm = data_vm / b2u.mvolt # strip units
+            V_res = V_res / b2u.mvolt
+            VT = VT / b2u.mvolt
+            data_vm = (data_vm - V_res ) / np.ptp(np.array([V_res, VT]))
             analog_signal = (analog_signal - np.min(analog_signal)) / np.ptp(analog_signal)
 
         # Create dict and column for timepoints
@@ -131,7 +145,6 @@ if __name__=='__main__':
     sns.lineplot(   x="t", y='data', hue='units',
                     data=df)
 
-    # TÄHÄN JÄIT, POISTA YKSITTÄINEN OUTO DATAPISTE 
     # SV = SystemViz()
 
     # # path = r'/home/tgarnier/CxPytestWorkspace/matrixsearch_L4_BC_noise'

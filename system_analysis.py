@@ -125,4 +125,5 @@ if __name__=='__main__':
 
     # analysis.printMeanFR(filename=None, time_start=0, time_end=None)
 
-    analysis.readout_on_input()
+    # analysis.readout_on_input()    
+    analysis.showSpikes()
