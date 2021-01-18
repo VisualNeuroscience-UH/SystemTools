@@ -33,7 +33,11 @@ class SystemUtilities():
         self.path=path
 
     def _parsePath(self, filename, data_type='results'):
-
+        '''
+        This internal function returns full path to either 1) the file given by the filename at self.path 
+        folder, or 2) to file with most recent modification time at self.path whose filename contains string 
+        data_type.
+        '''
         data_fullpath_filename = None
 
         if filename is None:

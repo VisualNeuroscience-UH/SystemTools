@@ -68,7 +68,7 @@ class SystemViz(SystemUtilities):
 
     def plot_readout_on_input(self, NG_name, filename=None, normalize=False):
         '''
-        Get input, get data. Scaling? turn to df, format df, Plot curves.
+        Get input, get data. Scaling. turn to df, format df, Plot curves.
         '''
         # Get data and input
         data = self.getData(filename, data_type='results')
@@ -82,7 +82,6 @@ class SystemViz(SystemUtilities):
         t = data['vm_all'][NG_name]['t'] # All timesteps
         assert t.ndim == 1, 'timepoints are not a 1-dim vector, aborting...'
 
-        # Neuron group names 'NG1_L4_SS_L4', 'NG2_L4_BC_L4', 'NG3_L4_PC1_L4toL1'
         data_vm = data['vm_all'][NG_name]['vm']
 
         if normalize==True:
@@ -91,12 +90,12 @@ class SystemViz(SystemUtilities):
             Vcut = data['Neuron_Groups_Parameters'][NG_name]['namespace']['Vcut']
             # Check that values of reset, threshold and vm are reasonable
             reasonable = np.array([-100,0]) * b2u.mvolt
-            # pdb.set_trace()
+
             assert all( [(reasonable[0] < V_res) & (V_res < reasonable[1]), \
                         (reasonable[0] < VT) & (VT < reasonable[1]), \
                         (reasonable[0] < np.min(data_vm)) & (np.max(data_vm)< Vcut)]), \
                         'Assumption about reset, threshold and vm values does not hold, aborting'
-            # data_vm = (data_vm - np.min(data_vm)) / np.ptp(data_vm)
+
             data_vm[data_vm > VT] = VT 
             data_vm = data_vm / b2u.mvolt # strip units
             V_res = V_res / b2u.mvolt
