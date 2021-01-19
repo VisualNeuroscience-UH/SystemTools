@@ -51,17 +51,28 @@ class SystemUtilities():
 
         return data_fullpath_filename
 
-    def _most_recent(self, data_type='results'):
-
-        path = self.path
-        # pdb.set_trace()
-        # files = [f for f, t in zip(os.listdir(path), data_type) if t in f]
+    def _listdir_loop(self, path, data_type):
         files = []
         for f in os.listdir(path):
             if data_type in f:
                 files.append(f)
 
         paths = [os.path.join(path, basename) for basename in files]
+
+        return paths
+
+    def _most_recent(self, data_type='results'):
+
+        path = self.path
+
+        paths = self._listdir_loop(path, data_type)
+
+        if not paths and self.experiment_folder is not None:
+            path_folder = os.path.join(path,self.experiment_folder)
+            print(f'Did not find files of type {data_type} at {path}, trying at {path_folder}')
+            paths = self._listdir_loop(path_folder, data_type)
+
+        assert paths, f'No files of type {data_type} found at {path}, aborting...'
         data_fullpath_filename = max(paths, key=os.path.getctime)
 
         return data_fullpath_filename
@@ -147,8 +158,6 @@ class SystemUtilities():
 
         if savefigname:
             self._figsave(figurename=savefigname)
-
-        plt.show()
 
     def pp_df_full(self, df):
         with pd.option_context('display.max_rows', None, 'display.max_columns', None): 
@@ -239,8 +248,6 @@ class SystemUtilities():
         if savefigname:
             self._figsave(figurename=savefigname)
 
-        plt.show()
-
     def showG(self, filename=None, savefigname=''):
 
         data = self.getData(filename, data_type='results')
@@ -275,8 +282,6 @@ class SystemUtilities():
 
         if savefigname:
             self._figsave(figurename=savefigname)
-
-        plt.show()
 
     def showI(self, filename=None, savefigname=''):
 
@@ -334,8 +339,6 @@ class SystemUtilities():
 
         if savefigname:
             self._figsave(figurename=savefigname)
-
-        plt.show()
 
     def _getI(self, neuron_group,data):
 
@@ -439,8 +442,6 @@ class SystemUtilities():
             axs[-1].axis('off')
         if savefigname:
             self._figsave(figurename=savefigname)
-
-        plt.show()
 
     def scale_values(self, source_data, target_data = None, skip_under_zeros_in_scaling=True):
         '''

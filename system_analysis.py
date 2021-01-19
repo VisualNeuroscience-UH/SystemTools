@@ -60,8 +60,6 @@ class SystemAnalysis(SystemViz):
         if savefigname:
             self._figsave(figurename=savefigname)
 
-        plt.show()
-
     def getMeanFR(self, data_df, time_start=0, time_end=None):
     
         # Get neuron group names
