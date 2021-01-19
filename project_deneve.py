@@ -6,6 +6,7 @@ import scipy.io as sio
 
 # Computational neuroscience
 import brian2.units as b2u
+from cxsystem2.core.tools import write_to_file
 
 # Builtin
 import os
@@ -69,17 +70,74 @@ class Project(SystemViz):
     #     mat_data_dict = sio.loadmat(mat_fullpath_filename)
     #     return mat_data_dict
 
-    def get_mat_data_dict(self):
+    # def get_mat_data_dict(self):
+
+        
+    #     return mat_data_dict
+
+    # def get_skeleton_gz_data_dict(self):
+
+
+    #     return connection_skeleton_dict
+
+    def _show_histogram(self, data, skipzeros=False, bins=10):
+
+        if 'scipy.sparse.csr.csr_matrix' in str(type(data)):
+            data = data.toarray()
+        
+        if 'numpy.ndarray' in str(type(data)):
+            data = data.flatten()
+        if skipzeros == True:
+            data = data[data != 0]
+        # pdb.set_trace()
+        plt.hist(data, bins=bins);plt.show()
+
+    def replace_connections(self):
 
         mat_data_dict = self.getData(self.mat_filename)
-        
-        return mat_data_dict
-
-    def get_skeleton_gz_data_dict(self):
-
         connection_skeleton_dict = self.getData(self.connection_skeleton_filename_in)
 
-        return connection_skeleton_dict
+        mat_keys= ['FsE', 'CsEE', 'CsEI', 'CsIE', 'CsII', 'DecsE', 'DecsI']
+        mat_data_dict_keys_str = str(mat_data_dict.keys())
+
+        assert all([x in mat_data_dict_keys_str for x in mat_keys]), 'Some mat keys not found, aborting...'
+
+        match_connection_names = {  'relay_video__to__L4_SS_L4_soma' : 'FsE',
+                                    'L4_SS_L4__to__L4_SS_L4_soma' : 'CsEE',
+                                    'L4_SS_L4__to__L4_BC_L4_soma' : 'CsEI',
+                                    'L4_BC_L4__to__L4_SS_L4_soma' : 'CsIE',
+                                    'L4_BC_L4__to__L4_BC_L4_soma' : 'CsII',
+                                    'L4_SS_L4__to__L4_SS2_L4_soma' : 'DecsE',
+                                    'L4_BC_L4__to__L4_SS2_L4_soma' : 'DecsI'
+                                    }
+
+        # which phase of learned connections to select. 29 = after teaching
+        mat_teach_idx = 28 
+        connection_final_dict = connection_skeleton_dict
+
+        for this_connection in match_connection_names.keys():
+            # Get cxsystem connection strengths (i.e. Physiology parameters J, J_I, k*J or k_I*J_I 
+            # multiplied by n synapses/connection)
+            data_cx = connection_skeleton_dict[this_connection]['data']
+            # Get mat_data connection strengths
+            data_mat = mat_data_dict[match_connection_names[this_connection]][mat_teach_idx,:,:]
+            if data_mat.shape != data_cx.shape:
+                pdb.set_trace()
+            assert data_mat.shape == data_cx.shape, 'Connection shape mismatch, aborting...'
+
+            # Scale mat_data to min and max values of cxsystem connection strengths (excluding zeros)
+            data_out = self.scale_values(data_mat, target_data=data_cx, skip_under_zeros_in_scaling=True)
+            # viz by request
+            # self._show_histogram(data_cx, skipzeros=True)
+            # self._show_histogram(data_mat, skipzeros=False)
+            # self._show_histogram(data_out, skipzeros=False)
+            # return scaled values
+            connection_final_dict[this_connection] = data_out
+
+        pdb.set_trace()
+
+        pass
+
 
 if __name__=='__main__':
 
@@ -87,16 +145,21 @@ if __name__=='__main__':
     experiment_folder = 'Replica_test'
     mat_filename = 'Fig4_workspace.mat'
     connection_filename_out = 'connections_Fig4.gz'
-    connection_skeleton_filename_in = r'\Replica_test\Replica_test_connections_20210118_0822512.gz'
+    # connection_skeleton_filename_in = 'Replica_test_connections_20210118_1141594.gz'
+    connection_skeleton_filename_in = 'Replica_test_connections_20210119_1436570.gz'
 
-    P = Project(path=path, 
-                mat_filename=mat_filename, 
-                connection_filename_out=connection_filename_out,
-                connection_skeleton_filename_in=connection_skeleton_filename_in)
+    P = Project(
+        path=path, 
+        mat_filename = mat_filename, 
+        connection_filename_out = os.path.join(experiment_folder, connection_filename_out),
+        connection_skeleton_filename_in = os.path.join(experiment_folder, connection_skeleton_filename_in))
 
-    mat_data_dict = P.get_mat_data_dict()
-    connection_skeleton_dict = P.get_skeleton_gz_data_dict()
-    print(connection_skeleton_dict.keys())
+    # mat_data_dict = P.get_mat_data_dict()
+    # connection_skeleton_dict = P.get_skeleton_gz_data_dict()
+    P.replace_connections()
+
+
+    # print(connection_skeleton_dict['positions_all']['w_coord'].keys())
     # print([n for n in dir(mat_data_dict) if not n.startswith('_') ])
 
 

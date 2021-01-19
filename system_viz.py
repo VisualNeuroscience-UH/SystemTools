@@ -65,7 +65,6 @@ class SystemViz(SystemUtilities):
         dims = new_data_shape[1]
         return data_dict, dims
 
-
     def plot_readout_on_input(self, NG_name, filename=None, normalize=False):
         '''
         Get input, get data. Scaling. turn to df, format df, Plot curves.

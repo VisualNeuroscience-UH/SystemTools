@@ -442,6 +442,42 @@ class SystemUtilities():
 
         plt.show()
 
+    def scale_values(self, source_data, target_data = None, skip_under_zeros_in_scaling=True):
+        '''
+        Scale data to same distribution but between target data min and max values.
+        If target data are missing, normalizes to 0-1
+        -skip_under_zeros_in_scaling: When True, assumes values at zero or negative are minor and not 
+        contributing to responses
+        '''
+        if target_data is None:
+            min_value=0
+            max_value=1
+        else:
+            if skip_under_zeros_in_scaling is True:
+                target_data = target_data[target_data > 0]
+            min_value = np.min(target_data)
+            max_value = np.max(target_data)
+
+        if skip_under_zeros_in_scaling is True:
+            source_data_nonzero_idx = source_data>0
+            source_data_shape = source_data.shape
+            data_out = np.zeros(source_data_shape)
+            source_data = source_data[source_data_nonzero_idx]
+            print(f'Scaling {(source_data.size / data_out.size) * 100:.0f} percent of data, rest is considered zero')
+
+        # Shift to zero
+        data_minzero = (source_data - np.min(source_data))
+        # Scale to destination range
+        data_scaled_minzero = data_minzero * (np.ptp([min_value, max_value]) / np.max(source_data))
+        # Add destination min
+        data_scaled = data_scaled_minzero + min_value
+
+        if skip_under_zeros_in_scaling is True:
+            data_out[source_data_nonzero_idx] = data_scaled
+        else:
+            data_out = data_scaled
+
+        return data_out 
 
 if __name__=='__main__':
     path = r'C:\Users\Simo\Laskenta\Models\Grossberg\CxPytestWorkspace\all_results'
