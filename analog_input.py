@@ -44,6 +44,10 @@ class AnalogInput():
                 print(f'NOTE: You requested {input_type} input type, setting Nrequested_units to 2')
             Input = self.create_quadratic_oscillation_input(Nx = 2, Ntime = Ntime, Ncycles = Ncycles)
 
+        # if current_injection is True:
+        #     Input = self.create_current_injection(Input)
+        #     filename_out = filename_out[:-4] + '_ci.mat'
+
         # get coordinates
         if coord_type == 'dummy':
             w_coord, z_coord = self.get_dummy_coordinates(Nx = Nrequested_units)
@@ -93,6 +97,7 @@ class AnalogInput():
         # self._lineplot(Input.T)
         # plt.show()
         return Input
+
 
     def create_quadratic_oscillation_input(self, Nx = 0, Ntime = None, Ncycles = 0):   
 
@@ -177,7 +182,8 @@ class AnalogInput():
 if __name__ == "__main__":
 
     root_path = r'C:\Users\Simo\Laskenta\SimuOut\Deneve\Replica_test'
-    filename_out = 'input_noise_210118.mat'
+    # filename_out = 'input_noise_210118.mat'
+    filename_out = 'input_test.mat'
     full_filename_out = os.path.join(root_path, filename_out)
     Nrequested_units = 3
     Ntime = 10000

@@ -132,6 +132,11 @@ class SystemViz(SystemUtilities):
 
         # plt.show()
 
+    def lineplot(self, data):
+        data_df = pd.DataFrame(data)
+        sns.lineplot(data=data_df)
+        plt.show()
+
 if __name__=='__main__':
 
     path = r'C:\Users\Simo\Laskenta\SimuOut\Deneve\Replica_test'
