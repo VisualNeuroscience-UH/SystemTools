@@ -231,7 +231,7 @@ if __name__=='__main__':
         connection_filename_out = os.path.join(experiment_folder, connection_filename_out),
         connection_skeleton_filename_in = os.path.join(experiment_folder, connection_skeleton_filename_in))
 
-    # input_filename = 'input_noise_210118.mat'
+    input_filename = 'input_noise_210125.mat'
     # P.create_current_injection(input_filename = input_filename)
 
     # P.replace_connections()
@@ -240,7 +240,7 @@ if __name__=='__main__':
     # # filename = os.path.join(experiment_folder, 'Replica_test_results_20210119_1436570.gz')
     # filename = 'Replica_test_results_20210119_1436570.gz'
     # P.plot_readout_on_input(NG_name, filename=filename, normalize=False)
-    P.show_spikes(filename=None, savefigname='')
+    # P.show_spikes(filename=None, savefigname='')
     P.showVm(filename=None, savefigname='')
 
     plt.show()

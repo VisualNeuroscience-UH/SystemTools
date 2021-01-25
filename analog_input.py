@@ -73,6 +73,7 @@ class AnalogInput():
 
         sigma = 30 # was abs(30)
         w = (1 / (sigma * np.sqrt(2 * np.pi))) * np.exp( -1 * np.power(np.arange(1000) - 500,2) / (2 * np.power(sigma,2)))
+        w=w/np.sum(w)
         return w
 
     def _normalize(self, Input):
@@ -89,10 +90,11 @@ class AnalogInput():
 
         # Get gaussian filter, apply
         w = self._gaussian_filter()
+        A = 20 # Deneve project was 2000, from their Learning.py file
         for d in np.arange(Nx):
-            Input[d,:] = np.convolve(Input[d,:],w,'same')
+            Input[d,:] = A * np.convolve(Input[d,:],w,'same')
 
-        Input = self._normalize(Input)
+        # Input = self._normalize(Input)
 
         # self._lineplot(Input.T)
         # plt.show()
@@ -183,7 +185,7 @@ if __name__ == "__main__":
 
     root_path = r'C:\Users\Simo\Laskenta\SimuOut\Deneve\Replica_test'
     # filename_out = 'input_noise_210118.mat'
-    filename_out = 'input_test.mat'
+    filename_out = 'input_noise_210125.mat'
     full_filename_out = os.path.join(root_path, filename_out)
     Nrequested_units = 3
     Ntime = 10000
