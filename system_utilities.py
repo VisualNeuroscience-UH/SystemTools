@@ -244,7 +244,10 @@ class SystemUtilities():
             fig.colorbar(im, ax=ax)
         data4hist = np.squeeze(np.asarray(data[hist_from]['data'].todense().flatten()))
         data4hist_nozeros = np.ma.masked_equal(data4hist,0)
+        Nzeros = data4hist==0
+        proportion_zeros = Nzeros.sum() / Nzeros.size
         axs[(n_rows * n_columns)-1].hist(data4hist_nozeros)
+        axs[(n_rows * n_columns)-1].set_title(f"{hist_from}\n{(proportion_zeros * 100):.1f}% zeros (not shown)")
         if savefigname:
             self._figsave(figurename=savefigname)
 
@@ -445,9 +448,10 @@ class SystemUtilities():
 
 
 if __name__=='__main__':
-    path = r'C:\Users\Simo\Laskenta\Models\Grossberg\CxPytestWorkspace\all_results'
-    os.chdir(path)
+    pass
+    # path = r'C:\Users\Simo\Laskenta\Models\Grossberg\CxPytestWorkspace\all_results'
+    # os.chdir(path)
 
-    SU = SystemUtilities(path=path)
+    # SU = SystemUtilities(path=path)
 
-    SU.showSpectra(filename='results_low_500NG4-3_results_20200826_1153084.gz', savefigname='results_low_500NG4-3.eps')
+    # SU.showSpectra(filename='results_low_500NG4-3_results_20200826_1153084.gz', savefigname='results_low_500NG4-3.eps')

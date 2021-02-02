@@ -65,14 +65,14 @@ class SystemViz(SystemUtilities):
         dims = new_data_shape[1]
         return data_dict, dims
 
-    def plot_readout_on_input(self, NG_name, filename=None, normalize=False):
+    def plot_readout_on_input(self, NG_name, filename=None, filename_stimulus=None, normalize=False):
         '''
         Get input, get data. Scaling. turn to df, format df, Plot curves.
         '''
         # Get data and input
         data = self.getData(filename, data_type='results')
         # analog_input = self.getData(filename, data_type='input')
-        analog_input = self.getData(None, data_type='input')
+        analog_input = self.getData(filename_stimulus, data_type='input')
 
         analog_signal = analog_input['stimulus']
         assert analog_signal.ndim == 2, 'input is not a 2-dim vector, aborting...'
