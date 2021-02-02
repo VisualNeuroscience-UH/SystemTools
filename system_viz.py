@@ -8,6 +8,7 @@ import pandas as pd
 
 # Builtin
 import os
+import copy
 
 # Computational neuroscience
 import brian2.units as b2u
@@ -50,6 +51,7 @@ class SystemViz(SystemUtilities):
         
     def _build_columns(self, data_dict, new_data, Ntimepoints, datatype):
 
+        tmp_dict = copy.deepcopy(data_dict)
         # columns for input
         new_data_shape = np.asarray(new_data.shape)
         new_data_time_dim = np.where(new_data_shape == Ntimepoints)
@@ -60,10 +62,10 @@ class SystemViz(SystemUtilities):
         for ch_idx in np.arange(new_data_shape[1]):
             ch_name = f'{datatype}_ch_{ch_idx}'
             ch_data = new_data[:,ch_idx]
-            data_dict[ch_name] = ch_data
+            tmp_dict[ch_name] = ch_data
 
         dims = new_data_shape[1]
-        return data_dict, dims
+        return tmp_dict, dims
 
     def plot_readout_on_input(self, NG_name, filename=None, filename_stimulus=None, normalize=False):
         '''
@@ -83,23 +85,26 @@ class SystemViz(SystemUtilities):
 
         data_vm = data['vm_all'][NG_name]['vm']
 
+        # if normalize==True:
+        #     EL = data['Neuron_Groups_Parameters'][NG_name]['namespace']['EL'] # data['Neuron_Groups_Parameters'][NG_name]['namespace']['EL']
+        #     VT = data['Neuron_Groups_Parameters'][NG_name]['namespace']['VT']
+        #     Vcut = data['Neuron_Groups_Parameters'][NG_name]['namespace']['Vcut']
+        #     # Check that values of reset, threshold and vm are reasonable
+        #     reasonable = np.array([-100,0]) * b2u.mvolt
+
+        #     assert all( [(reasonable[0] < EL) & (EL < reasonable[1]), \
+        #                 (reasonable[0] < VT) & (VT < reasonable[1]), \
+        #                 (reasonable[0] < np.min(data_vm)) & (np.max(data_vm)< Vcut)]), \
+        #                 'Assumption about reset, threshold and vm values does not hold, aborting'
+
+        #     data_vm[data_vm > VT] = VT 
+        #     data_vm = data_vm / b2u.mvolt # strip units
+        #     EL = EL / b2u.mvolt
+        #     VT = VT / b2u.mvolt
+        #     data_vm = (data_vm - EL ) / np.ptp(np.array([EL, VT]))
+        #     analog_signal = (analog_signal - np.min(analog_signal)) / np.ptp(analog_signal)
+
         if normalize==True:
-            V_res = data['Neuron_Groups_Parameters'][NG_name]['namespace']['V_res']
-            VT = data['Neuron_Groups_Parameters'][NG_name]['namespace']['VT']
-            Vcut = data['Neuron_Groups_Parameters'][NG_name]['namespace']['Vcut']
-            # Check that values of reset, threshold and vm are reasonable
-            reasonable = np.array([-100,0]) * b2u.mvolt
-
-            assert all( [(reasonable[0] < V_res) & (V_res < reasonable[1]), \
-                        (reasonable[0] < VT) & (VT < reasonable[1]), \
-                        (reasonable[0] < np.min(data_vm)) & (np.max(data_vm)< Vcut)]), \
-                        'Assumption about reset, threshold and vm values does not hold, aborting'
-
-            data_vm[data_vm > VT] = VT 
-            data_vm = data_vm / b2u.mvolt # strip units
-            V_res = V_res / b2u.mvolt
-            VT = VT / b2u.mvolt
-            data_vm = (data_vm - V_res ) / np.ptp(np.array([V_res, VT]))
             analog_signal = (analog_signal - np.min(analog_signal)) / np.ptp(analog_signal)
 
         # Create dict and column for timepoints
@@ -108,28 +113,44 @@ class SystemViz(SystemUtilities):
         Ntimepoints = t.shape[0]
 
         # columns for input
-        data_dict, dims_IN = self._build_columns(data_dict, analog_signal, Ntimepoints, 'IN')
+        data_dict_in, dims_IN = self._build_columns(data_dict, analog_signal, Ntimepoints, 'IN')
 
         # columns for vm
-        data_dict, dims_Dec_vm = self._build_columns(data_dict, data_vm, Ntimepoints, 'Dec_vm')
+        data_dict_vm, dims_Dec_vm = self._build_columns(data_dict, data_vm, Ntimepoints, 'Dec_vm')
 
-        # Get final output dimension, to get values for unpivot
-        prod_dims = dims_IN * dims_Dec_vm
+        # # Get final output dimension, to get values for unpivot
+        # prod_dims = dims_IN * dims_Dec_vm
 
-        df_from_arr = pd.DataFrame(data=data_dict)
+        df_from_arr_in = pd.DataFrame(data=data_dict_in)
+        df_from_arr_vm = pd.DataFrame(data=data_dict_vm)
 
-        value_vars = df_from_arr.columns[df_from_arr.columns != id_var]
-        df_from_arr_unpivot = pd.melt(  df_from_arr, 
+        value_vars_in = df_from_arr_in.columns[df_from_arr_in.columns != id_var]
+        value_vars_vm = df_from_arr_vm.columns[df_from_arr_vm.columns != id_var]
+        df_from_arr_unpivot_in = pd.melt(  df_from_arr_in, 
                                         id_vars=[id_var], 
-                                        value_vars=value_vars, 
-                                        var_name='units', 
-                                        value_name='data')
+                                        value_vars=value_vars_in, 
+                                        var_name='units_in', 
+                                        value_name='data_in')
+
+        df_from_arr_unpivot_vm = pd.melt(  df_from_arr_vm, 
+                                        id_vars=[id_var], 
+                                        value_vars=value_vars_vm, 
+                                        var_name='units_vm', 
+                                        value_name='data_vm')
 
         # return df_from_arr_unpivot
 
-        sns.lineplot(   x="t", y='data', hue='units',
-                data=df_from_arr_unpivot)
-
+        # palette1 = sns.color_palette("mako_r", 6)
+        sns.lineplot(x="t", y='data_in', data=df_from_arr_unpivot_in, hue='units_in', palette = 'dark')
+        plt.legend(loc='upper left')
+        ax2 = plt.twinx()
+        # palette2 = sns.color_palette("mako_r", 6)
+        sns.lineplot(x="t", y='data_vm', data=df_from_arr_unpivot_vm, palette = 'bright', hue='units_vm', ax=ax2)
+        plt.legend(loc='upper right')
+        if normalize==True:
+            EL = data['Neuron_Groups_Parameters'][NG_name]['namespace']['EL'] # data['Neuron_Groups_Parameters'][NG_name]['namespace']['EL']
+            VT = data['Neuron_Groups_Parameters'][NG_name]['namespace']['VT']
+            plt.ylim(EL, VT)
         # plt.show()
 
     def lineplot(self, data):
@@ -150,7 +171,6 @@ if __name__=='__main__':
     df = SV.plot_readout_on_input(NG_name, normalize=True)
 
     # df_long = SV.unpivot_dataframe(df, index_column=['t'], kw_sub_to_unpivot='MeanFR')
-    # pdb.set_trace()
     sns.lineplot(   x="t", y='data', hue='units',
                     data=df)
 

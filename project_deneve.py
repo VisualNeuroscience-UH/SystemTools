@@ -80,7 +80,6 @@ class Project(SystemAnalysis):
 
         if figure_title == None:
             figure_title = ''
-        # pdb.set_trace()
         fig = plt.figure()
         plt.hist(data, bins=bins)
         fig.suptitle(f'{figure_title}', fontsize=12)
@@ -137,7 +136,7 @@ class Project(SystemAnalysis):
 
         return data_out 
 
-    def replace_connections(self, show_histograms=False, constant_scaling=False):
+    def replace_connections(self, show_histograms=False, constant_scaling=False, constant_value=1e-9):
         '''
         After creating a CxSystem neural system with correct cell numbers and random connectivity, here we assign 
         precomputed connection weights to this system. 
@@ -180,7 +179,7 @@ class Project(SystemAnalysis):
             if constant_scaling is False:
                 data_out = self.scale_values(data_mat, target_data=data_cx, skip_under_zeros_in_scaling=False)
             elif constant_scaling is True:
-                data_out = self.scale_with_constant(data_mat, constant_value=1e-9)
+                data_out = self.scale_with_constant(data_mat, constant_value=constant_value)
 
             # viz by request
             if show_histograms is True:
@@ -235,7 +234,7 @@ if __name__=='__main__':
 
     experiment_folder = 'Replica_test'
     mat_filename = 'Fig4_workspace.mat'
-    connection_filename_out = 'connections_Fig4_test.gz'
+    connection_filename_out = 'connections_Fig4_test2.gz'
     # connection_skeleton_filename_in = 'Replica_test_connections_20210118_1141594.gz'
     connection_skeleton_filename_in = 'Replica_test_connections_20210126_2203449.gz'
 
@@ -248,14 +247,18 @@ if __name__=='__main__':
 
     input_filename = 'input_noise_210125.mat'
     # P.create_current_injection(input_filename = input_filename)
-    # P.replace_connections(show_histograms=False)
+    # P.replace_connections(show_histograms=True, constant_scaling=False, constant_value=1e-9)
 
     NG_name = 'NG3_L4_SS2_L4'
     filename_stimulus = os.path.join(experiment_folder, input_filename) # Replica_test_connections_20210201_1115529.gz
     # filename_connections = os.path.join(experiment_folder, 'Replica_test_connections_20210201_1230195.gz') # Replica_test_connections_20210201_1115529.gz connections_Fig4
-    P.plot_readout_on_input(NG_name, filename=filename, filename_stimulus=filename_stimulus, normalize=True)
+    # P.plot_readout_on_input(NG_name, filename=None, filename_stimulus=filename_stimulus, normalize=True)
     # P.show_spikes(filename=None, savefigname='')
     # P.showVm(filename=None, savefigname='')
-    # P.showConnections(filename=None, hist_from='L4_CI_SS_L4__to__L4_CI_SS_L4_soma', savefigname='')
+
+    neuron_index = {'NG1_L4_CI_SS_L4' : 150, 'NG2_L4_CI_BC_L4' : 37, 'NG3_L4_SS2_L4' : 1}
+    P.showI(filename=None, savefigname='', neuron_index=neuron_index) 
+    
+    # P.showConnections(filename=None, hist_from='L4_CI_BC_L4__to__L4_CI_SS_L4_soma', savefigname='')
 
     plt.show()

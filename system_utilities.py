@@ -265,28 +265,28 @@ class SystemUtilities():
         n_rows = int(np.ceil(n_images/n_columns))
 
         t=data['ge_soma_all'][list_of_results_ge[0]]['t']
-        time_interval=[2000, 4000]
+        time_idx_interval=[2000, 4000]
 
         fig, axs = plt.subplots(n_rows, n_columns)
         axs = axs.flat
 
         for ax, results in zip(axs,list_of_results_ge):
-            im = ax.plot(t[time_interval[0]:time_interval[1]], 
-                        data['ge_soma_all'][results]['ge_soma'][time_interval[0]:time_interval[1],0:-1:20])
+            im = ax.plot(t[time_idx_interval[0]:time_idx_interval[1]], 
+                        data['ge_soma_all'][results]['ge_soma'][time_idx_interval[0]:time_idx_interval[1],0:-1:20])
             ax.set_title(results + ' ge', fontsize=10)
 
         fig2, axs2 = plt.subplots(n_rows, n_columns)
         axs2 = axs2.flat
 
         for ax2, results2 in zip(axs2,list_of_results_gi):
-            im = ax2.plot(t[time_interval[0]:time_interval[1]], 
-                        data['gi_soma_all'][results2]['gi_soma'][time_interval[0]:time_interval[1],0:-1:20])
+            im = ax2.plot(t[time_idx_interval[0]:time_idx_interval[1]], 
+                        data['gi_soma_all'][results2]['gi_soma'][time_idx_interval[0]:time_idx_interval[1],0:-1:20])
             ax2.set_title(results2 + ' gi', fontsize=10)
 
         if savefigname:
             self._figsave(figurename=savefigname)
 
-    def showI(self, filename=None, savefigname=''):
+    def showI(self, filename=None, savefigname='', neuron_index=None):
 
         data = self.getData(filename, data_type='results')
         # Visualize
@@ -295,50 +295,60 @@ class SystemUtilities():
         list_of_results_gi = [n for n in data['gi_soma_all'].keys() if 'NG' in n]
         list_of_results_vm = [n for n in data['vm_all'].keys() if 'NG' in n]
 
-        El = -65 * mV
-        gl = 50 * nS
-        Ee = 0 * mV
-        Ei = -75 * mV
+        assert list_of_results_ge == list_of_results_gi == list_of_results_vm, 'Some key results missing, aborting...'
+        NG_list = list_of_results_ge 
 
-        print(list_of_results_ge)
-        print(f'Assuming El = {El:6.4f} * mV, gl = {gl:6.4f} * nS, Ee = {Ee:6.4f} * mV, Ei = {Ei:6.4f} * mV\nDig from physiology df if u start messing with neuron types')
-
-        n_images=len(list_of_results_ge)
+        n_images = len(NG_list)
         n_columns = 2
         n_rows = int(np.ceil(n_images/n_columns))
 
-        t=data['ge_soma_all'][list_of_results_ge[0]]['t']
-        time_interval=[2000, 4000]
+        t = data['ge_soma_all'][NG_list[0]]['t']
+        # time_idx_interval=[2000, 4000]
+        time_idx_interval = [0, len(t)-1]
 
         fig, axs = plt.subplots(n_rows, n_columns)
         axs = axs.flat
 
-        for ax, results_ge, results_gi, results_vm in zip(  axs,list_of_results_ge, \
-                                                            list_of_results_gi,list_of_results_vm):
+        
+        for ax, NG in zip(axs, NG_list):
 
-            N_monitored_neurons = data['vm_all'][results_vm]['vm'].shape[1]
-            N_neurons = len(data['positions_all']['w_coord'][results_vm])
+            N_monitored_neurons = data['vm_all'][NG]['vm'].shape[1]
+            N_neurons = len(data['positions_all']['w_coord'][NG])
 
-            ge= data['ge_soma_all'][results_ge]['ge_soma']
-            gi= data['gi_soma_all'][results_gi]['gi_soma']
-            vm= data['vm_all'][results_vm]['vm']
-            I_total = gl * (El - vm) + ge * (Ee - vm) + gi * (Ei - vm)
+            ge = data['ge_soma_all'][NG]['ge_soma']
+            gi = data['gi_soma_all'][NG]['gi_soma']
+            vm = data['vm_all'][NG]['vm']
 
-            if N_monitored_neurons == N_neurons: 
-                # neuron_index_center=data['positions_all']['w_coord'][results_vm].index(0+0j)
-                neuron_index_center = _getNeuronIndex(data, results_vm, position=0+0j)
-                ax.plot(t[time_interval[0]:time_interval[1]], 
-                            I_total[time_interval[0]:time_interval[1],
-                            neuron_index_center])
-            else:
-                ax.plot(t[time_interval[0]:time_interval[1]], 
-                            I_total[time_interval[0]:time_interval[1],:])
+            # pdb.set_trace()
 
-            ax.set_title(results_vm + ' I', fontsize=10)
+            # Get necessary variables
+            # Calculate excitatory, inhibitory (and leak) currents
+            gl = data['Neuron_Groups_Parameters'][NG]['namespace']['gL']
+            El = data['Neuron_Groups_Parameters'][NG]['namespace']['EL']         
+            I_leak = gl * (El - vm)
+            if (NG == 'NG1_L4_CI_SS_L4') or (NG == 'NG2_L4_CI_BC_L4') :
+                I_e =  ge * b2u.mV
+                I_i =  gi * b2u.mV
+            elif NG == 'NG3_L4_SS2_L4' :
+                Ee = data['Neuron_Groups_Parameters'][NG]['namespace']['Ee']
+                Ei = data['Neuron_Groups_Parameters'][NG]['namespace']['Ei']         
+                I_e =  ge * (Ee - vm)
+                I_i =  gi * (Ei - vm)
 
-            I_total_mean = np.mean(I_total[time_interval[0]:time_interval[1]] / namp)
-            I_total_mean_str = f'mean I = {I_total_mean:6.2f} nAmp'
-            ax.text(0.05, 0.95, I_total_mean_str, fontsize=10, verticalalignment='top', transform=ax.transAxes)
+            if neuron_index is None:
+                neuron_index = {'NG1_L4_CI_SS_L4' : 0, 'NG2_L4_CI_BC_L4' : 0, 'NG3_L4_SS2_L4' : 0}
+
+            # pdb.set_trace()
+            ax.plot(    t[time_idx_interval[0]:time_idx_interval[1]], 
+                        np.array([I_e[time_idx_interval[0]:time_idx_interval[1],neuron_index[NG]],
+                        I_i[time_idx_interval[0]:time_idx_interval[1],neuron_index[NG]]]).T
+                        )
+            ax.legend(['I_e', 'I_i'])
+            ax.set_title(NG + ' current', fontsize=10)
+
+            # I_total_mean = np.mean(I_total[time_idx_interval[0]:time_idx_interval[1]] / b2u.namp)
+            # I_total_mean_str = f'mean I = {I_total_mean:6.2f} nAmp'
+            # ax.text(0.05, 0.95, I_total_mean_str, fontsize=10, verticalalignment='top', transform=ax.transAxes)
 
         if savefigname:
             self._figsave(figurename=savefigname)
@@ -361,12 +371,12 @@ class SystemUtilities():
             I_inhibitory_mean = 0
             return I_total_mean, I_excitatory_mean, I_inhibitory_mean
         # These data are available in physiology_configuration file (inside results datafile), but hard coded here for the time being
-        El = -65 * mV
-        gl = 50 * nS
-        Ee = 0 * mV
-        Ei = -75 * mV
+        El = -65 * b2u.mV
+        gl = 50 * b2u.nS
+        Ee = 0 * b2u.mV
+        Ei = -75 * b2u.mV
 
-        time_interval=[2000, 4000]
+        time_idx_interval=[2000, 4000]
 
         for results_ge, results_gi, results_vm in zip(  list_of_results_ge, \
                                                             list_of_results_gi,list_of_results_vm):
@@ -382,10 +392,10 @@ class SystemUtilities():
             I_inhibitory = gi * (Ei - vm)
 
             if N_monitored_neurons == N_neurons: 
-                neuron_index_center = _getNeuronIndex(data, results_vm, position=0+0j)
-            I_total_mean = np.mean(I_total[time_interval[0]:time_interval[1]] / namp)
-            I_excitatory_mean = np.mean(I_excitatory[time_interval[0]:time_interval[1]] / namp)
-            I_inhibitory_mean = np.mean(I_inhibitory[time_interval[0]:time_interval[1]] / namp)
+                neuron_index = self._getNeuronIndex(data, results_vm, position=0+0j)
+            I_total_mean = np.mean(I_total[time_idx_interval[0]:time_idx_interval[1]] / namp)
+            I_excitatory_mean = np.mean(I_excitatory[time_idx_interval[0]:time_idx_interval[1]] / namp)
+            I_inhibitory_mean = np.mean(I_inhibitory[time_idx_interval[0]:time_idx_interval[1]] / namp)
             
         return I_total_mean, I_excitatory_mean, I_inhibitory_mean
 
