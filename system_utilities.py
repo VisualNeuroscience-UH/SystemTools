@@ -39,15 +39,22 @@ class SystemUtilities():
         data_type.
         '''
         data_fullpath_filename = None
+        path = self.path
+        experiment_folder = self.experiment_folder
 
         if filename is None:
             data_fullpath_filename = self._most_recent(data_type=data_type)
         
+        # Filename exists
         if not data_fullpath_filename:
-            path = self.path
             data_fullpath_filename = os.path.join(path,filename)
 
-        print(data_fullpath_filename)
+        # If not found in project path, try project/experiment folder -path
+        if not os.path.isfile(data_fullpath_filename) :
+            data_fullpath_filename = os.path.join(path, experiment_folder, filename)
+            assert os.path.isfile(data_fullpath_filename), 'Could not parse filepath, aborting...'
+
+        print(f'Working on file {data_fullpath_filename}')
 
         return data_fullpath_filename
 

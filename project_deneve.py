@@ -57,13 +57,16 @@ Developed by Simo Vanni 2021
 class Project(SystemAnalysis):
 
     def __init__(self, path='./', experiment_folder=None, mat_filename=None, connection_filename_out=None, 
-                connection_skeleton_filename_in=None):
+                NG_name = None, connection_skeleton_filename_in=None, input_filename=None):
 
         self.path = path
         self.experiment_folder = experiment_folder
         self.mat_filename = mat_filename
-        self.connection_filename_out = connection_filename_out
-        self.connection_skeleton_filename_in = connection_skeleton_filename_in
+        self.connection_filename_out = os.path.join(experiment_folder, connection_filename_out)
+        self.connection_skeleton_filename_in = os.path.join(experiment_folder, connection_skeleton_filename_in)
+        self.input_filename = input_filename
+        self.filename_stimulus = os.path.join(experiment_folder, input_filename)
+        self.NG_name = NG_name
 
     def _show_histogram(self, data, figure_title=None, skip_under_one_pros=False, bins=10):
 
@@ -196,9 +199,11 @@ class Project(SystemAnalysis):
         savepath = os.path.join(self.path, self.connection_filename_out)
         write_to_file(savepath, connection_final_dict)
 
-    def create_current_injection(self, input_filename=None):   
+    def create_current_injection(self):   
         # Multiply time x Nx matrix of Input with Nx x Nunits matrix of Deneve's FE mapping 
         # (input to excitatory neuron group mapping). Ref Brendel_2020_PLoSComputNeurosci
+
+        input_filename = self.input_filename
 
         # Get FE -- from input forward to e group connection matrix
         mat_data_dict = self.getData(self.mat_filename)
@@ -232,33 +237,39 @@ if __name__=='__main__':
     elif sys.platform == 'win32':
         path = r'C:\Users\Simo\Laskenta\SimuOut\Deneve'
 
+    # Experiment-specific file, folder and neuron group names
     experiment_folder = 'Replica_test'
     mat_filename = 'Fig4_workspace.mat'
     connection_filename_out = 'connections_Fig4_test2.gz'
-    # connection_skeleton_filename_in = 'Replica_test_connections_20210118_1141594.gz'
     connection_skeleton_filename_in = 'Replica_test_connections_20210126_2203449.gz'
-
-    P = Project(
-        path=path, 
-        experiment_folder=experiment_folder,
-        mat_filename = mat_filename, 
-        connection_filename_out = os.path.join(experiment_folder, connection_filename_out),
-        connection_skeleton_filename_in = os.path.join(experiment_folder, connection_skeleton_filename_in))
-
     input_filename = 'input_noise_210125.mat'
-    # P.create_current_injection(input_filename = input_filename)
+    NG_name_for_vm_on_input = 'NG3_L4_SS2_L4'
+
+    P = Project(path=path, experiment_folder=experiment_folder,mat_filename = mat_filename, 
+        connection_filename_out = connection_filename_out, NG_name = NG_name_for_vm_on_input,
+        connection_skeleton_filename_in = connection_skeleton_filename_in,
+        input_filename=input_filename)
+
+    # ## Create project files ##
+    # # Creates file named input_filename but with _ci.mat suffix to experiment folder
+    # P.create_current_injection() 
+    
+    # # Transforms Deneve's simulation connections from .mat file to CxSystem .gz fromat.
+    # # Creates connection_filename_out to experiment folder
     # P.replace_connections(show_histograms=True, constant_scaling=False, constant_value=1e-9)
 
-    NG_name = 'NG3_L4_SS2_L4'
-    filename_stimulus = os.path.join(experiment_folder, input_filename) # Replica_test_connections_20210201_1115529.gz
-    # filename_connections = os.path.join(experiment_folder, 'Replica_test_connections_20210201_1230195.gz') # Replica_test_connections_20210201_1115529.gz connections_Fig4
-    # P.plot_readout_on_input(NG_name, filename=None, filename_stimulus=filename_stimulus, normalize=True)
+    # ## Readout on input ##
+    # P.plot_readout_on_input(filename=None, normalize=True)
+
+    # ## Show spikes and vm ##
     # P.show_spikes(filename=None, savefigname='')
     # P.showVm(filename=None, savefigname='')
 
-    neuron_index = {'NG1_L4_CI_SS_L4' : 150, 'NG2_L4_CI_BC_L4' : 37, 'NG3_L4_SS2_L4' : 1}
-    P.showI(filename=None, savefigname='', neuron_index=neuron_index) 
+    # ## Show E and I currents ##
+    # neuron_index = {'NG1_L4_CI_SS_L4' : 150, 'NG2_L4_CI_BC_L4' : 37, 'NG3_L4_SS2_L4' : 1}
+    # P.showI(filename=None, savefigname='', neuron_index=neuron_index) 
     
+    # ## Show connections ##
     # P.showConnections(filename=None, hist_from='L4_CI_BC_L4__to__L4_CI_SS_L4_soma', savefigname='')
 
     plt.show()
