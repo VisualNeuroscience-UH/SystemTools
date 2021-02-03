@@ -95,7 +95,7 @@ class SystemAnalysis(SystemViz):
         # Display values
         self.pp_df_full(mean_df)
 
-        # Replace meatadata with MeanFR
+        # Replace metadata with MeanFR
         metadata_fullpath_filename = self._parsePath(filename, data_type='metadata')
         metadataroot, metadataextension = os.path.splitext(metadata_fullpath_filename)
         filename_out = metadataroot.replace('metadata', 'MeanFR')

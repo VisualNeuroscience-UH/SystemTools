@@ -250,7 +250,9 @@ if __name__=='__main__':
         connection_skeleton_filename_in = connection_skeleton_filename_in,
         input_filename=input_filename)
 
-    # ## Create project files ##
+    # ############################
+    # ### Create project files ###
+    # ############################
     # # Creates file named input_filename but with _ci.mat suffix to experiment folder
     # P.create_current_injection() 
     
@@ -258,18 +260,21 @@ if __name__=='__main__':
     # # Creates connection_filename_out to experiment folder
     # P.replace_connections(show_histograms=True, constant_scaling=False, constant_value=1e-9)
 
+    # ############################
+    # ######### Analysis #########
+    # ############################
     # ## Readout on input ##
     # P.plot_readout_on_input(filename=None, normalize=True)
 
-    # ## Show spikes and vm ##
+    # Show spikes and vm ##
     P.show_spikes(filename=None, savefigname='')
-    # P.showVm(filename=None, savefigname='')
+    P.showVm(filename=None, savefigname='')
 
     # ## Show E and I currents ##
     # neuron_index = {'NG1_L4_CI_SS_L4' : 150, 'NG2_L4_CI_BC_L4' : 37, 'NG3_L4_SS2_L4' : 1}
     # P.showI(filename=None, savefigname='', neuron_index=neuron_index) 
     
-    # ## Show connections ##
+    ## Show connections ##
     # P.showConnections(filename=None, hist_from='L4_CI_BC_L4__to__L4_CI_SS_L4_soma', savefigname='')
 
     plt.show()

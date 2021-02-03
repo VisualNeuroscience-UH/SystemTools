@@ -89,7 +89,7 @@ class SystemUtilities():
         # Saves current figure to working dir
 
         if myformat[0] == '.':
-            myformat=myformat[1:]
+            myformat = myformat[1:]
 
         filename, file_extension = os.path.splitext(figurename)
 
@@ -372,7 +372,7 @@ class SystemUtilities():
         assert list_of_results_ge == list_of_results_gi == list_of_results_vm, "different N neuron groups monitored, can not calculate current, aborting..."
 
         if len(list_of_results_ge)==0:
-            #No currents monitored for thir group
+            #No currents monitored for this group
             I_total_mean = 0 # to avoid stupid error later
             I_excitatory_mean = 0
             I_inhibitory_mean = 0
@@ -400,9 +400,9 @@ class SystemUtilities():
 
             if N_monitored_neurons == N_neurons: 
                 neuron_index = self._getNeuronIndex(data, results_vm, position=0+0j)
-            I_total_mean = np.mean(I_total[time_idx_interval[0]:time_idx_interval[1]] / namp)
-            I_excitatory_mean = np.mean(I_excitatory[time_idx_interval[0]:time_idx_interval[1]] / namp)
-            I_inhibitory_mean = np.mean(I_inhibitory[time_idx_interval[0]:time_idx_interval[1]] / namp)
+            I_total_mean = np.mean(I_total[time_idx_interval[0]:time_idx_interval[1]] / b2u.namp)
+            I_excitatory_mean = np.mean(I_excitatory[time_idx_interval[0]:time_idx_interval[1]] / b2u.namp)
+            I_inhibitory_mean = np.mean(I_inhibitory[time_idx_interval[0]:time_idx_interval[1]] / b2u.namp)
             
         return I_total_mean, I_excitatory_mean, I_inhibitory_mean
 
@@ -416,13 +416,13 @@ class SystemUtilities():
         list_of_results = [n for n in data['spikes_all'].keys() if 'NG' in n]
 
         print(list_of_results)
-        n_images=len(list_of_results)
+        n_images = len(list_of_results)
         n_columns = 2
-        nbins=400
+        nbins = 400
         duration = data['runtime']
         bar_width = duration / nbins
         freqCutoff = 200 # Hz
-        ylims=np.array([-18.4,18.4])
+        ylims = np.array([-18.4,18.4])
         n_rows = int(np.ceil(n_images/n_columns))
 
         width_ratios = np.array([2,2])
