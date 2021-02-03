@@ -262,7 +262,7 @@ if __name__=='__main__':
     # P.plot_readout_on_input(filename=None, normalize=True)
 
     # ## Show spikes and vm ##
-    # P.show_spikes(filename=None, savefigname='')
+    P.show_spikes(filename=None, savefigname='')
     # P.showVm(filename=None, savefigname='')
 
     # ## Show E and I currents ##

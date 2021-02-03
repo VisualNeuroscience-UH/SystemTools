@@ -67,6 +67,12 @@ class SystemViz(SystemUtilities):
         dims = new_data_shape[1]
         return tmp_dict, dims
 
+    def _string_on_plot(self, ax, variable_name=None, variable_value=None, variable_unit=None):
+
+            plot_str = f'{variable_name} = {variable_value:6.2f} {variable_unit}'
+            ax.text(0.05, 0.95, plot_str, fontsize=8, verticalalignment='top', transform=ax.transAxes,
+            bbox=dict(boxstyle="Square,pad=0.2", fc="white", ec="white", lw=1))
+
     def plot_readout_on_input(self, filename=None, normalize=False):
         '''
         Get input, get data. Scaling. turn to df, format df, Plot curves.
@@ -159,6 +165,34 @@ class SystemViz(SystemUtilities):
         data_df = pd.DataFrame(data)
         sns.lineplot(data=data_df)
         plt.show()
+
+    def show_spikes(self, filename=None, savefigname=''):
+
+        data = self.getData(filename, data_type='results')
+
+        # Visualize
+        # Extract connections from data dict
+        NG_list = [n for n in data['spikes_all'].keys() if 'NG' in n]
+
+        print(NG_list)
+        n_images=len(NG_list)
+        n_columns = 2
+        n_rows = int(np.ceil(n_images/n_columns))
+
+        fig, axs = plt.subplots(n_rows, n_columns)
+        axs = axs.flat
+
+        for ax, this_group in zip(axs,NG_list):
+
+            im = ax.plot(data['spikes_all'][this_group]['t'], data['spikes_all'][this_group]['i'],'.')
+            ax.set_title(this_group, fontsize=10)
+
+            MeanFR = self._get_MeanFR(data, this_group, time_start=0, time_end=None)
+            self._string_on_plot(ax, variable_name='Mean FR', variable_value=MeanFR, variable_unit='Hz')
+
+        if savefigname:
+            self._figsave(figurename=savefigname)
+
 
 if __name__=='__main__':
 

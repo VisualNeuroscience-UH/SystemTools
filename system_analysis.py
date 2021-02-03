@@ -36,31 +36,22 @@ class SystemAnalysis(SystemViz):
             np.logical_and(data_by_group['t'] > time_start * b2u.second, data_by_group['t'] < time_end * b2u.second)]
         return spikes
 
-    def show_spikes(self, filename=None, savefigname=''):
+    def  _get_MeanFR(self, data, this_group, time_start=0, time_end=None):
 
-        data = self.getData(filename, data_type='results')
+        if time_end is None:
+            time_end = data['runtime']
 
-        # Visualize
-        # Extract connections from data dict
-        list_of_results = [n for n in data['spikes_all'].keys() if 'NG' in n]
+        data_by_group = data['spikes_all'][this_group]
+        # Get and mark MeanFR to df
+        N_neurons = data_by_group['count'].size
 
-        print(list_of_results)
-        n_images=len(list_of_results)
-        n_columns = 2
-        n_rows = int(np.ceil(n_images/n_columns))
+        spikes = self._get_spikes_by_interval(data_by_group, time_start=time_start, time_end=time_end)
 
-        fig, axs = plt.subplots(n_rows, n_columns)
-        axs = axs.flat
+        MeanFR = spikes.size / (N_neurons * (time_end - time_start))
 
-        for ax, results in zip(axs,list_of_results):
-
-            im = ax.plot(data['spikes_all'][results]['t'], data['spikes_all'][results]['i'],'.')
-            ax.set_title(results, fontsize=10)
-
-        if savefigname:
-            self._figsave(figurename=savefigname)
-
-    def getMeanFR(self, data_df, time_start=0, time_end=None):
+        return MeanFR
+                
+    def getMeanFR_array(self, data_df, time_start=0, time_end=None):
     
         # Get neuron group names
         filename_0 = data_df['Full path'].values[0]
@@ -83,24 +74,20 @@ class SystemAnalysis(SystemViz):
             data = self.getData(this_file)
             # Loop through neuron groups 
             for this_group in list_of_group_names:
-                data_by_group = data['spikes_all'][this_group]
-                # Get and mark MeanFR to df
-                N_neurons = data_by_group['count'].size
 
-                spikes = self._get_spikes_by_interval(data_by_group, time_start=time_start, time_end=time_end)
+                MeanFR = self._get_MeanFR(data, this_group, time_start=time_start, time_end=time_end)
 
-                MeanFR = spikes.size / (N_neurons * (time_end - time_start))
                 data_df.loc[this_index,'MeanFR_' + this_group] = MeanFR
 
         return data_df
 
-    def printMeanFR(self, filename=None, time_start=0, time_end=None):
+    def printMeanFR_for_arrayrun(self, filename=None, time_start=0, time_end=None):
         '''
         Print mean firing rate for array run. Needs a metadata file.
         '''
         data_df = self.getData(filename, type='metadata')
     
-        data_df = self.getMeanFR(data_df, time_start=time_start, time_end=time_end)
+        data_df = self.getMeanFR_array(data_df, time_start=time_start, time_end=time_end)
 
         # Drop Full path column for concise printing
         mean_df = data_df.drop(['Full path'], axis=1)
