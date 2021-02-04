@@ -56,17 +56,20 @@ Developed by Simo Vanni 2021
 
 class Project(SystemAnalysis):
 
-    def __init__(self, path='./', experiment_folder=None, mat_filename=None, connection_filename_out=None, 
-                NG_name = None, connection_skeleton_filename_in=None, input_filename=None):
+    def __init__(self, path='./', input_folder=None, output_folder=None, mat_filename=None, 
+                connection_skeleton_filename_in=None, connection_filename_out=None, 
+                input_filename=None, NG_name=None):
 
         self.path = path
-        self.experiment_folder = experiment_folder
+        self.input_folder = input_folder
+        self.output_folder = output_folder
         self.mat_filename = mat_filename
-        self.connection_filename_out = os.path.join(experiment_folder, connection_filename_out)
-        self.connection_skeleton_filename_in = os.path.join(experiment_folder, connection_skeleton_filename_in)
+        self.connection_skeleton_filename_in = connection_skeleton_filename_in
+        self.connection_filename_out = os.path.join(input_folder, connection_filename_out)
         self.input_filename = input_filename
-        self.filename_stimulus = os.path.join(experiment_folder, input_filename)
         self.NG_name = NG_name
+
+        self.data_types_out = ['results', 'connections', 'metadata']
 
     def _show_histogram(self, data, figure_title=None, skip_under_one_pros=False, bins=10):
 
@@ -214,7 +217,7 @@ class Project(SystemAnalysis):
         # Read existing Input
         assert input_filename is not None, 'Input mat filename not set, aborting...'
         assert input_filename[-4:] == '.mat', 'Input filename does not end .mat, aborting...'
-        input_filename_full = os.path.join(self.path, self.experiment_folder, input_filename)
+        input_filename_full = os.path.join(self.path, self.input_folder, input_filename)
         input_dict = self.getData(input_filename_full)
 
         # Extract Input
@@ -238,17 +241,18 @@ if __name__=='__main__':
         path = r'C:\Users\Simo\Laskenta\SimuOut\Deneve'
 
     # Experiment-specific file, folder and neuron group names
-    experiment_folder = 'Replica_test'
+    input_folder = 'Replica_in'
+    output_folder = 'Replica_out'
     mat_filename = 'Fig4_workspace.mat'
-    connection_filename_out = 'connections_Fig4_test2.gz'
     connection_skeleton_filename_in = 'Replica_test_connections_20210126_2203449.gz'
+    connection_filename_out = 'connections_Fig4_test3.gz'
     input_filename = 'input_noise_210125.mat'
     NG_name_for_vm_on_input = 'NG3_L4_SS2_L4'
 
-    P = Project(path=path, experiment_folder=experiment_folder,mat_filename = mat_filename, 
-        connection_filename_out = connection_filename_out, NG_name = NG_name_for_vm_on_input,
-        connection_skeleton_filename_in = connection_skeleton_filename_in,
-        input_filename=input_filename)
+    P = Project(path=path, input_folder=input_folder, output_folder=output_folder, 
+                mat_filename=mat_filename, connection_skeleton_filename_in=connection_skeleton_filename_in, 
+                connection_filename_out=connection_filename_out, input_filename=input_filename, 
+                NG_name=NG_name_for_vm_on_input)
 
     # ############################
     # ### Create project files ###
@@ -258,7 +262,7 @@ if __name__=='__main__':
     
     # # Transforms Deneve's simulation connections from .mat file to CxSystem .gz fromat.
     # # Creates connection_filename_out to experiment folder
-    # P.replace_connections(show_histograms=True, constant_scaling=False, constant_value=1e-9)
+    # P.replace_connections(show_histograms=False, constant_scaling=False, constant_value=1e-9)
 
     # ############################
     # ######### Analysis #########
@@ -266,15 +270,15 @@ if __name__=='__main__':
     # ## Readout on input ##
     # P.plot_readout_on_input(filename=None, normalize=True)
 
-    # Show spikes and vm ##
-    P.show_spikes(filename=None, savefigname='')
-    P.showVm(filename=None, savefigname='')
+    # # Show spikes and vm ##
+    # P.show_spikes(filename=None, savefigname='')
+    # P.show_vm(filename=None, savefigname='')
 
     # ## Show E and I currents ##
     # neuron_index = {'NG1_L4_CI_SS_L4' : 150, 'NG2_L4_CI_BC_L4' : 37, 'NG3_L4_SS2_L4' : 1}
-    # P.showI(filename=None, savefigname='', neuron_index=neuron_index) 
+    # P.show_currents(filename=None, savefigname='', neuron_index=neuron_index) 
     
-    ## Show connections ##
-    # P.showConnections(filename=None, hist_from='L4_CI_BC_L4__to__L4_CI_SS_L4_soma', savefigname='')
+    # # Show connections ##
+    # P.show_connections(filename=None, hist_from='L4_CI_BC_L4__to__L4_CI_SS_L4_soma', savefigname='')
 
     plt.show()

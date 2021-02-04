@@ -32,7 +32,21 @@ class SystemUtilities():
 
         self.path=path
 
-    def _parsePath(self, filename, data_type='results'):
+        # Init some variables
+        self.data_types_out = None
+        self.input_folder = None
+        self.output_folder = None
+
+    def _check_cadidate_file(self, path, filename):
+        candidate_data_fullpath_filename = os.path.join(path, filename)
+        if os.path.isfile(candidate_data_fullpath_filename):
+            data_fullpath_filename = candidate_data_fullpath_filename
+            return data_fullpath_filename
+        else:
+            return None
+
+
+    def _parsePath(self, filename, data_type=None):
         '''
         This internal function returns full path to either 1) the file given by the filename at self.path 
         folder, or 2) to file with most recent modification time at self.path whose filename contains string 
@@ -40,19 +54,32 @@ class SystemUtilities():
         '''
         data_fullpath_filename = None
         path = self.path
-        experiment_folder = self.experiment_folder
+        input_folder = self.input_folder
+        output_folder = self.output_folder
 
-        if filename is None:
-            data_fullpath_filename = self._most_recent(data_type=data_type)
-        
-        # Filename exists
-        if not data_fullpath_filename:
-            data_fullpath_filename = os.path.join(path,filename)
+        # Parse output filetypes
+        if data_type in self.data_types_out:
+            output_path = os.path.join(path, output_folder)
+            if filename is None:
+                data_fullpath_filename = self._most_recent(output_path, data_type=data_type)
+            else:
+                data_fullpath_filename = self._check_cadidate_file(output_path, filename)
+            if not data_fullpath_filename: 
+                raise FileNotFoundError(f'Did not find {data_type} file in folder {output_path}')
+            
+        # Parse other filetypes
+        elif data_type not in self.data_types_out:
+            assert filename is not None, "I don't know what file to search for, aborting..."
+    
+            # Check for filename first in input folder
+            input_path = os.path.join(path, input_folder)
+            data_fullpath_filename = self._check_cadidate_file(input_path, filename)
 
-        # If not found in project path, try project/experiment folder -path
-        if not os.path.isfile(data_fullpath_filename) :
-            data_fullpath_filename = os.path.join(path, experiment_folder, filename)
-            assert os.path.isfile(data_fullpath_filename), 'Could not parse filepath, aborting...'
+            # Check for filename next in project folder
+            if not data_fullpath_filename:
+                data_fullpath_filename = self._check_cadidate_file(input_path, filename)
+
+        assert data_fullpath_filename is not None, 'Could not parse filepath, aborting...'
 
         print(f'Working on file {data_fullpath_filename}')
 
@@ -68,21 +95,23 @@ class SystemUtilities():
 
         return paths
 
-    def _most_recent(self, data_type='results'):
-
-        path = self.path
+    def _most_recent(self, path, data_type=None):
 
         paths = self._listdir_loop(path, data_type)
 
-        if not paths and self.experiment_folder is not None:
-            path_folder = os.path.join(path,self.experiment_folder)
-            print(f'Did not find files of type {data_type} at {path}, trying at {path_folder}')
-            paths = self._listdir_loop(path_folder, data_type)
+        # path = self.path
 
-        assert paths, f'No files of type {data_type} found at {path}, aborting...'
-        data_fullpath_filename = max(paths, key=os.path.getctime)
+        # if not paths and self.input_folder is not None:
+        #     path_folder = os.path.join(path,self.input_folder)
+        #     print(f'Did not find files of type {data_type} at {path}, trying at {path_folder}')
+        #     paths = self._listdir_loop(path_folder, data_type)
+        # assert paths, f'No files of type {data_type} found at {path}, aborting...'
 
-        return data_fullpath_filename
+        if not paths:
+            return None
+        else:
+            data_fullpath_filename = max(paths, key=os.path.getctime)
+            return data_fullpath_filename
 
     def _figsave(self, figurename='', myformat='png', suffix=''):
         
@@ -110,7 +139,7 @@ class SystemUtilities():
             transparent=False, bbox_inches=None, pad_inches=0.1,
             metadata=None)
 
-    def getData(self, filename=None, data_type='results'):
+    def getData(self, filename=None, data_type=None):
 
         # Explore which is the most recent file in path of data_type and add full path to filename 
         data_fullpath_filename = self._parsePath(filename, data_type=data_type)
@@ -136,35 +165,6 @@ class SystemUtilities():
 
     def close(self):
         plt.close('all')
-
-    def showVm(self, filename=None, savefigname=''):
-        # Shows data on filename. If filename remains None, shows the most recent data.
-
-        data = self.getData(filename, data_type='results')
-
-        # Visualize
-        # Extract connections from data dict
-        list_of_results = [n for n in data['vm_all'].keys() if 'NG' in n]
-
-        print(list_of_results)
-        n_images=len(list_of_results)
-        n_columns = 2
-        n_rows = int(np.ceil(n_images/n_columns))
-
-        t=data['vm_all'][list_of_results[0]]['t']
-
-        fig, axs = plt.subplots(n_rows, n_columns)
-        axs = axs.flat
-
-        for ax, results in zip(axs,list_of_results):
-            N_monitored_neurons = data['vm_all'][results]['vm'].shape[1]
-            N_neurons = len(data['positions_all']['w_coord'][results])
-
-            im = ax.plot(t, data['vm_all'][results]['vm'])
-            ax.set_title(results, fontsize=10)
-
-        if savefigname:
-            self._figsave(figurename=savefigname)
 
     def pp_df_full(self, df):
         with pd.option_context('display.max_rows', None, 'display.max_columns', None): 
@@ -227,37 +227,6 @@ class SystemUtilities():
         neuron_index=data['positions_all']['w_coord'][neuron_group].index(position)
         return neuron_index
 
-    def showConnections(self, filename=None, hist_from=None, savefigname=''):
-
-        data = self.getData(filename, data_type='connections')
-
-        # Visualize
-        # Extract connections from data dict
-        list_of_connections = [n for n in data.keys() if '__to__' in n]
-    
-        # Pick histogram data
-        if hist_from is None:
-            hist_from = list_of_connections[-1]
-
-        print(list_of_connections)
-        n_images=len(list_of_connections)
-        n_columns = 2
-        n_rows = int(np.ceil(n_images/n_columns))
-        fig, axs = plt.subplots(n_rows, n_columns)
-        axs = axs.flat
-        for ax, connection in zip(axs,list_of_connections):
-            im = ax.imshow(data[connection]['data'].todense())
-            ax.set_title(connection, fontsize=10)
-            fig.colorbar(im, ax=ax)
-        data4hist = np.squeeze(np.asarray(data[hist_from]['data'].todense().flatten()))
-        data4hist_nozeros = np.ma.masked_equal(data4hist,0)
-        Nzeros = data4hist==0
-        proportion_zeros = Nzeros.sum() / Nzeros.size
-        axs[(n_rows * n_columns)-1].hist(data4hist_nozeros)
-        axs[(n_rows * n_columns)-1].set_title(f"{hist_from}\n{(proportion_zeros * 100):.1f}% zeros (not shown)")
-        if savefigname:
-            self._figsave(figurename=savefigname)
-
     def showG(self, filename=None, savefigname=''):
 
         data = self.getData(filename, data_type='results')
@@ -292,119 +261,6 @@ class SystemUtilities():
 
         if savefigname:
             self._figsave(figurename=savefigname)
-
-    def showI(self, filename=None, savefigname='', neuron_index=None):
-
-        data = self.getData(filename, data_type='results')
-        # Visualize
-        # Extract connections from data dict
-        list_of_results_ge = [n for n in data['ge_soma_all'].keys() if 'NG' in n]
-        list_of_results_gi = [n for n in data['gi_soma_all'].keys() if 'NG' in n]
-        list_of_results_vm = [n for n in data['vm_all'].keys() if 'NG' in n]
-
-        assert list_of_results_ge == list_of_results_gi == list_of_results_vm, 'Some key results missing, aborting...'
-        NG_list = list_of_results_ge 
-
-        n_images = len(NG_list)
-        n_columns = 2
-        n_rows = int(np.ceil(n_images/n_columns))
-
-        t = data['ge_soma_all'][NG_list[0]]['t']
-        # time_idx_interval=[2000, 4000]
-        time_idx_interval = [0, len(t)-1]
-
-        fig, axs = plt.subplots(n_rows, n_columns)
-        axs = axs.flat
-
-        
-        for ax, NG in zip(axs, NG_list):
-
-            N_monitored_neurons = data['vm_all'][NG]['vm'].shape[1]
-            N_neurons = len(data['positions_all']['w_coord'][NG])
-
-            ge = data['ge_soma_all'][NG]['ge_soma']
-            gi = data['gi_soma_all'][NG]['gi_soma']
-            vm = data['vm_all'][NG]['vm']
-
-            # pdb.set_trace()
-
-            # Get necessary variables
-            # Calculate excitatory, inhibitory (and leak) currents
-            gl = data['Neuron_Groups_Parameters'][NG]['namespace']['gL']
-            El = data['Neuron_Groups_Parameters'][NG]['namespace']['EL']         
-            I_leak = gl * (El - vm)
-            if (NG == 'NG1_L4_CI_SS_L4') or (NG == 'NG2_L4_CI_BC_L4') :
-                I_e =  ge * b2u.mV
-                I_i =  gi * b2u.mV
-            elif NG == 'NG3_L4_SS2_L4' :
-                Ee = data['Neuron_Groups_Parameters'][NG]['namespace']['Ee']
-                Ei = data['Neuron_Groups_Parameters'][NG]['namespace']['Ei']         
-                I_e =  ge * (Ee - vm)
-                I_i =  gi * (Ei - vm)
-
-            if neuron_index is None:
-                neuron_index = {'NG1_L4_CI_SS_L4' : 0, 'NG2_L4_CI_BC_L4' : 0, 'NG3_L4_SS2_L4' : 0}
-
-            # pdb.set_trace()
-            ax.plot(    t[time_idx_interval[0]:time_idx_interval[1]], 
-                        np.array([I_e[time_idx_interval[0]:time_idx_interval[1],neuron_index[NG]],
-                        I_i[time_idx_interval[0]:time_idx_interval[1],neuron_index[NG]]]).T
-                        )
-            ax.legend(['I_e', 'I_i'])
-            ax.set_title(NG + ' current', fontsize=10)
-
-            # I_total_mean = np.mean(I_total[time_idx_interval[0]:time_idx_interval[1]] / b2u.namp)
-            # I_total_mean_str = f'mean I = {I_total_mean:6.2f} nAmp'
-            # ax.text(0.05, 0.95, I_total_mean_str, fontsize=10, verticalalignment='top', transform=ax.transAxes)
-
-        if savefigname:
-            self._figsave(figurename=savefigname)
-
-    def _getI(self, neuron_group,data):
-
-        # Extract connections from data dict
-        # list_of_results_ge = [n for n in data['ge_soma_all'].keys() if 'NG' in n]
-        # list_of_results_gi = [n for n in data['gi_soma_all'].keys() if 'NG' in n]
-        # list_of_results_vm = [n for n in data['vm_all'].keys() if 'NG' in n]
-        list_of_results_ge = [n for n in data['ge_soma_all'].keys() if neuron_group in n]
-        list_of_results_gi = [n for n in data['gi_soma_all'].keys() if neuron_group in n]
-        list_of_results_vm = [n for n in data['vm_all'].keys() if neuron_group in n]
-        assert list_of_results_ge == list_of_results_gi == list_of_results_vm, "different N neuron groups monitored, can not calculate current, aborting..."
-
-        if len(list_of_results_ge)==0:
-            #No currents monitored for this group
-            I_total_mean = 0 # to avoid stupid error later
-            I_excitatory_mean = 0
-            I_inhibitory_mean = 0
-            return I_total_mean, I_excitatory_mean, I_inhibitory_mean
-        # These data are available in physiology_configuration file (inside results datafile), but hard coded here for the time being
-        El = -65 * b2u.mV
-        gl = 50 * b2u.nS
-        Ee = 0 * b2u.mV
-        Ei = -75 * b2u.mV
-
-        time_idx_interval=[2000, 4000]
-
-        for results_ge, results_gi, results_vm in zip(  list_of_results_ge, \
-                                                            list_of_results_gi,list_of_results_vm):
-
-            N_monitored_neurons = data['vm_all'][results_vm]['vm'].shape[1]
-            N_neurons = len(data['positions_all']['w_coord'][results_vm])
-
-            ge= data['ge_soma_all'][results_ge]['ge_soma']
-            gi= data['gi_soma_all'][results_gi]['gi_soma']
-            vm= data['vm_all'][results_vm]['vm']
-            I_total = gl * (El - vm) + ge * (Ee - vm) + gi * (Ei - vm)
-            I_excitatory = ge * (Ee - vm)
-            I_inhibitory = gi * (Ei - vm)
-
-            if N_monitored_neurons == N_neurons: 
-                neuron_index = self._getNeuronIndex(data, results_vm, position=0+0j)
-            I_total_mean = np.mean(I_total[time_idx_interval[0]:time_idx_interval[1]] / b2u.namp)
-            I_excitatory_mean = np.mean(I_excitatory[time_idx_interval[0]:time_idx_interval[1]] / b2u.namp)
-            I_inhibitory_mean = np.mean(I_inhibitory[time_idx_interval[0]:time_idx_interval[1]] / b2u.namp)
-            
-        return I_total_mean, I_excitatory_mean, I_inhibitory_mean
 
     def showSpectra(self, filename=None, savefigname=''):
 
