@@ -281,6 +281,6 @@ if __name__=='__main__':
 
     # # Show mean FR ##
     # P.analyze_arrayrun_MeanFR()
-    P.show_array_meanFR(filename=None, analysis='MeanFR', NG_id_list=['NG2', 'NG1'])
+    P.show_array_analysis(filename=None, analysis='MeanFR', variable_unit='Hz', NG_id_list=['NG2', 'NG1'])
 
     plt.show()

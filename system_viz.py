@@ -308,7 +308,7 @@ class SystemViz(SystemAnalysis):
         if savefigname:
             self._figsave(figurename=savefigname)
 
-    def _make_2D_surface(self, fig, ax, data, x_values=None, y_values=None, x_label=None, y_label=None, z_label=None):
+    def _make_2D_surface(self, fig, ax, data, x_values=None, y_values=None, x_label=None, y_label=None, variable_name=None, variable_unit=None):
 
         im = ax.imshow(data, cmap=self.cmap, interpolation='none', extent=[np.min(x_values),np.max(x_values),np.max(y_values),np.min(y_values)])
         pos1 = ax.get_position() # get the original position    
@@ -319,7 +319,8 @@ class SystemViz(SystemAnalysis):
         height = pos1.ymax - pos1.ymin
         cax = fig.add_axes([left, bottom, width, height])
         fig.colorbar(im, cax=cax, orientation='vertical')
-        cax.set_ylabel(z_label)
+        plot_str = f'{variable_name} {variable_unit}'
+        cax.set_ylabel(plot_str)
 
         # Set common labels
         if x_label is not None:
@@ -327,7 +328,7 @@ class SystemViz(SystemAnalysis):
         if y_label is not None:
             ax.set_ylabel(y_label)
 
-    def _make_3D_surface(self, ax, x_values, y_values, z_values, x_label=None, y_label=None, z_label=None):
+    def _make_3D_surface(self, ax, x_values, y_values, z_values, x_label=None, y_label=None, variable_name=None):
 
         X, Y = np.meshgrid(x_values, y_values)
         Z = z_values
@@ -338,14 +339,15 @@ class SystemViz(SystemAnalysis):
             ax.set_xlabel(x_label)
         if y_label is not None:
             ax.set_ylabel(y_label)
-        if z_label is not None:
-            ax.set_zlabel(z_label)
+        if variable_name is not None:
+            ax.set_zlabel(variable_name)
 
     def _make_table(self, ax, text_keys_list=[], text_values_list=[]):
 
         for i, (this_key, this_value) in enumerate(zip(text_keys_list, text_values_list)):
             # ax.text(0.01, 0.9, f"{this_key}: {this_value}", va="top", ha="left")
-            ax.text(0.01, 0.8 - (i * 0.15), f"{this_key}: {this_value}")
+            j=i - (i//5) * 5
+            ax.text(0.01 + (i//5) * 0.3, 0.8 - (j * 0.15), f"{this_key}: {this_value}")
             ax.tick_params(labelbottom=False, labelleft=False)
 
         ax.tick_params(
@@ -358,14 +360,14 @@ class SystemViz(SystemAnalysis):
 
     def _prep_array_figure(self):
 
-        fig = plt.figure()
+        fig = plt.figure(figsize=(12, 8))
         ax1 = plt.subplot2grid((3, 2), (0, 0), colspan=2)
         ax2 = plt.subplot2grid((3, 2), (1, 0), rowspan=2)
         ax3 = plt.subplot2grid((3, 2), (1, 1), rowspan=2,projection='3d')
         
         return fig, fig.axes
 
-    def show_array_meanFR(self, filename=None, analysis='meanfr', NG_id_list=[]):
+    def show_array_analysis(self, filename=None, analysis='meanfr', variable_unit=None, NG_id_list=[]):
         '''
         Pseudocode
         Get MeanFR_TIMESTAMP_.csv
@@ -386,7 +388,8 @@ class SystemViz(SystemAnalysis):
 
         print(f'Creating one figure for each neuron group')
         analyses_for_zipping = [analysis] * len(data_df.columns)
-        available_data_column_list = [ng for (dtype, ng) in zip(analyses_for_zipping, data_df.columns) if dtype.lower() in ng.lower()]
+        available_data_column_list = [  ng for (dtype, ng) in zip(analyses_for_zipping, data_df.columns) 
+                                        if dtype.lower() in ng.lower()]
         NG_name_list = []
         if not NG_id_list:
             print('All neuron groups requested')
@@ -419,26 +422,40 @@ class SystemViz(SystemAnalysis):
             # pdb.set_trace()
             x_label=data_df['Dimension-2 Parameter'][0]
             y_label=data_df['Dimension-1 Parameter'][0]
-            z_label=analysis
+            variable_name=analysis
 
             # Table what is necessary, display
-            text_keys_list=['Analysis', 'Neuron Group #', 'Neuron Group Name']
+            text_keys_list=['Analysis', 'Neuron Group #', 'Neuron Group Name', 'MIN value - (y,x)', 
+                'MAX value - (y,x)', 'MIN at Params', 'MAX at Params']
             text_values_list=[]
             text_values_list.append(analysis)
             text_values_list.append(this_NG_id)
             text_values_list.append(this_NG_name)
 
-            self._make_table(axs[0], text_keys_list=text_keys_list, text_values_list=text_values_list)
 
             # Get 2 dims for viz
-            df_2d = self.pivot_to_2d_dataframe(data_df, index_column_name=index_column_name, column_column_name=column_column_name, value_column_name=value_column_name)
+            df_2d = self.pivot_to_2d_dataframe(data_df, index_column_name=index_column_name, 
+                column_column_name=column_column_name, value_column_name=value_column_name)
             data_2d = df_2d.values
+            min_value = np.amin(data_2d)
+            min_idx = np.unravel_index(np.argmin(data_2d), data_2d.shape)
+            max_value = np.amax(data_2d)
+            max_idx = np.unravel_index(np.argmax(data_2d), data_2d.shape)
+            text_values_list.append(f'{min_value:.1f} {variable_unit}- {min_idx}')
+            text_values_list.append(f'{max_value:.1f} {variable_unit} - {max_idx}')
+            text_values_list.append(f'{y_label} = {df_2d.columns[min_idx[0]]}; {x_label} = {df_2d.index[min_idx[1]]}')
+            text_values_list.append(f'{y_label} = {df_2d.columns[max_idx[0]]}; {x_label} = {df_2d.index[max_idx[1]]}')
+
+            self._make_table(axs[0], text_keys_list=text_keys_list, text_values_list=text_values_list)
+
             x_values = df_2d.columns
             y_values = df_2d.index
 
-            self. _make_2D_surface(fig, axs[1], data_2d, x_values=x_values, y_values=y_values, x_label=x_label, y_label=y_label, z_label=z_label)
+            self. _make_2D_surface(fig, axs[1], data_2d, x_values=x_values, y_values=y_values, 
+                x_label=x_label, y_label=y_label, variable_name=variable_name, variable_unit=variable_unit)
 
-            self._make_3D_surface(axs[2], x_values, y_values, data_2d, x_label=x_label, y_label=y_label, z_label=z_label)
+            self._make_3D_surface(axs[2], x_values, y_values, data_2d, 
+                x_label=x_label, y_label=y_label, variable_name=variable_name)
 
 if __name__=='__main__':
 
