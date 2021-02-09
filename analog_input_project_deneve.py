@@ -27,7 +27,7 @@ class AnalogInput():
     frameduration assumes milliseconds
     '''
     def __init__(   self, 
-                    Nrequested_units = 2, 
+                    Nrequested_units = 3, 
                     Ntime = 100000, 
                     filename_out = 'my_video.mat', 
                     input_type = 'quadratic_oscillation',
@@ -41,8 +41,8 @@ class AnalogInput():
             Input = self.create_noise_input(Nx = Nrequested_units, Ntime = Ntime)
         elif input_type == 'quadratic_oscillation':
             if Nrequested_units != 2:
-                print(f'NOTE: You requested {input_type} input type, setting Nrequested_units to 2')
-            Input = self.create_quadratic_oscillation_input(Nx = 2, Ntime = Ntime, Ncycles = Ncycles)
+                print(f'NOTE: You requested {input_type} input type, setting excessive units to 0 value')
+            Input = self.create_quadratic_oscillation_input(Nx = Nrequested_units, Ntime = Ntime, Ncycles = Ncycles)
 
         # if current_injection is True:
         #     Input = self.create_current_injection(Input)
@@ -109,11 +109,16 @@ class AnalogInput():
 
         freq = Ncycles * 2 * np.pi * 1/Ntime # frequency, this gives Ncycles over all time points
         time = np.arange(Ntime)
-        # Input=(np.random.multivariate_normal(np.zeros([Nx]), np.eye(Nx), Ntime)).T
+
         sine_wave = np.sin(freq * time)
         cosine_wave = np.cos(freq * time)
 
-        Input = np.array([sine_wave, cosine_wave])
+        if Nx > 2:
+            Input = np.array([sine_wave, cosine_wave])
+            unit_zero_input = np.zeros(sine_wave.shape)
+            stack_to_add = np.tile(unit_zero_input, (Nx - 2, 1))
+            zero_padded_input_stack = np.vstack((Input, stack_to_add))
+            Input = zero_padded_input_stack
 
         # self._lineplot(Input.T)
         # plt.show()
@@ -183,13 +188,13 @@ class AnalogInput():
 
 if __name__ == "__main__":
 
-    root_path = r'C:\Users\Simo\Laskenta\SimuOut\Deneve\Replica_test'
+    root_path = r'C:\Users\Simo\Laskenta\SimuOut\Deneve\Replica_in'
     # filename_out = 'input_noise_210118.mat'
-    filename_out = 'input_noise_210125.mat'
+    filename_out = 'input_quadratic_three_units.mat'
     full_filename_out = os.path.join(root_path, filename_out)
     Nrequested_units = 3
     Ntime = 10000
-    input_type = 'noise' # 'quadratic_oscillation' or 'noise'
+    input_type = 'quadratic_oscillation' # 'quadratic_oscillation' or 'noise'
     Ncycles = 2
     dt = 0.1 # IMPORTANT: assuming milliseconds
 

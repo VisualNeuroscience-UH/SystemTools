@@ -16,7 +16,7 @@ import copy
 import brian2.units as b2u
 
 # Current repo
-from system_utilities import SystemUtilities
+from system_analysis import SystemAnalysis
 
 # Develop
 import pdb
@@ -27,7 +27,9 @@ Module on visualization
 Developed by Simo Vanni 2020-2021
 '''
 
-class SystemViz(SystemUtilities):
+class SystemViz(SystemAnalysis):
+
+    cmap='gist_earth'
 
     def unpivot_dataframe(self, wide_df, index_column=None, kw_sub_to_unpivot=None):
 
@@ -51,6 +53,14 @@ class SystemViz(SystemUtilities):
 
         return long_df
         
+    def pivot_to_2d_dataframe(self, long_df, index_column_name= None, column_column_name=None, value_column_name=None):
+
+        assert all([index_column_name, column_column_name, value_column_name]), 'Missing some column names, aborting...'
+
+        wide_2d_df = long_df.pivot(index=index_column_name, columns=column_column_name, values=value_column_name)
+
+        return wide_2d_df
+
     def _build_columns(self, data_dict, new_data, Ntimepoints, datatype):
 
         tmp_dict = copy.deepcopy(data_dict)
@@ -298,24 +308,137 @@ class SystemViz(SystemUtilities):
         if savefigname:
             self._figsave(figurename=savefigname)
 
-    def _get_3D_surface(self, ax, x_values, y_values, z_values,):
-        def fun(x, y):
-           return x**2 + y
+    def _make_2D_surface(self, fig, ax, data, x_values=None, y_values=None, x_label=None, y_label=None, z_label=None):
+
+        im = ax.imshow(data, cmap=self.cmap, interpolation='none', extent=[np.min(x_values),np.max(x_values),np.max(y_values),np.min(y_values)])
+        pos1 = ax.get_position() # get the original position    
+
+        left =  pos1.xmax
+        bottom = pos1.ymin
+        width = (pos1.xmax - pos1.xmin)/10
+        height = pos1.ymax - pos1.ymin
+        cax = fig.add_axes([left, bottom, width, height])
+        fig.colorbar(im, cax=cax, orientation='vertical')
+        cax.set_ylabel(z_label)
+
+        # Set common labels
+        if x_label is not None:
+            ax.set_xlabel(x_label)
+        if y_label is not None:
+            ax.set_ylabel(y_label)
+
+    def _make_3D_surface(self, ax, x_values, y_values, z_values, x_label=None, y_label=None, z_label=None):
+
+        X, Y = np.meshgrid(x_values, y_values)
+        Z = z_values
+
+        ax.plot_surface(X, Y, Z, cmap = self.cmap)
+
+        if x_label is not None:
+            ax.set_xlabel(x_label)
+        if y_label is not None:
+            ax.set_ylabel(y_label)
+        if z_label is not None:
+            ax.set_zlabel(z_label)
+
+    def _make_table(self, ax, text_keys_list=[], text_values_list=[]):
+
+        for i, (this_key, this_value) in enumerate(zip(text_keys_list, text_values_list)):
+            # ax.text(0.01, 0.9, f"{this_key}: {this_value}", va="top", ha="left")
+            ax.text(0.01, 0.8 - (i * 0.15), f"{this_key}: {this_value}")
+            ax.tick_params(labelbottom=False, labelleft=False)
+
+        ax.tick_params(
+            axis='both',        # changes apply to both x and y axis; 'x', 'y', 'both'
+            which='both',       # both major and minor ticks are affected
+            left=False,         # ticks along the left edge are off
+            bottom=False,       # ticks along the bottom edge are off
+            labelleft=False,    # labels along the left edge are off
+            labelbottom=False)  
+
+    def _prep_array_figure(self):
 
         fig = plt.figure()
-        ax = fig.add_subplot(111, projection='3d')
-        x = y = np.arange(-3.0, 3.0, 0.05)
-        X, Y = np.meshgrid(x, y)
-        zs = np.array(fun(np.ravel(X), np.ravel(Y)))
-        Z = zs.reshape(X.shape)
+        ax1 = plt.subplot2grid((3, 2), (0, 0), colspan=2)
+        ax2 = plt.subplot2grid((3, 2), (1, 0), rowspan=2)
+        ax3 = plt.subplot2grid((3, 2), (1, 1), rowspan=2,projection='3d')
+        
+        return fig, fig.axes
 
-        ax.plot_surface(X, Y, Z)
+    def show_array_meanFR(self, filename=None, analysis='meanfr', NG_id_list=[]):
+        '''
+        Pseudocode
+        Get MeanFR_TIMESTAMP_.csv
+        If does not exist, calculate from metadata file list
+        Prep figure in subfunction, get axes handles
+        Table what is necessary, display
+        Plot 2D
+        Plot 3D
+        '''
+        # Get MeanFR_TIMESTAMP_.csv
+        try:
+            data_df = self.getData(filename=filename, data_type=analysis)
+        # If does not exist, calculate from metadata file list
+        except FileNotFoundError as error:
+            print(error)
+            print('Conducting necessary analysis first')
+            self.analyze_arrayrun_MeanFR()
 
-        ax.set_xlabel('X Label')
-        ax.set_ylabel('Y Label')
-        ax.set_zlabel('Z Label')
+        print(f'Creating one figure for each neuron group')
+        analyses_for_zipping = [analysis] * len(data_df.columns)
+        available_data_column_list = [ng for (dtype, ng) in zip(analyses_for_zipping, data_df.columns) if dtype.lower() in ng.lower()]
+        NG_name_list = []
+        if not NG_id_list:
+            print('All neuron groups requested')
+            requested_data_column_list = available_data_column_list
+            for this_data_column in available_data_column_list:
+                start_idx = this_data_column.find('NG')
+                end_idx = this_data_column.find('_', start_idx)
+                NG_id_list.append(this_data_column[start_idx:end_idx])
+        else:
+            requested_data_column_list = [] 
+            for this_NG_id in NG_id_list:
+                for this_data_column in available_data_column_list:
+                    if this_NG_id in this_data_column:
+                        requested_data_column_list.append(this_data_column)
+                        ng_str_idx = this_data_column.find('NG')
+                        uscore_idx = this_data_column.find('_', ng_str_idx) + 1
+                        NG_name_list.append(this_data_column[uscore_idx:])
 
-        plt.show()
+        for this_NG_id, this_NG_name, this_data_column in zip(NG_id_list, NG_name_list, requested_data_column_list):
+
+            assert this_NG_id in this_data_column, 'Neuron group does not match data column, aborting ...'
+
+            # Prep figure in subfunction, get axes handles
+            fig, axs = self._prep_array_figure()
+
+            # Variables of interest
+            index_column_name = 'Dimension-1 Value'
+            column_column_name = 'Dimension-2 Value'
+            value_column_name = this_data_column
+            # pdb.set_trace()
+            x_label=data_df['Dimension-2 Parameter'][0]
+            y_label=data_df['Dimension-1 Parameter'][0]
+            z_label=analysis
+
+            # Table what is necessary, display
+            text_keys_list=['Analysis', 'Neuron Group #', 'Neuron Group Name']
+            text_values_list=[]
+            text_values_list.append(analysis)
+            text_values_list.append(this_NG_id)
+            text_values_list.append(this_NG_name)
+
+            self._make_table(axs[0], text_keys_list=text_keys_list, text_values_list=text_values_list)
+
+            # Get 2 dims for viz
+            df_2d = self.pivot_to_2d_dataframe(data_df, index_column_name=index_column_name, column_column_name=column_column_name, value_column_name=value_column_name)
+            data_2d = df_2d.values
+            x_values = df_2d.columns
+            y_values = df_2d.index
+
+            self. _make_2D_surface(fig, axs[1], data_2d, x_values=x_values, y_values=y_values, x_label=x_label, y_label=y_label, z_label=z_label)
+
+            self._make_3D_surface(axs[2], x_values, y_values, data_2d, x_label=x_label, y_label=y_label, z_label=z_label)
 
 if __name__=='__main__':
 

@@ -12,7 +12,8 @@ import os
 import pickle
 
 # Current repo
-from system_viz import SystemViz
+from system_utilities import SystemUtilities
+
 
 # Develop
 import pdb
@@ -25,7 +26,7 @@ Inherits SystemViz which inherits SystemUtilities
 Developed by Simo Vanni 2020-2021
 '''
 
-class SystemAnalysis(SystemViz):
+class SystemAnalysis(SystemUtilities):
 
     def __init__(self, path='./'):
 
@@ -81,19 +82,18 @@ class SystemAnalysis(SystemViz):
 
         return data_df
 
-    def printMeanFR_for_arrayrun(self, filename=None, time_start=0, time_end=None):
+    def analyze_arrayrun_MeanFR(self, filename=None, time_start=0, time_end=None):
         '''
-        Print mean firing rate for array run. Needs a metadata file.
+        Create mean firing rate csv table for array run. Needs a metadata file.
         '''
-        data_df = self.getData(filename, type='metadata')
-    
+        data_df = self.getData(filename, data_type='metadata')
         data_df = self.getMeanFR_array(data_df, time_start=time_start, time_end=time_end)
 
         # Drop Full path column for concise printing
         mean_df = data_df.drop(['Full path'], axis=1)
 
-        # Display values
-        self.pp_df_full(mean_df)
+        # # Display values
+        # self.pp_df_full(mean_df)
 
         # Replace metadata with MeanFR
         metadata_fullpath_filename = self._parsePath(filename, data_type='metadata')

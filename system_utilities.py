@@ -27,15 +27,19 @@ Developed by Simo Vanni 2020-2021
 '''
 
 class SystemUtilities():
+    
+    # Types of data in simulation outputfolder
+    data_types_out = ['results', 'connections', 'metadata', 'meanfr']
 
     def __init__(self, path='./'):
 
         self.path=path
 
         # Init some variables
-        self.data_types_out = None
         self.input_folder = None
         self.output_folder = None
+
+        
 
     def _check_cadidate_file(self, path, filename):
         candidate_data_fullpath_filename = os.path.join(path, filename)
@@ -57,14 +61,18 @@ class SystemUtilities():
         input_folder = self.input_folder
         output_folder = self.output_folder
 
+        # Check for direct load in current directory
+        if filename is not None:
+            data_fullpath_filename = self._check_cadidate_file('./', filename)
+
         # Parse output filetypes
-        if data_type in self.data_types_out:
+        elif data_type in self.data_types_out:
             output_path = os.path.join(path, output_folder)
             if filename is None:
                 data_fullpath_filename = self._most_recent(output_path, data_type=data_type)
             else:
                 data_fullpath_filename = self._check_cadidate_file(output_path, filename)
-            if not data_fullpath_filename: 
+            if not data_fullpath_filename:
                 raise FileNotFoundError(f'Did not find {data_type} file in folder {output_path}')
             
         # Parse other filetypes
@@ -77,7 +85,7 @@ class SystemUtilities():
 
             # Check for filename next in project folder
             if not data_fullpath_filename:
-                data_fullpath_filename = self._check_cadidate_file(input_path, filename)
+                data_fullpath_filename = self._check_cadidate_file(path, filename)
 
         assert data_fullpath_filename is not None, 'Could not parse filepath, aborting...'
 
@@ -88,7 +96,7 @@ class SystemUtilities():
     def _listdir_loop(self, path, data_type):
         files = []
         for f in os.listdir(path):
-            if data_type in f:
+            if data_type in f.lower():
                 files.append(f)
 
         paths = [os.path.join(path, basename) for basename in files]
@@ -98,14 +106,6 @@ class SystemUtilities():
     def _most_recent(self, path, data_type=None):
 
         paths = self._listdir_loop(path, data_type)
-
-        # path = self.path
-
-        # if not paths and self.input_folder is not None:
-        #     path_folder = os.path.join(path,self.input_folder)
-        #     print(f'Did not find files of type {data_type} at {path}, trying at {path_folder}')
-        #     paths = self._listdir_loop(path_folder, data_type)
-        # assert paths, f'No files of type {data_type} found at {path}, aborting...'
 
         if not paths:
             return None
@@ -140,15 +140,18 @@ class SystemUtilities():
             metadata=None)
 
     def getData(self, filename=None, data_type=None):
-
+        '''
+        Open requested file and get data.
+        '''
+        if data_type is not None:
+            data_type = data_type.lower()
         # Explore which is the most recent file in path of data_type and add full path to filename 
         data_fullpath_filename = self._parsePath(filename, data_type=data_type)
-
         # If extension is .gz, open pickle, else assume .mat
         filename_root, filename_extension = os.path.splitext(data_fullpath_filename)
-        if 'gz' in filename_extension:
-            fi = open(data_fullpath_filename, 'rb')
+        if 'gz' in filename_extension:           
             try:
+                fi = open(data_fullpath_filename, 'rb')
                 data_pickle = zlib.decompress(fi.read())
                 data = pickle.loads(data_pickle)
             except:
@@ -157,6 +160,8 @@ class SystemUtilities():
         elif 'mat' in filename_extension:
             data = {}
             sio.loadmat(data_fullpath_filename,data) 
+        elif 'csv' in filename_extension:
+            data = pd.read_csv(data_fullpath_filename)
         else:
             raise TypeError('U r trying to input unknown filetype, aborting...')
 

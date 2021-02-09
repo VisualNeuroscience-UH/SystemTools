@@ -14,7 +14,7 @@ import os
 import sys
 
 # Current repo
-from system_analysis import SystemAnalysis
+from system_viz import SystemViz
 
 # Develop
 import pdb
@@ -54,7 +54,7 @@ save
 Developed by Simo Vanni 2021
 '''
 
-class Project(SystemAnalysis):
+class Project(SystemViz):
 
     def __init__(self, path='./', input_folder=None, output_folder=None, mat_filename=None, 
                 connection_skeleton_filename_in=None, connection_filename_out=None, 
@@ -68,8 +68,6 @@ class Project(SystemAnalysis):
         self.connection_filename_out = os.path.join(input_folder, connection_filename_out)
         self.input_filename = input_filename
         self.NG_name = NG_name
-
-        self.data_types_out = ['results', 'connections', 'metadata']
 
     def _show_histogram(self, data, figure_title=None, skip_under_one_pros=False, bins=10):
 
@@ -246,7 +244,7 @@ if __name__=='__main__':
     mat_filename = 'Fig4_workspace.mat'
     connection_skeleton_filename_in = 'Replica_test_connections_20210126_2203449.gz'
     connection_filename_out = 'connections_Fig4_test3.gz'
-    input_filename = 'input_noise_210125.mat'
+    input_filename = 'input_quadratic_three_units.mat'
     NG_name_for_vm_on_input = 'NG3_L4_SS2_L4'
 
     P = Project(path=path, input_folder=input_folder, output_folder=output_folder, 
@@ -280,5 +278,9 @@ if __name__=='__main__':
     
     # # Show connections ##
     # P.show_connections(filename=None, hist_from='L4_CI_BC_L4__to__L4_CI_SS_L4_soma', savefigname='')
+
+    # # Show mean FR ##
+    # P.analyze_arrayrun_MeanFR()
+    P.show_array_meanFR(filename=None, analysis='MeanFR', NG_id_list=['NG2', 'NG1'])
 
     plt.show()
