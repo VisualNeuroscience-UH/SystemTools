@@ -28,6 +28,8 @@ Developed by Simo Vanni 2020-2021
 
 class SystemAnalysis(SystemUtilities):
 
+    map_analysis_names = {'meanfr':'MeanFR'}
+
     def __init__(self, path='./'):
 
         self.path=path
@@ -37,7 +39,7 @@ class SystemAnalysis(SystemUtilities):
             np.logical_and(data_by_group['t'] > time_start * b2u.second, data_by_group['t'] < time_end * b2u.second)]
         return spikes
 
-    def  _get_MeanFR(self, data, this_group, time_start=0, time_end=None):
+    def  _analyze_meanfr(self, data, this_group, time_start=0, time_end=None):
 
         if time_end is None:
             time_end = data['runtime']
@@ -52,7 +54,37 @@ class SystemAnalysis(SystemUtilities):
 
         return MeanFR
                 
-    def getMeanFR_array(self, data_df, time_start=0, time_end=None):
+    # def getMeanFR_array(self, data_df, time_start=0, time_end=None):
+    
+    #     # Get neuron group names
+    #     filename_0 = data_df['Full path'].values[0]
+    #     data = self.getData(filename_0)
+    #     list_of_group_names = [n for n in data['spikes_all'].keys() if 'NG' in n]
+
+    #     # Add neuron group columns
+    #     for this_group in list_of_group_names:
+    #         data_df['MeanFR_' + this_group] = np.nan
+
+    #     # Get duration
+    #     duration = data['runtime'] # unitless scalar, in seconds
+    #     assert time_start < duration, f'Duration is {duration} (seconds) but time start is {time_start}'
+    #     # Determine start and end times of spike rate averaging
+    #     if time_end is None:
+    #         time_end = duration
+
+    #     # Loop through datafiles
+    #     for this_index, this_file in zip(data_df.index, data_df['Full path'].values):
+    #         data = self.getData(this_file)
+    #         # Loop through neuron groups 
+    #         for this_group in list_of_group_names:
+
+    #             MeanFR = self._analyze_meanfr(data, this_group, time_start=time_start, time_end=time_end)
+
+    #             data_df.loc[this_index,'MeanFR_' + this_group] = MeanFR
+
+    #     return data_df
+
+    def get_analyzed_array_as_df(self, data_df, analysisHR=None, time_start=0, time_end=None):
     
         # Get neuron group names
         filename_0 = data_df['Full path'].values[0]
@@ -61,7 +93,7 @@ class SystemAnalysis(SystemUtilities):
 
         # Add neuron group columns
         for this_group in list_of_group_names:
-            data_df['MeanFR_' + this_group] = np.nan
+            data_df[f'{analysisHR}_' + this_group] = np.nan
 
         # Get duration
         duration = data['runtime'] # unitless scalar, in seconds
@@ -76,18 +108,24 @@ class SystemAnalysis(SystemUtilities):
             # Loop through neuron groups 
             for this_group in list_of_group_names:
 
-                MeanFR = self._get_MeanFR(data, this_group, time_start=time_start, time_end=time_end)
+                # analyzed_results = self._analyze_meanfr(data, this_group, time_start=time_start, time_end=time_end)
+                analyzed_results = eval(f'self._analyze_{analysisHR.lower()}(data, this_group, time_start=time_start, time_end=time_end)')
 
-                data_df.loc[this_index,'MeanFR_' + this_group] = MeanFR
+                data_df.loc[this_index,f'{analysisHR}_' + this_group] = analyzed_results
 
         return data_df
 
-    def analyze_arrayrun_MeanFR(self, filename=None, time_start=0, time_end=None):
+    def analyze_arrayrun(self, metadata_filename=None, analysis=None, time_start=0, time_end=None):
         '''
         Create mean firing rate csv table for array run. Needs a metadata file.
         '''
-        data_df = self.getData(filename, data_type='metadata')
-        data_df = self.getMeanFR_array(data_df, time_start=time_start, time_end=time_end)
+        # Map to standard camelcase
+        assert analysis.lower() in self.map_analysis_names.keys(), 'Analysis type not found, aborting...'
+        analysisHR = self.map_analysis_names[analysis.lower()]
+
+        data_df = self.getData(metadata_filename, data_type='metadata')
+        # data_df = self.getMeanFR_array(data_df, time_start=time_start, time_end=time_end)
+        data_df = self.get_analyzed_array_as_df(data_df, analysisHR=analysisHR, time_start=time_start, time_end=time_end)
 
         # Drop Full path column for concise printing
         mean_df = data_df.drop(['Full path'], axis=1)
@@ -96,7 +134,7 @@ class SystemAnalysis(SystemUtilities):
         # self.pp_df_full(mean_df)
 
         # Replace metadata with MeanFR
-        metadata_fullpath_filename = self._parsePath(filename, data_type='metadata')
+        metadata_fullpath_filename = self._parsePath(metadata_filename, data_type='metadata')
         metadataroot, metadataextension = os.path.splitext(metadata_fullpath_filename)
         filename_out = metadataroot.replace('metadata', 'MeanFR')
         csv_name_out = filename_out + '.csv'

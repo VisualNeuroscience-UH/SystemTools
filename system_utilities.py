@@ -61,7 +61,7 @@ class SystemUtilities():
         input_folder = self.input_folder
         output_folder = self.output_folder
 
-        # Check for direct load in current directory
+        # Check first for direct load in current directory. E.g. for direct ipython testing
         if filename is not None:
             data_fullpath_filename = self._check_cadidate_file('./', filename)
 
@@ -75,8 +75,9 @@ class SystemUtilities():
             if not data_fullpath_filename:
                 raise FileNotFoundError(f'Did not find {data_type} file in folder {output_path}')
             
-        # Parse other filetypes
-        elif data_type not in self.data_types_out:
+        # Parse other filetypes in project/input and project paths
+        # elif data_type not in self.data_types_out:
+        if data_fullpath_filename is None:
             assert filename is not None, "I don't know what file to search for, aborting..."
     
             # Check for filename first in input folder

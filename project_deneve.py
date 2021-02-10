@@ -263,24 +263,24 @@ if __name__=='__main__':
     # P.replace_connections(show_histograms=False, constant_scaling=False, constant_value=1e-9)
 
     # ############################
-    # ######### Analysis #########
+    # ###### Analysis & Viz ######
     # ############################
     # ## Readout on input ##
-    # P.plot_readout_on_input(filename=None, normalize=True)
+    # P.plot_readout_on_input(results_filename=None, normalize=True)
 
     # # Show spikes and vm ##
-    # P.show_spikes(filename=None, savefigname='')
-    # P.show_vm(filename=None, savefigname='')
+    # P.show_spikes(results_filename=None, savefigname='')
+    # P.show_vm(results_filename=None, savefigname='')
 
     # ## Show E and I currents ##
     # neuron_index = {'NG1_L4_CI_SS_L4' : 150, 'NG2_L4_CI_BC_L4' : 37, 'NG3_L4_SS2_L4' : 1}
-    # P.show_currents(filename=None, savefigname='', neuron_index=neuron_index) 
+    # P.show_currents(results_filename=None, savefigname='', neuron_index=neuron_index) 
     
     # # Show connections ##
-    # P.show_connections(filename=None, hist_from='L4_CI_BC_L4__to__L4_CI_SS_L4_soma', savefigname='')
+    # P.show_connections(connections_filename=None, hist_from='L4_CI_BC_L4__to__L4_CI_SS_L4_soma', savefigname='')
 
-    # # Show mean FR ##
-    # P.analyze_arrayrun_MeanFR()
-    P.show_array_analysis(filename=None, analysis='MeanFR', variable_unit='Hz', NG_id_list=['NG2', 'NG1'])
+    # # Analyse and show arrayrun data ##
+    # P.analyze_arrayrun(metadata_filename=None, analysis='MeanFR', time_start=0, time_end=None)
+    P.show_analyzed_arrayrun(csv_filename=None, analysis='MeanFR', variable_unit='Hz', NG_id_list=['NG1', 'NG2'])
 
     plt.show()

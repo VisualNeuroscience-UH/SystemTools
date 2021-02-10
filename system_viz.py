@@ -85,12 +85,12 @@ class SystemViz(SystemAnalysis):
             ax.text(0.05, 0.95, plot_str, fontsize=8, verticalalignment='top', transform=ax.transAxes,
             bbox=dict(boxstyle="Square,pad=0.2", fc="white", ec="white", lw=1))
 
-    def plot_readout_on_input(self, filename=None, normalize=False):
+    def plot_readout_on_input(self, results_filename=None, normalize=False):
         '''
         Get input, get data. Scaling. turn to df, format df, Plot curves.
         '''
         # Get data and input
-        data = self.getData(filename, data_type='results')
+        data = self.getData(filename=results_filename, data_type='results')
 
         analog_input = self.getData( self.input_filename, data_type=None)
 
@@ -158,9 +158,9 @@ class SystemViz(SystemAnalysis):
         sns.lineplot(data=data_df)
         plt.show()
 
-    def show_spikes(self, filename=None, savefigname=''):
+    def show_spikes(self, results_filename=None, savefigname=''):
 
-        data = self.getData(filename, data_type='results')
+        data = self.getData(filename=results_filename, data_type='results')
 
         # Visualize
         # Extract connections from data dict
@@ -179,16 +179,16 @@ class SystemViz(SystemAnalysis):
             im = ax.plot(data['spikes_all'][this_group]['t'], data['spikes_all'][this_group]['i'],'.')
             ax.set_title(this_group, fontsize=10)
 
-            MeanFR = self._get_MeanFR(data, this_group, time_start=0, time_end=None)
+            MeanFR = self._analyze_meanfr(data, this_group, time_start=0, time_end=None)
             self._string_on_plot(ax, variable_name='Mean FR', variable_value=MeanFR, variable_unit='Hz')
 
         if savefigname:
             self._figsave(figurename=savefigname)
 
-    def show_vm(self, filename=None, savefigname=''):
+    def show_vm(self, results_filename=None, savefigname=''):
         # Shows data on filename. If filename remains None, shows the most recent data.
 
-        data = self.getData(filename, data_type='results')
+        data = self.getData(filename=results_filename, data_type='results')
 
         # Visualize
         # Extract connections from data dict
@@ -214,9 +214,9 @@ class SystemViz(SystemAnalysis):
         if savefigname:
             self._figsave(figurename=savefigname)
 
-    def show_currents(self, filename=None, savefigname='', neuron_index=None):
+    def show_currents(self, results_filename=None, savefigname='', neuron_index=None):
 
-        data = self.getData(filename, data_type='results')
+        data = self.getData(results_filename, data_type='results')
         # Visualize
         # Extract connections from data dict
         list_of_results_ge = [n for n in data['ge_soma_all'].keys() if 'NG' in n]
@@ -277,9 +277,9 @@ class SystemViz(SystemAnalysis):
         if savefigname:
             self._figsave(figurename=savefigname)
 
-    def show_connections(self, filename=None, hist_from=None, savefigname=''):
+    def show_connections(self, connections_filename=None, hist_from=None, savefigname=''):
 
-        data = self.getData(filename, data_type='connections')
+        data = self.getData(filename=connections_filename, data_type='connections')
 
         # Visualize
         # Extract connections from data dict
@@ -367,7 +367,7 @@ class SystemViz(SystemAnalysis):
         
         return fig, fig.axes
 
-    def show_array_analysis(self, filename=None, analysis='meanfr', variable_unit=None, NG_id_list=[]):
+    def show_analyzed_arrayrun(self, csv_filename=None, analysis=None, variable_unit=None, NG_id_list=[]):
         '''
         Pseudocode
         Get MeanFR_TIMESTAMP_.csv
@@ -377,36 +377,40 @@ class SystemViz(SystemAnalysis):
         Plot 2D
         Plot 3D
         '''
+        analysisHR = self.map_analysis_names[analysis.lower()]
         # Get MeanFR_TIMESTAMP_.csv
         try:
-            data_df = self.getData(filename=filename, data_type=analysis)
+            data_df = self.getData(filename=csv_filename, data_type=analysisHR)
         # If does not exist, calculate from metadata file list
         except FileNotFoundError as error:
             print(error)
-            print('Conducting necessary analysis first')
-            self.analyze_arrayrun_MeanFR()
+            print('Conducting necessary analysis first. Using most recent metadata file and full duration')
+            self.analyze_arrayrun(analysis=analysisHR)
+            data_df = self.getData(data_type=analysisHR)
 
         print(f'Creating one figure for each neuron group')
-        analyses_for_zipping = [analysis] * len(data_df.columns)
+        analyses_for_zipping = [analysisHR] * len(data_df.columns)
         available_data_column_list = [  ng for (dtype, ng) in zip(analyses_for_zipping, data_df.columns) 
                                         if dtype.lower() in ng.lower()]
-        NG_name_list = []
         if not NG_id_list:
             print('All neuron groups requested')
             requested_data_column_list = available_data_column_list
-            for this_data_column in available_data_column_list:
-                start_idx = this_data_column.find('NG')
-                end_idx = this_data_column.find('_', start_idx)
-                NG_id_list.append(this_data_column[start_idx:end_idx])
         else:
             requested_data_column_list = [] 
             for this_NG_id in NG_id_list:
                 for this_data_column in available_data_column_list:
                     if this_NG_id in this_data_column:
                         requested_data_column_list.append(this_data_column)
-                        ng_str_idx = this_data_column.find('NG')
-                        uscore_idx = this_data_column.find('_', ng_str_idx) + 1
-                        NG_name_list.append(this_data_column[uscore_idx:])
+
+        NG_id_list = []
+        NG_name_list = []
+
+        for this_data_column in requested_data_column_list:
+            start_idx = this_data_column.find('NG')
+            end_idx = this_data_column.find('_', start_idx)
+            NG_id_list.append(this_data_column[start_idx:end_idx])
+            uscore_idx = this_data_column.find('_', end_idx) + 1
+            NG_name_list.append(this_data_column[uscore_idx:])
 
         for this_NG_id, this_NG_name, this_data_column in zip(NG_id_list, NG_name_list, requested_data_column_list):
 
@@ -422,13 +426,13 @@ class SystemViz(SystemAnalysis):
             # pdb.set_trace()
             x_label=data_df['Dimension-2 Parameter'][0]
             y_label=data_df['Dimension-1 Parameter'][0]
-            variable_name=analysis
+            variable_name=analysisHR
 
             # Table what is necessary, display
             text_keys_list=['Analysis', 'Neuron Group #', 'Neuron Group Name', 'MIN value - (y,x)', 
                 'MAX value - (y,x)', 'MIN at Params', 'MAX at Params']
             text_values_list=[]
-            text_values_list.append(analysis)
+            text_values_list.append(analysisHR)
             text_values_list.append(this_NG_id)
             text_values_list.append(this_NG_name)
 
