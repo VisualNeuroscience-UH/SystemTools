@@ -159,8 +159,8 @@ class Project(SystemViz):
                                     'L4_CI_SS_L4__to__L4_CI_BC_L4_soma' : 'CsEI',
                                     'L4_CI_BC_L4__to__L4_CI_SS_L4_soma' : 'CsIE',
                                     'L4_CI_BC_L4__to__L4_CI_BC_L4_soma' : 'CsII',
-                                    'L4_CI_SS_L4__to__L4_SS2_L4_soma' : 'DecsE',
-                                    'L4_CI_BC_L4__to__L4_SS2_L4_soma' : 'DecsI'
+                                    'L4_CI_SS_L4__to__L4_CI_SS2_L4_soma' : 'DecsE',
+                                    'L4_CI_BC_L4__to__L4_CI_SS2_L4_soma' : 'DecsI'
                                     }
 
         # which phase of learned connections to select. 29 = after teaching
@@ -226,6 +226,7 @@ class Project(SystemViz):
 
         # Save mat file for the current injection
         current_injection_filename_full = input_filename_full[:-4] + '_ci.mat'
+        # This will be read by physiology_reference.py
         mat_out_dict = {'injected_current' : injected_current, 
                         'dt' : input_dict['frameduration'],
                         'stimulus_duration_in_seconds' : input_dict['stimulus_duration_in_seconds']}
@@ -242,10 +243,10 @@ if __name__=='__main__':
     input_folder = 'Replica_in'
     output_folder = 'Replica_out'
     mat_filename = 'Fig4_workspace.mat'
-    connection_skeleton_filename_in = 'Replica_test_connections_20210126_2203449.gz'
-    connection_filename_out = 'connections_Fig4_test3.gz'
+    connection_skeleton_filename_in = 'Replica_skeleton_connections_20210211_1453238.gz'
+    connection_filename_out = 'connections_deneve_ci_constant.gz'
     input_filename = 'input_quadratic_three_units.mat'
-    NG_name_for_vm_on_input = 'NG3_L4_SS2_L4'
+    NG_name_for_vm_on_input = 'NG3_L4_CI_SS2_L4'
 
     P = Project(path=path, input_folder=input_folder, output_folder=output_folder, 
                 mat_filename=mat_filename, connection_skeleton_filename_in=connection_skeleton_filename_in, 
@@ -259,32 +260,31 @@ if __name__=='__main__':
     # P.create_current_injection() 
     
     # # Transforms Deneve's simulation connections from .mat file to CxSystem .gz fromat.
-    # # Creates connection_filename_out to experiment folder
-    # P.replace_connections(show_histograms=False, constant_scaling=False, constant_value=1e-9)
+    # # Creates connection_filename_out to input folder
+    # P.replace_connections(show_histograms=False, constant_scaling=True, constant_value=1e-9)
 
     # ############################
     # ###### Analysis & Viz ######
     # ############################
     # ## Readout on input ##
-    # P.plot_readout_on_input(results_filename=None, normalize=True)
+    # P.plot_readout_on_input(results_filename=None, normalize=False)
 
-    # # Show spikes and vm ##
-    # P.show_spikes(results_filename=None, savefigname='')
-    # P.show_vm(results_filename=None, savefigname='')
+    # # ## Show spikes and vm ##
+    P.show_spikes(results_filename=None, savefigname='')
+    P.show_vm(results_filename=None, savefigname='')
 
     # ## Show E and I currents ##
-    # neuron_index = {'NG1_L4_CI_SS_L4' : 150, 'NG2_L4_CI_BC_L4' : 37, 'NG3_L4_SS2_L4' : 1}
     # neuron_index = None
+    # neuron_index = {'NG1_L4_CI_SS_L4' : 150, 'NG2_L4_CI_BC_L4' : 37, 'NG3_L4_CI_SS2_L4' : 1}
     # P.show_currents(results_filename=None, savefigname='', neuron_index=neuron_index) 
     
-    # # Show connections ##
+    # ## Show connections ##
     # P.show_connections(connections_filename=None, hist_from='L4_CI_BC_L4__to__L4_CI_SS_L4_soma', savefigname='')
 
-    # # Analyse and show arrayrun data ##
+    # ## Analyse and show arrayrun data ##
     # Available analyses: 'MeanFR', 'EICurrentDiff'
-    # P.analyze_arrayrun(metadata_filename=None, analysis='eicurrentdiff', t_idx_start=0, t_idx_end=None)
-    # P.show_analyzed_arrayrun(csv_filename=None, analysis='eicurrentdiff', variable_unit='Amp', NG_id_list=['NG1']) # Empty NG_id_list for all groups
     # P.analyze_arrayrun(metadata_filename=None, analysis='MeanFR', t_idx_start=0, t_idx_end=None)
-    # P.show_analyzed_arrayrun(csv_filename=None, analysis='MeanFR', variable_unit='Hz', NG_id_list=['NG1']) 
+    # P.show_analyzed_arrayrun(csv_filename='MeanFR__20210209_0842282.csv', analysis='MeanFR', variable_unit='Hz', NG_id_list=['NG1']) # Empty NG_id_list for all groups
+    # P.show_analyzed_arrayrun(csv_filename=None, analysis='MeanFR', variable_unit='Hz', NG_id_list=[]) # Empty NG_id_list for all groups
 
     plt.show()

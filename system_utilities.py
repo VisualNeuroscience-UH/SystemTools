@@ -40,8 +40,13 @@ class SystemUtilities():
         self.output_folder = None
 
     def round_to_n_significant(self, value_in, significant_digits=2):
-        int_to_subtract = significant_digits - 1
-        value_out = round(value_in, -int(np.floor(np.log10(np.abs(value_in))) - int_to_subtract))
+
+        if value_in != 0:
+            int_to_subtract = significant_digits - 1
+            value_out = round(value_in, -int(np.floor(np.log10(np.abs(value_in))) - int_to_subtract))
+        else:
+            value_out = value_in
+            
         return value_out    
 
     def _check_cadidate_file(self, path, filename):

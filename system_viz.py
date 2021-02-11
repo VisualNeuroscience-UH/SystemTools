@@ -284,7 +284,8 @@ class SystemViz(SystemAnalysis):
 
     def _make_2D_surface(self, fig, ax, data, x_values=None, y_values=None, x_label=None, y_label=None, variable_name=None, variable_unit=None):
 
-        im = ax.imshow(data, cmap=self.cmap, interpolation='none', extent=[np.min(x_values),np.max(x_values),np.max(y_values),np.min(y_values)])
+        im = ax.imshow( data, cmap=self.cmap, interpolation='none', 
+                        extent=[np.min(x_values),np.max(x_values),np.max(y_values),np.min(y_values)])
         pos1 = ax.get_position() # get the original position    
 
         left =  pos1.xmax
@@ -346,13 +347,17 @@ class SystemViz(SystemAnalysis):
         
         return fig, fig.axes
 
-    def _prep_array_figure(self):
+    def _prep_array_figure(self, two_dim):
 
         fig = plt.figure(figsize=(12, 8))
         ax1 = plt.subplot2grid((3, 2), (0, 0), colspan=2)
-        ax2 = plt.subplot2grid((3, 2), (1, 0), rowspan=2)
-        ax3 = plt.subplot2grid((3, 2), (1, 1), rowspan=2,projection='3d')
-        
+
+        if two_dim:
+            ax2 = plt.subplot2grid((3, 2), (1, 0), rowspan=2)
+            ax3 = plt.subplot2grid((3, 2), (1, 1), rowspan=2,projection='3d')
+        else:
+            ax2 = plt.subplot2grid((3, 2), (1, 0), rowspan=2, colspan=2)
+
         return fig, fig.axes
 
     def show_analyzed_arrayrun(self, csv_filename=None, analysis=None, variable_unit=None, NG_id_list=[]):
@@ -400,21 +405,18 @@ class SystemViz(SystemAnalysis):
             uscore_idx = this_data_column.find('_', end_idx) + 1
             NG_name_list.append(this_data_column[uscore_idx:])
 
+        if 'Dimension-2 Parameter' in data_df.columns:
+            two_dim = True
+        else:
+            two_dim = False
+
+
         for this_NG_id, this_NG_name, this_data_column in zip(NG_id_list, NG_name_list, requested_data_column_list):
 
             assert this_NG_id in this_data_column, 'Neuron group does not match data column, aborting ...'
 
             # Prep figure in subfunction, get axes handles
-            fig, axs = self._prep_array_figure()
-
-            # Variables of interest
-            index_column_name = 'Dimension-1 Value'
-            column_column_name = 'Dimension-2 Value'
-            value_column_name = this_data_column
-
-            x_label=data_df['Dimension-2 Parameter'][0]
-            y_label=data_df['Dimension-1 Parameter'][0]
-            variable_name=analysisHR
+            fig, axs = self._prep_array_figure(two_dim)
 
             # Table what is necessary, display
             text_keys_list=['Analysis', 'Neuron Group #', 'Neuron Group Name', 'MIN value - (y,x)', 
@@ -424,32 +426,54 @@ class SystemViz(SystemAnalysis):
             text_values_list.append(this_NG_id)
             text_values_list.append(this_NG_name)
 
+            value_column_name = this_data_column
+            variable_name=analysisHR
+            
+            if two_dim:
+                # Get 2 dims for viz
+                index_column_name = 'Dimension-1 Value'
+                column_column_name = 'Dimension-2 Value'
+                x_label=data_df['Dimension-2 Parameter'][0]
+                y_label=data_df['Dimension-1 Parameter'][0]
 
-            # Get 2 dims for viz
-            df_2d = self.pivot_to_2d_dataframe(data_df, index_column_name=index_column_name, 
-                column_column_name=column_column_name, value_column_name=value_column_name)
-            data_2d = df_2d.values
-            min_value = np.amin(data_2d)
+                df_2d = self.pivot_to_2d_dataframe(data_df, index_column_name=index_column_name, 
+                    column_column_name=column_column_name, value_column_name=value_column_name)
+                data_nd_array = df_2d.values
+                x_values = df_2d.columns
+                y_values = df_2d.index
+            else:
+                x_label = data_df['Dimension-1 Parameter'][0]
+                data_nd_array = data_df[value_column_name].values
+                x_values = data_df["Dimension-1 Value"].values
+
+            min_value = np.amin(data_nd_array)
             min_value_rounded = self.round_to_n_significant(min_value, significant_digits=2)
-            min_idx = np.unravel_index(np.argmin(data_2d), data_2d.shape)
-            max_value = np.amax(data_2d)
+            min_idx = np.unravel_index(np.argmin(data_nd_array), data_nd_array.shape)
+            max_value = np.amax(data_nd_array)
             max_value_rounded = self.round_to_n_significant(max_value, significant_digits=2)
-            max_idx = np.unravel_index(np.argmax(data_2d), data_2d.shape)
+            max_idx = np.unravel_index(np.argmax(data_nd_array), data_nd_array.shape)
             text_values_list.append(f'{min_value_rounded} {variable_unit}- {min_idx}')
             text_values_list.append(f'{max_value_rounded} {variable_unit} - {max_idx}')
-            text_values_list.append(f'{y_label} = {df_2d.columns[min_idx[0]]}; {x_label} = {df_2d.index[min_idx[1]]}')
-            text_values_list.append(f'{y_label} = {df_2d.columns[max_idx[0]]}; {x_label} = {df_2d.index[max_idx[1]]}')
 
+            if two_dim:
+                text_values_list.append(f'{y_label} = {df_2d.columns[min_idx[0]]}; {x_label} = {df_2d.index[min_idx[1]]}')
+                text_values_list.append(f'{y_label} = {df_2d.columns[max_idx[0]]}; {x_label} = {df_2d.index[max_idx[1]]}')
+            else:
+                text_values_list.append(f'{x_label} = {data_df["Dimension-1 Value"][min_idx[0]]}')
+                text_values_list.append(f'{x_label} = {data_df["Dimension-1 Value"][max_idx[0]]}')
+                
             self._make_table(axs[0], text_keys_list=text_keys_list, text_values_list=text_values_list)
 
-            x_values = df_2d.columns
-            y_values = df_2d.index
+            if two_dim:
+                self. _make_2D_surface(fig, axs[1], data_nd_array, x_values=x_values, y_values=y_values, 
+                    x_label=x_label, y_label=y_label, variable_name=variable_name, variable_unit=variable_unit)
 
-            self. _make_2D_surface(fig, axs[1], data_2d, x_values=x_values, y_values=y_values, 
-                x_label=x_label, y_label=y_label, variable_name=variable_name, variable_unit=variable_unit)
-
-            self._make_3D_surface(axs[2], x_values, y_values, data_2d, 
-                x_label=x_label, y_label=y_label, variable_name=variable_name)
+                self._make_3D_surface(axs[2], x_values, y_values, data_nd_array, 
+                    x_label=x_label, y_label=y_label, variable_name=variable_name)
+            else:
+                axs[1].plot(x_values, data_nd_array)
+                axs[1].set_xlabel(f'{x_label}' )
+                axs[1].set_ylabel(f'{variable_name} ({variable_unit})' )
 
 if __name__=='__main__':
 
