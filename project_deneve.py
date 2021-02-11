@@ -274,13 +274,17 @@ if __name__=='__main__':
 
     # ## Show E and I currents ##
     # neuron_index = {'NG1_L4_CI_SS_L4' : 150, 'NG2_L4_CI_BC_L4' : 37, 'NG3_L4_SS2_L4' : 1}
+    # neuron_index = None
     # P.show_currents(results_filename=None, savefigname='', neuron_index=neuron_index) 
     
     # # Show connections ##
     # P.show_connections(connections_filename=None, hist_from='L4_CI_BC_L4__to__L4_CI_SS_L4_soma', savefigname='')
 
     # # Analyse and show arrayrun data ##
-    # P.analyze_arrayrun(metadata_filename=None, analysis='MeanFR', time_start=0, time_end=None)
-    P.show_analyzed_arrayrun(csv_filename=None, analysis='MeanFR', variable_unit='Hz', NG_id_list=['NG1', 'NG2'])
+    # Available analyses: 'MeanFR', 'EICurrentDiff'
+    # P.analyze_arrayrun(metadata_filename=None, analysis='eicurrentdiff', t_idx_start=0, t_idx_end=None)
+    # P.show_analyzed_arrayrun(csv_filename=None, analysis='eicurrentdiff', variable_unit='Amp', NG_id_list=['NG1']) # Empty NG_id_list for all groups
+    # P.analyze_arrayrun(metadata_filename=None, analysis='MeanFR', t_idx_start=0, t_idx_end=None)
+    # P.show_analyzed_arrayrun(csv_filename=None, analysis='MeanFR', variable_unit='Hz', NG_id_list=['NG1']) 
 
     plt.show()

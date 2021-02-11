@@ -7,6 +7,7 @@ from mpl_toolkits.mplot3d import Axes3D
 # Analysis
 import numpy as np
 import pandas as pd
+from scipy.interpolate import griddata
 
 # Builtin
 import os
@@ -158,7 +159,7 @@ class SystemViz(SystemAnalysis):
         sns.lineplot(data=data_df)
         plt.show()
 
-    def show_spikes(self, results_filename=None, savefigname=''):
+    def show_spikes(self, results_filename=None, savefigname='', t_idx_start=0, t_idx_end=10000):
 
         data = self.getData(filename=results_filename, data_type='results')
 
@@ -167,19 +168,14 @@ class SystemViz(SystemAnalysis):
         NG_list = [n for n in data['spikes_all'].keys() if 'NG' in n]
 
         print(NG_list)
-        n_images=len(NG_list)
-        n_columns = 2
-        n_rows = int(np.ceil(n_images/n_columns))
-
-        fig, axs = plt.subplots(n_rows, n_columns)
-        axs = axs.flat
+        fig, axs = self._prep_group_figure(NG_list)
 
         for ax, this_group in zip(axs,NG_list):
 
             im = ax.plot(data['spikes_all'][this_group]['t'], data['spikes_all'][this_group]['i'],'.')
             ax.set_title(this_group, fontsize=10)
 
-            MeanFR = self._analyze_meanfr(data, this_group, time_start=0, time_end=None)
+            MeanFR = self._analyze_meanfr(data, this_group, t_idx_start=t_idx_start, t_idx_end=t_idx_end)
             self._string_on_plot(ax, variable_name='Mean FR', variable_value=MeanFR, variable_unit='Hz')
 
         if savefigname:
@@ -192,19 +188,15 @@ class SystemViz(SystemAnalysis):
 
         # Visualize
         # Extract connections from data dict
-        list_of_results = [n for n in data['vm_all'].keys() if 'NG' in n]
+        NG_list = [n for n in data['vm_all'].keys() if 'NG' in n]
 
-        print(list_of_results)
-        n_images=len(list_of_results)
-        n_columns = 2
-        n_rows = int(np.ceil(n_images/n_columns))
+        print(NG_list)
+ 
+        t=data['vm_all'][NG_list[0]]['t']
 
-        t=data['vm_all'][list_of_results[0]]['t']
+        fig, axs = self._prep_group_figure(NG_list)
 
-        fig, axs = plt.subplots(n_rows, n_columns)
-        axs = axs.flat
-
-        for ax, results in zip(axs,list_of_results):
+        for ax, results in zip(axs,NG_list):
             N_monitored_neurons = data['vm_all'][results]['vm'].shape[1]
             N_neurons = len(data['positions_all']['w_coord'][results])
 
@@ -214,7 +206,7 @@ class SystemViz(SystemAnalysis):
         if savefigname:
             self._figsave(figurename=savefigname)
 
-    def show_currents(self, results_filename=None, savefigname='', neuron_index=None):
+    def show_currents(self, results_filename=None, savefigname='', neuron_index=None, t_idx_start=None, t_idx_end=None):
 
         data = self.getData(results_filename, data_type='results')
         # Visualize
@@ -226,51 +218,33 @@ class SystemViz(SystemAnalysis):
         assert list_of_results_ge == list_of_results_gi == list_of_results_vm, 'Some key results missing, aborting...'
         NG_list = list_of_results_ge 
 
-        n_images = len(NG_list)
-        n_columns = 2
-        n_rows = int(np.ceil(n_images/n_columns))
-
         t = data['ge_soma_all'][NG_list[0]]['t']
-        # time_idx_interval=[2000, 4000]
-        time_idx_interval = [0, len(t)-1]
 
-        fig, axs = plt.subplots(n_rows, n_columns)
-        axs = axs.flat
+        if t_idx_start is None:
+            t_idx_start = 0
+        if t_idx_end is None:
+            t_idx_end = len(t)
 
-        
+        fig, axs = self._prep_group_figure(NG_list)
+
         for ax, NG in zip(axs, NG_list):
 
-            N_monitored_neurons = data['vm_all'][NG]['vm'].shape[1]
-            N_neurons = len(data['positions_all']['w_coord'][NG])
-
-            ge = data['ge_soma_all'][NG]['ge_soma']
-            gi = data['gi_soma_all'][NG]['gi_soma']
-            vm = data['vm_all'][NG]['vm']
-
-            # pdb.set_trace()
-
-            # Get necessary variables
-            # Calculate excitatory, inhibitory (and leak) currents
-            gl = data['Neuron_Groups_Parameters'][NG]['namespace']['gL']
-            El = data['Neuron_Groups_Parameters'][NG]['namespace']['EL']         
-            I_leak = gl * (El - vm)
-            if (NG == 'NG1_L4_CI_SS_L4') or (NG == 'NG2_L4_CI_BC_L4') :
-                I_e =  ge * b2u.mV
-                I_i =  gi * b2u.mV
-            elif NG == 'NG3_L4_SS2_L4' :
-                Ee = data['Neuron_Groups_Parameters'][NG]['namespace']['Ee']
-                Ei = data['Neuron_Groups_Parameters'][NG]['namespace']['Ei']         
-                I_e =  ge * (Ee - vm)
-                I_i =  gi * (Ei - vm)
+            I_e, I_i, I_leak = self._get_currents_by_interval(data, NG, t_idx_start=t_idx_start, t_idx_end=t_idx_end)
 
             if neuron_index is None:
-                neuron_index = {'NG1_L4_CI_SS_L4' : 0, 'NG2_L4_CI_BC_L4' : 0, 'NG3_L4_SS2_L4' : 0}
+                # print(f'Showing mean current over all neurons for group {NG}')
+                N_neurons = I_e.shape[1]
+                I_e_display = I_e.sum(axis=1) / N_neurons
+                I_i_display = I_i.sum(axis=1) / N_neurons
+            else:
+                I_e_display = I_e[:,neuron_index[NG]]
+                I_i_display = I_i[:,neuron_index[NG]]
 
-            # pdb.set_trace()
-            ax.plot(    t[time_idx_interval[0]:time_idx_interval[1]], 
-                        np.array([I_e[time_idx_interval[0]:time_idx_interval[1],neuron_index[NG]],
-                        I_i[time_idx_interval[0]:time_idx_interval[1],neuron_index[NG]]]).T
-                        )
+            # Inhibitory current is negative, invert to cover same space as excitatory current
+            I_i_display = I_i_display * -1
+
+            ax.plot(t[t_idx_start:t_idx_end], np.array([I_e_display, I_i_display]).T)       
+
             ax.legend(['I_e', 'I_i'])
             ax.set_title(NG + ' current', fontsize=10)
 
@@ -290,11 +264,8 @@ class SystemViz(SystemAnalysis):
             hist_from = list_of_connections[-1]
 
         print(list_of_connections)
-        n_images=len(list_of_connections)
-        n_columns = 2
-        n_rows = int(np.ceil(n_images/n_columns))
-        fig, axs = plt.subplots(n_rows, n_columns)
-        axs = axs.flat
+        fig, axs = self._prep_group_figure(list_of_connections)
+
         for ax, connection in zip(axs,list_of_connections):
             im = ax.imshow(data[connection]['data'].todense())
             ax.set_title(connection, fontsize=10)
@@ -303,8 +274,11 @@ class SystemViz(SystemAnalysis):
         data4hist_nozeros = np.ma.masked_equal(data4hist,0)
         Nzeros = data4hist==0
         proportion_zeros = Nzeros.sum() / Nzeros.size
-        axs[(n_rows * n_columns)-1].hist(data4hist_nozeros)
-        axs[(n_rows * n_columns)-1].set_title(f"{hist_from}\n{(proportion_zeros * 100):.1f}% zeros (not shown)")
+
+        n_images=len(list_of_connections)
+        n_rows = int(np.ceil(n_images/2))
+        axs[(n_rows * 2)-1].hist(data4hist_nozeros)
+        axs[(n_rows * 2)-1].set_title(f"{hist_from}\n{(proportion_zeros * 100):.1f}% zeros (not shown)")
         if savefigname:
             self._figsave(figurename=savefigname)
 
@@ -331,9 +305,13 @@ class SystemViz(SystemAnalysis):
     def _make_3D_surface(self, ax, x_values, y_values, z_values, x_label=None, y_label=None, variable_name=None):
 
         X, Y = np.meshgrid(x_values, y_values)
-        Z = z_values
-
-        ax.plot_surface(X, Y, Z, cmap = self.cmap)
+        dense_grid_steps = 50 # This should be relative to search space density
+        assert dense_grid_steps > x_values.shape[0], 'Interpolation to less than original data, aborting...' # You can comment this out and think it as a warning
+        grid_x, grid_y = np.mgrid[np.min(x_values):np.max(x_values):dense_grid_steps*1j, np.min(y_values):np.max(y_values):dense_grid_steps*1j]
+        values = z_values.flatten()
+        points = np.array([X.flatten(), Y.flatten()]).T
+        grid_z2 = griddata(points, values, (grid_x, grid_y), method='cubic')
+        ax.plot_surface(grid_x, grid_y, grid_z2, cstride=1, rstride=1, cmap = self.cmap)
 
         if x_label is not None:
             ax.set_xlabel(x_label)
@@ -357,6 +335,16 @@ class SystemViz(SystemAnalysis):
             bottom=False,       # ticks along the bottom edge are off
             labelleft=False,    # labels along the left edge are off
             labelbottom=False)  
+
+    def _prep_group_figure(self, NG_list):
+
+        n_images = len(NG_list)
+        n_columns = 2
+        n_rows = int(np.ceil(n_images/n_columns))
+
+        fig, axs = plt.subplots(n_rows, n_columns)
+        
+        return fig, fig.axes
 
     def _prep_array_figure(self):
 
@@ -423,7 +411,7 @@ class SystemViz(SystemAnalysis):
             index_column_name = 'Dimension-1 Value'
             column_column_name = 'Dimension-2 Value'
             value_column_name = this_data_column
-            # pdb.set_trace()
+
             x_label=data_df['Dimension-2 Parameter'][0]
             y_label=data_df['Dimension-1 Parameter'][0]
             variable_name=analysisHR
@@ -442,11 +430,13 @@ class SystemViz(SystemAnalysis):
                 column_column_name=column_column_name, value_column_name=value_column_name)
             data_2d = df_2d.values
             min_value = np.amin(data_2d)
+            min_value_rounded = self.round_to_n_significant(min_value, significant_digits=2)
             min_idx = np.unravel_index(np.argmin(data_2d), data_2d.shape)
             max_value = np.amax(data_2d)
+            max_value_rounded = self.round_to_n_significant(max_value, significant_digits=2)
             max_idx = np.unravel_index(np.argmax(data_2d), data_2d.shape)
-            text_values_list.append(f'{min_value:.1f} {variable_unit}- {min_idx}')
-            text_values_list.append(f'{max_value:.1f} {variable_unit} - {max_idx}')
+            text_values_list.append(f'{min_value_rounded} {variable_unit}- {min_idx}')
+            text_values_list.append(f'{max_value_rounded} {variable_unit} - {max_idx}')
             text_values_list.append(f'{y_label} = {df_2d.columns[min_idx[0]]}; {x_label} = {df_2d.index[min_idx[1]]}')
             text_values_list.append(f'{y_label} = {df_2d.columns[max_idx[0]]}; {x_label} = {df_2d.index[max_idx[1]]}')
 
@@ -467,7 +457,7 @@ if __name__=='__main__':
 
     SV = SystemViz(path=path)
 
-    # analysis.printMeanFR(filename=None, time_start=0, time_end=None)
+    # analysis.printMeanFR(filename=None, t_idx_start=0, t_idx_end=None)
 
     # Neuron group names 'NG1_L4_SS_L4', 'NG2_L4_BC_L4', 'NG3_L4_SS2_L4'
     NG_name = 'NG3_L4_SS2_L4'

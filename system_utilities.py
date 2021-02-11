@@ -29,7 +29,7 @@ Developed by Simo Vanni 2020-2021
 class SystemUtilities():
     
     # Types of data in simulation outputfolder
-    data_types_out = ['results', 'connections', 'metadata', 'meanfr']
+    data_types_out = ['results', 'connections', 'metadata', 'meanfr', 'eicurrentdiff']
 
     def __init__(self, path='./'):
 
@@ -39,7 +39,10 @@ class SystemUtilities():
         self.input_folder = None
         self.output_folder = None
 
-        
+    def round_to_n_significant(self, value_in, significant_digits=2):
+        int_to_subtract = significant_digits - 1
+        value_out = round(value_in, -int(np.floor(np.log10(np.abs(value_in))) - int_to_subtract))
+        return value_out    
 
     def _check_cadidate_file(self, path, filename):
         candidate_data_fullpath_filename = os.path.join(path, filename)
@@ -52,41 +55,43 @@ class SystemUtilities():
 
     def _parsePath(self, filename, data_type=None):
         '''
-        This internal function returns full path to either 1) the file given by the filename at self.path 
-        folder, or 2) to file with most recent modification time at self.path whose filename contains string 
-        data_type.
+        This internal function returns full path to either given filename or to most recently
+        updated file of given data_type (a.k.a. containing key substring in filename). 
+        Note that the data_type can be timestamp.
         '''
+        
         data_fullpath_filename = None
         path = self.path
         input_folder = self.input_folder
         output_folder = self.output_folder
+        output_path = os.path.join(path, output_folder)
+        input_path = os.path.join(path, input_folder)
 
         # Check first for direct load in current directory. E.g. for direct ipython testing
         if filename is not None:
             data_fullpath_filename = self._check_cadidate_file('./', filename)
 
-        # Parse output filetypes
-        elif data_type in self.data_types_out:
-            output_path = os.path.join(path, output_folder)
-            if filename is None:
-                data_fullpath_filename = self._most_recent(output_path, data_type=data_type)
-            else:
+        # Next check direct load in output path, input path and project path in this order
+            if not data_fullpath_filename:
                 data_fullpath_filename = self._check_cadidate_file(output_path, filename)
+            if not data_fullpath_filename:
+                data_fullpath_filename = self._check_cadidate_file(input_path, filename)
+            if not data_fullpath_filename:
+                data_fullpath_filename = self._check_cadidate_file(path, filename)
+    
+        # Parse output folder for given data_type
+        elif data_type in self.data_types_out:
+            data_fullpath_filename = self._most_recent(output_path, data_type=data_type)
             if not data_fullpath_filename:
                 raise FileNotFoundError(f'Did not find {data_type} file in folder {output_path}')
             
-        # Parse other filetypes in project/input and project paths
-        # elif data_type not in self.data_types_out:
-        if data_fullpath_filename is None:
-            assert filename is not None, "I don't know what file to search for, aborting..."
-    
-            # Check for filename first in input folder
-            input_path = os.path.join(path, input_folder)
-            data_fullpath_filename = self._check_cadidate_file(input_path, filename)
-
-            # Check for filename next in project folder
+        # Parse data_type next in project/input and project paths
+        elif data_type is not None:
+            # Check for data_type first in input folder
+            data_fullpath_filename = self._most_recent(input_path, data_type=data_type)
+            # Check for data_type next in project folder
             if not data_fullpath_filename:
-                data_fullpath_filename = self._check_cadidate_file(path, filename)
+                data_fullpath_filename = self._most_recent(path, data_type=data_type)
 
         assert data_fullpath_filename is not None, 'Could not parse filepath, aborting...'
 
@@ -168,6 +173,10 @@ class SystemUtilities():
 
         # print(f'Acquiring data from {data_fullpath_filename}')
         return data
+
+    def _get_dt(self, data):
+        dt = (data['time_vector'][1] - data['time_vector'][0]) / b2u.second
+        return dt
 
     def close(self):
         plt.close('all')
