@@ -73,7 +73,7 @@ class SystemUtilities():
         input_path = os.path.join(path, input_folder)
 
         # Check first for direct load in current directory. E.g. for direct ipython testing
-        if filename is not None:
+        if filename:
             data_fullpath_filename = self._check_cadidate_file('./', filename)
 
         # Next check direct load in output path, input path and project path in this order

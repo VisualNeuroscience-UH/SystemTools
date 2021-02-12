@@ -270,8 +270,8 @@ if __name__=='__main__':
     # P.plot_readout_on_input(results_filename=None, normalize=False)
 
     # # ## Show spikes and vm ##
-    P.show_spikes(results_filename=None, savefigname='')
-    P.show_vm(results_filename=None, savefigname='')
+    # P.show_spikes(results_filename=None, savefigname='')
+    # P.show_vm(results_filename=None, savefigname='')
 
     # ## Show E and I currents ##
     # neuron_index = None
@@ -283,8 +283,8 @@ if __name__=='__main__':
 
     # ## Analyse and show arrayrun data ##
     # Available analyses: 'MeanFR', 'EICurrentDiff'
-    # P.analyze_arrayrun(metadata_filename=None, analysis='MeanFR', t_idx_start=0, t_idx_end=None)
+    # P.analyze_arrayrun(metadata_filename=None, analysis='EICurrentDiff', t_idx_start=0, t_idx_end=None)
     # P.show_analyzed_arrayrun(csv_filename='MeanFR__20210209_0842282.csv', analysis='MeanFR', variable_unit='Hz', NG_id_list=['NG1']) # Empty NG_id_list for all groups
-    # P.show_analyzed_arrayrun(csv_filename=None, analysis='MeanFR', variable_unit='Hz', NG_id_list=[]) # Empty NG_id_list for all groups
+    P.show_analyzed_arrayrun(csv_filename='', analysis='EICurrentDiff', variable_unit='Amp', NG_id_list=[]) # Empty NG_id_list for all groups
 
     plt.show()
