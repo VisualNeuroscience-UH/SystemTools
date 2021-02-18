@@ -97,7 +97,7 @@ class SystemViz(SystemAnalysis):
 
         analog_signal = analog_input['stimulus']
         assert analog_signal.ndim == 2, 'input is not a 2-dim vector, aborting...'
-        analog_timestep = analog_input['frameduration']
+        # analog_timestep = analog_input['frameduration']
 
         NG_name = self.NG_name
         t = data['vm_all'][NG_name]['t'] # All timesteps
@@ -139,17 +139,14 @@ class SystemViz(SystemAnalysis):
                                         var_name='units_vm', 
                                         value_name='data_vm')
 
-        # return df_from_arr_unpivot
-
-        # palette1 = sns.color_palette("mako_r", 6)
         sns.lineplot(x="t", y='data_in', data=df_from_arr_unpivot_in, hue='units_in', palette = 'dark')
         plt.legend(loc='upper left')
         ax2 = plt.twinx()
-        # palette2 = sns.color_palette("mako_r", 6)
         sns.lineplot(x="t", y='data_vm', data=df_from_arr_unpivot_vm, palette = 'bright', hue='units_vm', ax=ax2)
         plt.legend(loc='upper right')
+
         if normalize==True:
-            EL = data['Neuron_Groups_Parameters'][NG_name]['namespace']['EL'] # data['Neuron_Groups_Parameters'][NG_name]['namespace']['EL']
+            EL = data['Neuron_Groups_Parameters'][NG_name]['namespace']['EL'] 
             VT = data['Neuron_Groups_Parameters'][NG_name]['namespace']['VT']
             plt.ylim(EL, VT)
         # plt.show()

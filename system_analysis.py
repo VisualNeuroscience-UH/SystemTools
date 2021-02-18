@@ -5,7 +5,10 @@ import pandas as pd
 
 # Computational neuroscience
 import brian2.units as b2u
-import elephant as el
+import elephant as el 
+from elephant.causality.granger import pairwise_granger, conditional_granger
+from neo.core import AnalogSignal
+import quantities as pq
 
 # Builtin
 import os
@@ -28,8 +31,8 @@ Developed by Simo Vanni 2020-2021
 
 class SystemAnalysis(SystemUtilities):
 
-    map_analysis_names = {'meanfr':'MeanFR', 'eicurrentdiff':'EICurrentDiff'}
-    map_data_types = {'meanfr':'spikes_all', 'eicurrentdiff':'vm_all'}
+    map_analysis_names = {'meanfr':'MeanFR', 'eicurrentdiff':'EICurrentDiff', 'grcaus':'GrCaus'}
+    map_data_types = {'meanfr':'spikes_all', 'eicurrentdiff':'vm_all', 'grcaus': 'vm_all'}
 
     def __init__(self, path='./'):
 
@@ -90,6 +93,30 @@ class SystemAnalysis(SystemUtilities):
  
         return MeanEIdifference
                 
+    def _get_vm_by_interval(self, data, NG, t_idx_start=0, t_idx_end=None):
+        
+        vm = data['vm_all'][NG]['vm']
+        return vm[t_idx_start:t_idx_end,:]
+
+    def _analyze_grcaus(self, data, source_signal, source_signal_dt, NG, t_idx_start=0, t_idx_end=None):
+        '''
+        Get input and output timeseries.
+        Run grangercausality for relevant pairs. 
+        
+        '''
+        source_signal_neo = AnalogSignal(source_signal, units='mV', sampling_rate=(1/dt) * pq.Hz)
+
+        vm = self._get_vm_by_interval(data, NG, t_idx_start=t_idx_start, t_idx_end=t_idx_end)
+        dt = self._get_dt(data)
+        pdb.set_trace()
+        # Select the two analog signals to work with. Units = columns, time = rows.
+        vm_neo = AnalogSignal(vm, units='mV', sampling_rate=(1/dt) * pq.Hz)
+        # The model order is the maximum number of lagged observations included in the model
+        pairwise_gc = pairwise_granger(vm_neo, max_order=10, information_criterion='aic')
+
+        return MeanGrCaus
+                
+
     def get_analyzed_array_as_df(self, data_df, analysisHR=None, t_idx_start=0, t_idx_end=None):
     
         # Get neuron group names
@@ -100,24 +127,35 @@ class SystemAnalysis(SystemUtilities):
         # Add neuron group columns
         for NG in NG_list:
             data_df[f'{analysisHR}_' + NG] = np.nan
-
         dt = self._get_dt(data)
         
         # Get duration
         if t_idx_end is None:
             t_idx_end = int(data['runtime']  / dt)
 
+        # Get reference data for granger causality
+        analog_input = self.getData( self.input_filename, data_type=None)
+        source_signal = analog_input['stimulus'].T # We want time x units
+        source_signal_dt = analog_input['frameduration']
+
+        # pdb.set_trace()
 
         # Loop through datafiles
         for this_index, this_file in zip(data_df.index, data_df['Full path'].values):
             data = self.getData(this_file)
+            # pdb.set_trace()
             # Loop through neuron groups 
             for NG in NG_list:
+                # _analyze_meanfr or _analyze_eicurrentdiff, analysis by single group
+                if analysisHR.lower() in ['meanfr', 'eicurrentdiff']:
+                    analyzed_results = eval(f'self._analyze_{analysisHR.lower()}(data, NG, t_idx_start=t_idx_start, t_idx_end=t_idx_end)')
+                    data_df.loc[this_index,f'{analysisHR}_' + NG] = analyzed_results
+                # _analyze__grcaus, analysis between two groups
+                elif analysisHR.lower() in ['grcaus']:
+                    # check how multivariate gc is analyzed; are min, max, mean, median useful?
+                    # Apply this to _analyze_grangercausality
+                    analyzed_results = eval(f'self._analyze_{analysisHR.lower()}(data, source_signal, source_signal_dt, NG, t_idx_start=t_idx_start, t_idx_end=t_idx_end)')
 
-                # _analyze_meanfr or _analyze_eicurrentdiff
-                analyzed_results = eval(f'self._analyze_{analysisHR.lower()}(data, NG, t_idx_start=t_idx_start, t_idx_end=t_idx_end)')
-
-                data_df.loc[this_index,f'{analysisHR}_' + NG] = analyzed_results
 
         return data_df
 

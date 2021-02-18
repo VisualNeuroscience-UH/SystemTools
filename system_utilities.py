@@ -69,8 +69,10 @@ class SystemUtilities():
         path = self.path
         input_folder = self.input_folder
         output_folder = self.output_folder
-        output_path = os.path.join(path, output_folder)
-        input_path = os.path.join(path, input_folder)
+        if output_folder is not None:
+            output_path = os.path.join(path, output_folder)
+        if input_folder is not None:
+            input_path = os.path.join(path, input_folder)
 
         # Check first for direct load in current directory. E.g. for direct ipython testing
         if filename:

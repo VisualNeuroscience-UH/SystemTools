@@ -241,7 +241,7 @@ if __name__=='__main__':
 
     # Experiment-specific file, folder and neuron group names
     input_folder = 'Replica_in'
-    output_folder = 'Replica_out'
+    output_folder = 'Replica_test'
     mat_filename = 'Fig4_workspace.mat'
     connection_skeleton_filename_in = 'Replica_skeleton_connections_20210211_1453238.gz'
     connection_filename_out = 'connections_deneve_ci_constant.gz'
@@ -269,7 +269,7 @@ if __name__=='__main__':
     # ## Readout on input ##
     # P.plot_readout_on_input(results_filename=None, normalize=False)
 
-    # # ## Show spikes and vm ##
+    # # ## Show spikes and vm ##q
     # P.show_spikes(results_filename=None, savefigname='')
     # P.show_vm(results_filename=None, savefigname='')
 
@@ -282,9 +282,9 @@ if __name__=='__main__':
     # P.show_connections(connections_filename=None, hist_from='L4_CI_BC_L4__to__L4_CI_SS_L4_soma', savefigname='')
 
     # ## Analyse and show arrayrun data ##
-    # Available analyses: 'MeanFR', 'EICurrentDiff'
-    # P.analyze_arrayrun(metadata_filename=None, analysis='EICurrentDiff', t_idx_start=0, t_idx_end=None)
+    # Available analyses: 'MeanFR', 'EICurrentDiff', 'GrCaus'
+    # P.analyze_arrayrun(metadata_filename=None, analysis='MeanFR', t_idx_start=0, t_idx_end=None)
     # P.show_analyzed_arrayrun(csv_filename='MeanFR__20210209_0842282.csv', analysis='MeanFR', variable_unit='Hz', NG_id_list=['NG1']) # Empty NG_id_list for all groups
-    P.show_analyzed_arrayrun(csv_filename='', analysis='EICurrentDiff', variable_unit='Amp', NG_id_list=[]) # Empty NG_id_list for all groups
+    P.show_analyzed_arrayrun(csv_filename='', analysis='MeanFR', variable_unit='Hz', NG_id_list=[]) # Empty NG_id_list for all groups
 
     plt.show()
