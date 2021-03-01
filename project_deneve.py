@@ -256,6 +256,7 @@ if __name__=='__main__':
     # ############################
     # ### Create project files ###
     # ############################
+
     # # Creates file named input_filename but with _ci.mat suffix to experiment folder
     # P.create_current_injection() 
     
@@ -266,6 +267,12 @@ if __name__=='__main__':
     # ############################
     # ###### Analysis & Viz ######
     # ############################
+
+    # ## Print metadata ##
+    # # Use "data_type" with no filename, if you want the most recent file
+    # metadata_df = P.getData(filename=None, data_type='metadata') 
+    # P.pp_df_full(metadata_df)
+    
     # ## Readout on input ##
     # P.plot_readout_on_input(results_filename=None, normalize=False)
 
@@ -283,8 +290,8 @@ if __name__=='__main__':
 
     # ## Analyse and show arrayrun data ##
     # Available analyses: 'MeanFR', 'EICurrentDiff', 'GrCaus'
-    # P.analyze_arrayrun(metadata_filename=None, analysis='MeanFR', t_idx_start=0, t_idx_end=None)
+    P.analyze_arrayrun(metadata_filename=None, analysis='GrCaus', t_idx_start=0, t_idx_end=None)
     # P.show_analyzed_arrayrun(csv_filename='MeanFR__20210209_0842282.csv', analysis='MeanFR', variable_unit='Hz', NG_id_list=['NG1']) # Empty NG_id_list for all groups
-    P.show_analyzed_arrayrun(csv_filename='', analysis='MeanFR', variable_unit='Hz', NG_id_list=[]) # Empty NG_id_list for all groups
-
+    # P.show_analyzed_arrayrun(csv_filename='', analysis='GrCaus', variable_unit='Amp', NG_id_list=[]) # Empty NG_id_list for all groups
+    
     plt.show()

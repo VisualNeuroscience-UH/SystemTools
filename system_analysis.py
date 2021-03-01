@@ -104,18 +104,26 @@ class SystemAnalysis(SystemUtilities):
         Run grangercausality for relevant pairs. 
         
         '''
+
+        dt = self._get_dt(data)
         source_signal_neo = AnalogSignal(source_signal, units='mV', sampling_rate=(1/dt) * pq.Hz)
 
         vm = self._get_vm_by_interval(data, NG, t_idx_start=t_idx_start, t_idx_end=t_idx_end)
-        dt = self._get_dt(data)
-        pdb.set_trace()
+
         # Select the two analog signals to work with. Units = columns, time = rows.
         vm_neo = AnalogSignal(vm, units='mV', sampling_rate=(1/dt) * pq.Hz)
+
+        pdb.set_trace()
+        # for each source signal, calculate all target signals. 
         # The model order is the maximum number of lagged observations included in the model
         pairwise_gc = pairwise_granger(vm_neo, max_order=10, information_criterion='aic')
+        # Fill matrix (pre, post)
+        # Find best matching target signal for each input signal
+        # Calculate mean of best matching gc values, one for each input signal
+        # TODO Calculate CV of gc "grandmother index"
 
-        return MeanGrCaus
-                
+        # Return one value per analysis (mean of best matching units), indicating GrCaus relation
+        return MeanBestGrCaus, analyzed_matrix
 
     def get_analyzed_array_as_df(self, data_df, analysisHR=None, t_idx_start=0, t_idx_end=None):
     
@@ -138,7 +146,6 @@ class SystemAnalysis(SystemUtilities):
         source_signal = analog_input['stimulus'].T # We want time x units
         source_signal_dt = analog_input['frameduration']
 
-        # pdb.set_trace()
 
         # Loop through datafiles
         for this_index, this_file in zip(data_df.index, data_df['Full path'].values):
@@ -154,7 +161,8 @@ class SystemAnalysis(SystemUtilities):
                 elif analysisHR.lower() in ['grcaus']:
                     # check how multivariate gc is analyzed; are min, max, mean, median useful?
                     # Apply this to _analyze_grangercausality
-                    analyzed_results = eval(f'self._analyze_{analysisHR.lower()}(data, source_signal, source_signal_dt, NG, t_idx_start=t_idx_start, t_idx_end=t_idx_end)')
+                    analyzed_results, analyzed_matrix = eval(f'self._analyze_{analysisHR.lower()}(data, source_signal, source_signal_dt, NG, t_idx_start=t_idx_start, t_idx_end=t_idx_end)')
+            pdb.set_trace()
 
 
         return data_df
@@ -177,7 +185,7 @@ class SystemAnalysis(SystemUtilities):
         # # Display values
         # self.pp_df_full(mean_df)
 
-        # Replace metadata with MeanFR
+        # Replace metadata with scalar value for MeanFR or EICurrentDiff
         metadata_fullpath_filename = self._parsePath(metadata_filename, data_type='metadata')
         metadataroot, metadataextension = os.path.splitext(metadata_fullpath_filename)
         filename_out = metadataroot.replace('metadata', analysisHR)

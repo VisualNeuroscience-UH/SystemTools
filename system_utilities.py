@@ -57,7 +57,6 @@ class SystemUtilities():
         else:
             return None
 
-
     def _parsePath(self, filename, data_type=None):
         '''
         This internal function returns full path to either given filename or to most recently
@@ -189,7 +188,7 @@ class SystemUtilities():
         plt.close('all')
 
     def pp_df_full(self, df):
-        with pd.option_context('display.max_rows', None, 'display.max_columns', None): 
+        with pd.option_context('display.max_rows', None, 'display.max_columns', None, 'display.max_colwidth', -1): 
             print(df)
 
     def pp_df_memory(self, df):
