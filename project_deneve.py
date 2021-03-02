@@ -289,9 +289,9 @@ if __name__=='__main__':
     # P.show_connections(connections_filename=None, hist_from='L4_CI_BC_L4__to__L4_CI_SS_L4_soma', savefigname='')
 
     # ## Analyse and show arrayrun data ##
-    # Available analyses: 'MeanFR', 'EICurrentDiff', 'GrCaus'
-    P.analyze_arrayrun(metadata_filename=None, analysis='GrCaus', t_idx_start=0, t_idx_end=None)
+    # Available analyses: 'MeanFR':  variable_unit='Hz', 'EICurrentDiff': variable_unit='Amp', 'GrCaus': variable_unit='F value'
+    # P.analyze_arrayrun(metadata_filename=None, analysis='GrCaus', t_idx_start=0, t_idx_end=None)
     # P.show_analyzed_arrayrun(csv_filename='MeanFR__20210209_0842282.csv', analysis='MeanFR', variable_unit='Hz', NG_id_list=['NG1']) # Empty NG_id_list for all groups
-    # P.show_analyzed_arrayrun(csv_filename='', analysis='GrCaus', variable_unit='Amp', NG_id_list=[]) # Empty NG_id_list for all groups
+    P.show_analyzed_arrayrun(csv_filename='GrCaus__20210219_0038240.csv', analysis='GrCaus', variable_unit='F value', NG_id_list=[]) # Empty NG_id_list for all groups
     
     plt.show()

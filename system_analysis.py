@@ -133,18 +133,18 @@ class SystemAnalysis(SystemUtilities):
 
             return time_lag
 
-        dt = self._get_dt(data)
-        # source_signal_neo = AnalogSignal(source_signal, units='mV', sampling_rate=(1/dt) * pq.Hz)
+        # dt = self._get_dt(data)
 
         vm_unit = self._get_vm_by_interval(data, NG, t_idx_start=t_idx_start, t_idx_end=t_idx_end)
 
         # Remove brian2 dimension for gc analysis
         target_signal = vm_unit / vm_unit.get_best_unit() 
 
-        gc_matrix_np = np.full_like(np.empty((source_signal.shape[1], target_signal.shape[1])),np.nan)
+        gc_matrix_np_F = np.full_like(np.empty((source_signal.shape[1], target_signal.shape[1])),np.nan)
+        gc_matrix_np_p = np.full_like(np.empty((source_signal.shape[1], target_signal.shape[1])),np.nan)
 
 
-        time_lag = 170
+        time_lag = 10
         time_jump = 20
 
         if test_stationarity is True:
@@ -171,17 +171,25 @@ class SystemAnalysis(SystemUtilities):
                 _source, _target = source_signal[:,pre_idx], target_signal[:,post_idx]
                 signals = np.vstack([_target, _source]).T
                 pairwise_gc_dict = gc_test(signals, time_lag, verbose=False)
+                # TODO Get best F / p-value
+
                 # dict_keys(['ssr_ftest', 'ssr_chi2test', 'lrtest', 'params_ftest'])
                 # test statistic, pvalues, degrees of freedom
-                gc_matrix_np[pre_idx, post_idx] = pairwise_gc_dict[time_lag][0]['ssr_ftest'][1]
+                gc_matrix_np_F[pre_idx, post_idx] = pairwise_gc_dict[time_lag][0]['ssr_ftest'][0]
+                gc_matrix_np_p[pre_idx, post_idx] = pairwise_gc_dict[time_lag][0]['ssr_ftest'][1]
 
-        pdb.set_trace()
         # Find best matching target signal for each input signal
-        # Calculate mean of best matching gc values, one for each input signal
+        gc_highest_F_idx = np.argmax(gc_matrix_np_F, axis=0)
+        gc_highest_F = gc_matrix_np_F[gc_highest_F_idx] 
+        gc_lowest_p = gc_matrix_np_p[gc_highest_F_idx] 
+        # Calculate mean of best matching gc F values, one for each input signal
+        MeanBestGrCaus = np.mean(gc_highest_F)
         # TODO Calculate CV of gc "grandmother index"
 
+        # TODO Where is the best F / p value? Which time_lag to choose? First stationary?
+
         # Return one value per analysis (mean of best matching units), indicating GrCaus relation
-        return MeanBestGrCaus, analyzed_matrix
+        return MeanBestGrCaus, gc_highest_F_idx, gc_matrix_np_F, gc_matrix_np_p
 
     def get_analyzed_array_as_df(self, data_df, analysisHR=None, t_idx_start=0, t_idx_end=None):
     
@@ -210,7 +218,6 @@ class SystemAnalysis(SystemUtilities):
         # Loop through datafiles
         for this_index, this_file in zip(data_df.index, data_df['Full path'].values):
             data = self.getData(this_file)
-            # pdb.set_trace()
             # Loop through neuron groups 
             if analysisHR.lower() in ['meanfr', 'eicurrentdiff']:
                 for NG in NG_list:
@@ -221,9 +228,8 @@ class SystemAnalysis(SystemUtilities):
             elif analysisHR.lower() in ['grcaus']:
                 # check how multivariate gc is analyzed; are min, max, mean, median useful?
                 # Apply this to _analyze_grangercausality
-                analyzed_results, analyzed_matrix = eval(f'self._analyze_{analysisHR.lower()}(data, source_signal, source_signal_dt, target_group, t_idx_start=t_idx_start, t_idx_end=t_idx_end)')
-            pdb.set_trace()
-
+                MeanBestGrCaus, gc_highest_F_idx, gc_matrix_np_F, gc_matrix_np_p = eval(f'self._analyze_{analysisHR.lower()}(data, source_signal, source_signal_dt, target_group, t_idx_start=t_idx_start, t_idx_end=t_idx_end)')
+                data_df.loc[this_index,f'{analysisHR}_' + NG] = MeanBestGrCaus
 
         return data_df
 
