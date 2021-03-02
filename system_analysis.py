@@ -2,6 +2,8 @@
 import numpy as np
 from matplotlib import pyplot as plt
 import pandas as pd
+from statsmodels.tsa.stattools import grangercausalitytests as gc_test
+from statsmodels.tsa.stattools import adfuller as stationarity_test
 
 # Computational neuroscience
 import brian2.units as b2u
@@ -20,6 +22,8 @@ from system_utilities import SystemUtilities
 
 # Develop
 import pdb
+import warnings
+warnings.filterwarnings("ignore")
 
 '''
 Module on analysis of simulated electrophysiology data.
@@ -98,26 +102,80 @@ class SystemAnalysis(SystemUtilities):
         vm = data['vm_all'][NG]['vm']
         return vm[t_idx_start:t_idx_end,:]
 
-    def _analyze_grcaus(self, data, source_signal, source_signal_dt, NG, t_idx_start=0, t_idx_end=None):
+    def _analyze_grcaus(self, data, source_signal, source_signal_dt, NG, t_idx_start=0, t_idx_end=None, test_stationarity=False):
         '''
         Get input and output timeseries.
         Run grangercausality for relevant pairs. 
-        
+
+        Stationary time series is a requirement for gc test. This is tested separately for each time
+        series.
+
+        The dt in is retained in case we need to have source and target at different sampling rates later.
         '''
 
+        def _check_stationarity(signal, stationarity_p, time_lag, time_jump):
+            stationary = False
+            idx = 0
+            while  not stationary:
+                print(f'time lag: {time_lag} for idx {idx}\r', end="")
+                if idx + 1 == signal.shape[1]:
+                    stationary = True
+                # Stationarity test for source signals
+                st_result = stationarity_test(signal[:,idx], time_lag)
+                p_value = st_result[1] 
+                if np.isnan(p_value):
+                    idx += 1
+                    continue
+                if p_value > stationarity_p:
+                    time_lag += time_jump
+                elif p_value <= stationarity_p:
+                    idx += 1
+
+            return time_lag
+
         dt = self._get_dt(data)
-        source_signal_neo = AnalogSignal(source_signal, units='mV', sampling_rate=(1/dt) * pq.Hz)
+        # source_signal_neo = AnalogSignal(source_signal, units='mV', sampling_rate=(1/dt) * pq.Hz)
 
-        vm = self._get_vm_by_interval(data, NG, t_idx_start=t_idx_start, t_idx_end=t_idx_end)
+        vm_unit = self._get_vm_by_interval(data, NG, t_idx_start=t_idx_start, t_idx_end=t_idx_end)
 
-        # Select the two analog signals to work with. Units = columns, time = rows.
-        vm_neo = AnalogSignal(vm, units='mV', sampling_rate=(1/dt) * pq.Hz)
+        # Remove brian2 dimension for gc analysis
+        target_signal = vm_unit / vm_unit.get_best_unit() 
+
+        gc_matrix_np = np.full_like(np.empty((source_signal.shape[1], target_signal.shape[1])),np.nan)
+
+
+        time_lag = 170
+        time_jump = 20
+
+        if test_stationarity is True:
+            # Search for minimum valid time lag for this dataset
+            stationarity_p = 0.05 # significance to reject non stationarity test
+            
+            time_lag = _check_stationarity(source_signal, stationarity_p, time_lag, time_jump)
+
+            print(f'Source min time_lag {time_lag} time points')
+
+            time_lag = _check_stationarity(target_signal, stationarity_p, time_lag, time_jump)
+
+            print(f'Source and Target min time_lag {time_lag} time points')
+
+        pre_idx_array =  np.arange(source_signal.shape[1])
+        post_idx_array =  np.arange(target_signal.shape[1])
+
+        # for each source signal, calculate all target signals.
+        for pre_idx in pre_idx_array:
+            for post_idx in post_idx_array:
+                print(f'pre {pre_idx} post {post_idx}\r', end="")
+
+                # The model order is the maximum number of lagged observations included in the model
+                _source, _target = source_signal[:,pre_idx], target_signal[:,post_idx]
+                signals = np.vstack([_target, _source]).T
+                pairwise_gc_dict = gc_test(signals, time_lag, verbose=False)
+                # dict_keys(['ssr_ftest', 'ssr_chi2test', 'lrtest', 'params_ftest'])
+                # test statistic, pvalues, degrees of freedom
+                gc_matrix_np[pre_idx, post_idx] = pairwise_gc_dict[time_lag][0]['ssr_ftest'][1]
 
         pdb.set_trace()
-        # for each source signal, calculate all target signals. 
-        # The model order is the maximum number of lagged observations included in the model
-        pairwise_gc = pairwise_granger(vm_neo, max_order=10, information_criterion='aic')
-        # Fill matrix (pre, post)
         # Find best matching target signal for each input signal
         # Calculate mean of best matching gc values, one for each input signal
         # TODO Calculate CV of gc "grandmother index"
@@ -142,9 +200,11 @@ class SystemAnalysis(SystemUtilities):
             t_idx_end = int(data['runtime']  / dt)
 
         # Get reference data for granger causality
-        analog_input = self.getData( self.input_filename, data_type=None)
-        source_signal = analog_input['stimulus'].T # We want time x units
-        source_signal_dt = analog_input['frameduration']
+        if analysisHR.lower() in ['grcaus']:
+            analog_input = self.getData( self.input_filename, data_type=None)
+            source_signal = analog_input['stimulus'].T # We want time x units
+            source_signal_dt = analog_input['frameduration']
+            target_group = self.NG_name
 
 
         # Loop through datafiles
@@ -152,16 +212,16 @@ class SystemAnalysis(SystemUtilities):
             data = self.getData(this_file)
             # pdb.set_trace()
             # Loop through neuron groups 
-            for NG in NG_list:
-                # _analyze_meanfr or _analyze_eicurrentdiff, analysis by single group
-                if analysisHR.lower() in ['meanfr', 'eicurrentdiff']:
+            if analysisHR.lower() in ['meanfr', 'eicurrentdiff']:
+                for NG in NG_list:
+                    # _analyze_meanfr or _analyze_eicurrentdiff, analysis by single group
                     analyzed_results = eval(f'self._analyze_{analysisHR.lower()}(data, NG, t_idx_start=t_idx_start, t_idx_end=t_idx_end)')
                     data_df.loc[this_index,f'{analysisHR}_' + NG] = analyzed_results
-                # _analyze__grcaus, analysis between two groups
-                elif analysisHR.lower() in ['grcaus']:
-                    # check how multivariate gc is analyzed; are min, max, mean, median useful?
-                    # Apply this to _analyze_grangercausality
-                    analyzed_results, analyzed_matrix = eval(f'self._analyze_{analysisHR.lower()}(data, source_signal, source_signal_dt, NG, t_idx_start=t_idx_start, t_idx_end=t_idx_end)')
+            # _analyze__grcaus, analysis between two groups
+            elif analysisHR.lower() in ['grcaus']:
+                # check how multivariate gc is analyzed; are min, max, mean, median useful?
+                # Apply this to _analyze_grangercausality
+                analyzed_results, analyzed_matrix = eval(f'self._analyze_{analysisHR.lower()}(data, source_signal, source_signal_dt, target_group, t_idx_start=t_idx_start, t_idx_end=t_idx_end)')
             pdb.set_trace()
 
 

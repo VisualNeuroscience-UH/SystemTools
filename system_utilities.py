@@ -201,6 +201,21 @@ class SystemUtilities():
         pprint(obj)
         print(f'\nObject size is {sys.getsizeof(obj)} bytes')
 
+    def get_added_attributes(self, obj1, obj2):
+
+        XOR_attributes = set(dir(obj1)).symmetric_difference(dir(obj2))
+        unique_attributes_list = [n for n in XOR_attributes if not n.startswith('_')]
+        return unique_attributes_list
+
+    def pp_attribute_types(self, obj, attribute_list=[]):
+
+        if not attribute_list:
+            attribute_list = dir(obj)
+
+        for this_attribute in attribute_list:
+            attribute_type = eval(f'type(obj.{this_attribute})')
+            print(f'{this_attribute}: {attribute_type}')
+
     def read_neo_block(self, filename):
         import neo
         reader = neo.io.NixIO(filename=filename, mode='ro')
