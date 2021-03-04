@@ -167,6 +167,13 @@ class Project(SystemViz):
         mat_teach_idx = 28 
         connection_final_dict = connection_skeleton_dict
 
+        # We need to turn Deneve's negative inhibitory connections to positive for CxSystem
+        # These connections are fed to gi which has no driving force, because they are I_NDF type. 
+        # There the conductance itself is negative, which is necessary if we want inhibition 
+        # without driving force. The DecsI has both negative and positive connection strengths
+        # (optimized for decoding in Deneve's code). 
+        inh_keys = ['CsIE', 'CsII', 'DecsI']
+
         for this_connection in match_connection_names.keys():
             # Get cxsystem connection strengths (i.e. Physiology parameters J, J_I, k*J or k_I*J_I 
             # multiplied by n synapses/connection)
@@ -184,6 +191,10 @@ class Project(SystemViz):
                 data_out = self.scale_values(data_mat, target_data=data_cx, skip_under_zeros_in_scaling=False)
             elif constant_scaling is True:
                 data_out = self.scale_with_constant(data_mat, constant_value=constant_value)
+
+            # Turn Deneve's negative inhibitory connections to positive for CxSystem
+            if match_connection_names[this_connection] in inh_keys:
+                data_out = data_out * -1
 
             # viz by request
             if show_histograms is True:
@@ -276,9 +287,9 @@ if __name__=='__main__':
     # ## Readout on input ##
     # P.plot_readout_on_input(results_filename=None, normalize=False)
 
-    # # ## Show spikes and vm ##q
-    # P.show_spikes(results_filename=None, savefigname='')
-    # P.show_vm(results_filename=None, savefigname='')
+    ## Show spikes and vm ##q
+    P.show_spikes(results_filename=None, savefigname='')
+    P.show_vm(results_filename=None, savefigname='')
 
     # ## Show E and I currents ##
     # neuron_index = None
@@ -288,10 +299,16 @@ if __name__=='__main__':
     # ## Show connections ##
     # P.show_connections(connections_filename=None, hist_from='L4_CI_BC_L4__to__L4_CI_SS_L4_soma', savefigname='')
 
-    # ## Analyse and show arrayrun data ##
-    # Available analyses: 'MeanFR':  variable_unit='Hz', 'EICurrentDiff': variable_unit='Amp', 'GrCaus': variable_unit='F value'
-    # P.analyze_arrayrun(metadata_filename=None, analysis='GrCaus', t_idx_start=0, t_idx_end=None)
-    # P.show_analyzed_arrayrun(csv_filename='MeanFR__20210209_0842282.csv', analysis='MeanFR', variable_unit='Hz', NG_id_list=['NG1']) # Empty NG_id_list for all groups
-    P.show_analyzed_arrayrun(csv_filename='GrCaus__20210219_0038240.csv', analysis='GrCaus', variable_unit='F value', NG_id_list=[]) # Empty NG_id_list for all groups
+    # # ## Analyse and show arrayrun data ##
+    # # Available analyses: 'MeanFR':  variable_unit='Hz', 'EICurrentDiff': variable_unit='Amp', 'GrCaus': variable_unit='F value'
+    # extra_GrCaus_attributes = {
+    #     'time_lag': 26,
+    #     'do_downsample': True,
+    #     'test_stationarity': False,
+    #     'test_timelag': False} 
+    # P.analyze_arrayrun(metadata_filename=None, analysis='GrCaus', t_idx_start=0, t_idx_end=None, **extra_GrCaus_attributes)
+    # # P.show_analyzed_arrayrun(csv_filename='MeanFR__20210209_0842282.csv', analysis='MeanFR', variable_unit='Hz', NG_id_list=['NG1']) # Empty NG_id_list for all groups
+    # P.show_analyzed_arrayrun(csv_filename='GrCaus__20210219_0038240.csv', analysis='GrCaus', 
+    #     variable_unit='F value', NG_id_list=['NG3']) # Empty NG_id_list for all groups
     
     plt.show()
