@@ -43,7 +43,8 @@ class AnalogInput():
             if Nrequested_units != 2:
                 print(f'NOTE: You requested {input_type} input type, setting excessive units to 0 value')
             Input = self.create_quadratic_oscillation_input(Nx = Nrequested_units, Ntime = Ntime, Ncycles = Ncycles)
-
+        elif input_type == 'step_current':
+            Input = self.create_step_input(Nx = Nrequested_units, Ntime = Ntime)
         # if current_injection is True:
         #     Input = self.create_current_injection(Input)
         #     filename_out = filename_out[:-4] + '_ci.mat'
@@ -209,16 +210,16 @@ class AnalogInput():
 if __name__ == "__main__":
 
     if sys.platform == 'linux':
-        root_path = r'C:\Users\Simo\Laskenta\SimuOut\Deneve\Replica_in'
-    elif sys.platform == 'win32':
         root_path = r'/opt/tomas/projects/Results/ParameterHuntNL/Replica_in'
+    elif sys.platform == 'win32':
+        root_path = r'C:\Users\Simo\Laskenta\SimuOut\Deneve\Replica_in'
 
-    # filename_out = 'input_noise_210118.mat'
-    filename_out = 'input_quadratic_three_units.mat'
+    filename_out = 'input_noise_210304.mat'
+    # filename_out = 'input_quadratic_three_units.mat'
     full_filename_out = os.path.join(root_path, filename_out)
     Nrequested_units = 3
     Ntime = 10000
-    input_type = 'quadratic_oscillation' # 'quadratic_oscillation' or 'noise'
+    input_type = 'noise' # 'quadratic_oscillation' or 'noise' or 'step_current'
     Ncycles = 2
     dt = 0.1 # IMPORTANT: assuming milliseconds
 

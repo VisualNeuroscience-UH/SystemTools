@@ -138,6 +138,7 @@ class SystemAnalysis(SystemUtilities):
                 print(f'WARNING: Serial autocorrelation test failed, p = {p_value}')
             else:
                 print('Serial autocorrelation test passed')
+            
             # print(results.summary())
 
         # # plot signals
@@ -156,7 +157,15 @@ class SystemAnalysis(SystemUtilities):
         #     plt.legend(loc='upper right', fontsize='x-large')
         #     plt.show()
 
-    def _analyze_grcaus(self, data, source_signal, NG, 
+    def _return_best_order(self, data, max_lag, ic):
+
+        model = VAR(data)
+        results = model.fit(maxlags=max_lag, ic=ic, trend='c')
+        best_time_lag = results.k_ar
+
+        return best_time_lag
+
+    def _analyze_grcaus(self, data, source_signal, dt, NG, 
                         t_idx_start=0, t_idx_end=None, **kwargs):
         '''
         Get input and output timeseries.
@@ -164,8 +173,6 @@ class SystemAnalysis(SystemUtilities):
 
         Stationary time series is a requirement for gc test. This is tested separately for each time
         series.
-
-        The dt in is retained in case we need to have source and target at different sampling rates later.
         '''
 
         def _check_stationarity(signal, stationarity_p, time_lag, time_jump):
@@ -189,7 +196,7 @@ class SystemAnalysis(SystemUtilities):
             print('')
             return time_lag
 
-        time_lag = kwargs['time_lag']
+        max_time_lag = kwargs['time_lag']
         do_downsample = kwargs['do_downsample'] 
         test_stationarity = kwargs['test_stationarity'] 
         test_timelag = kwargs['test_timelag'] 
@@ -201,12 +208,11 @@ class SystemAnalysis(SystemUtilities):
 
         gc_matrix_np_F = np.full_like(np.empty((source_signal.shape[1], target_signal.shape[1])),np.nan)
         gc_matrix_np_p = np.full_like(np.empty((source_signal.shape[1], target_signal.shape[1])),np.nan)
-        gc_matrix_np_lr = np.full_like(np.empty((source_signal.shape[1], target_signal.shape[1])),np.nan)
-        gc_matrix_np_lr_p = np.full_like(np.empty((source_signal.shape[1], target_signal.shape[1])),np.nan)
-
+        gc_matrix_np_latency = np.full_like(np.empty((source_signal.shape[1], target_signal.shape[1])),np.nan)
 
         # Analyze causal effect delay
 
+        downsampling_factor = 1
         if do_downsample is True:
             # Barnett_2017_JNeurosciMeth: sample-period should be kept at 1/10 or less of
             # causal effect delay for detectability sweet spot. 
@@ -223,15 +229,15 @@ class SystemAnalysis(SystemUtilities):
         if test_stationarity is True:
             # Search for minimum valid time lag for this dataset
             stationarity_p = 0.01 # significance to reject non stationarity test
-            time_jump = 20 # If stationarity fails, automatically add this value to time_lag and rerun
+            time_jump = 20 # If stationarity fails, automatically add this value to max_time_lag and rerun
             
-            time_lag = _check_stationarity(source_signal_pp, stationarity_p, time_lag, time_jump)
+            max_time_lag = _check_stationarity(source_signal_pp, stationarity_p, max_time_lag, time_jump)
 
-            print(f'Source min time_lag {time_lag} time points')
+            print(f'Source min max_time_lag {max_time_lag} time points')
 
-            time_lag = _check_stationarity(target_signal_pp, stationarity_p, time_lag, time_jump)
+            max_time_lag = _check_stationarity(target_signal_pp, stationarity_p, max_time_lag, time_jump)
 
-            print(f'Source and Target min time_lag {time_lag} time points')
+            print(f'Source and Target min max_time_lag {max_time_lag} time points')
 
         pre_idx_array =  np.arange(source_signal.shape[1])
         post_idx_array =  np.arange(target_signal.shape[1])
@@ -241,42 +247,50 @@ class SystemAnalysis(SystemUtilities):
                 for post_idx in post_idx_array:
                     _source, _target = source_signal_pp[:,pre_idx], target_signal_pp[:,post_idx]
                     signals = np.vstack([_target, _source]).T
-                    self._test_time_lag(signals, time_lag)
+                    self._test_time_lag(signals, max_time_lag)
             sys.exit()
-
 
         # for each source signal, calculate all target signals.
         for pre_idx in pre_idx_array:
             for post_idx in post_idx_array:
-                print(f'pre {pre_idx} post {post_idx}\r', end="")
+                # print(f'pre {pre_idx} post {post_idx}\r', end="")
 
                 # The model order is the maximum number of lagged observations included in the model
                 _source, _target = source_signal_pp[:,pre_idx], target_signal_pp[:,post_idx]
                 signals = np.vstack([_target, _source]).T
-                pairwise_gc_dict = gc_test(signals, time_lag, verbose=False)
+
+                # Get best order with Bayesian information criterion
+                try:
+                    best_time_lag = self._return_best_order(signals, max_time_lag, 'hqic')
+                except:
+                    continue
+                pairwise_gc_dict = gc_test(signals, [best_time_lag], verbose=False)
 
                 # dict_keys(['ssr_ftest', 'ssr_chi2test', 'lrtest', 'params_ftest'])
                 # test statistic, pvalues, degrees of freedom
-                gc_matrix_np_F[pre_idx, post_idx] = pairwise_gc_dict[time_lag][0]['ssr_ftest'][0]
-                gc_matrix_np_p[pre_idx, post_idx] = pairwise_gc_dict[time_lag][0]['ssr_ftest'][1]
-                gc_matrix_np_lr[pre_idx, post_idx] = pairwise_gc_dict[time_lag][0]['lrtest'][0]
-                gc_matrix_np_lr_p[pre_idx, post_idx] = pairwise_gc_dict[time_lag][0]['lrtest'][1]
+                gc_matrix_np_F[pre_idx, post_idx] = pairwise_gc_dict[best_time_lag][0]['ssr_ftest'][0]
+                gc_matrix_np_p[pre_idx, post_idx] = pairwise_gc_dict[best_time_lag][0]['ssr_ftest'][1]
+                gc_matrix_np_latency[pre_idx, post_idx] = best_time_lag * dt * downsampling_factor
 
         # Find best matching target signal for each input signal
-        gc_highest_F_row_idx = np.argmax(gc_matrix_np_F, axis=0)
-        gc_highest_F_idx = (gc_highest_F_row_idx, post_idx_array)
-        gc_highest_F = gc_matrix_np_F[gc_highest_F_idx] 
-        gc_highest_logF = np.log(gc_matrix_np_F[gc_highest_F_idx])
-        gc_lowest_p = gc_matrix_np_p[gc_highest_F_idx] 
+        # gc_highest_F_row_idx = np.nanargmax(gc_matrix_np_F, axis=1)
+        # gc_highest_F_idx = (gc_highest_F_row_idx, post_idx_array)
+        # gc_highest_logF = np.log(gc_matrix_np_F[gc_highest_F_idx]) # This can be used for magnitude
+        gc_lowest_p_row_idx = np.nanargmin(gc_matrix_np_p, axis=1)
+        gc_lowest_p_idx = (gc_lowest_p_row_idx, post_idx_array)
+        gc_lowest_p = gc_matrix_np_p[gc_lowest_p_row_idx] 
 
-        # Calculate mean of best matching gc F values, one for each input signal
-        # MeanBestGrCaus = np.mean(gc_highest_F)
-        MeanBestGrCaus = np.mean(gc_highest_logF)
-        # MeanBestGrCaus = np.mean(gc_lowest_p)
+        # Calculate mean of best matching gc log(F) values
+        # MeanBestGrCaus = np.mean(gc_highest_logF)
+        BestGrCaus = np.nanmin(gc_lowest_p)
+        print(f'BG: {BestGrCaus}')
+        print(f'gc_matrix_np_p: \n{gc_matrix_np_p}')
+        print(f'gc_matrix_np_latency: \n{gc_matrix_np_latency}')
+
         # TODO Calculate CV of gc "grandmother index"
 
         # Return one value per analysis (mean of best matching units), indicating GrCaus relation
-        return MeanBestGrCaus, gc_highest_F_idx, gc_matrix_np_F, gc_matrix_np_p
+        return BestGrCaus, gc_matrix_np_p, gc_matrix_np_latency
 
     def get_analyzed_array_as_df(self, data_df, analysisHR=None, t_idx_start=0, t_idx_end=None, **kwargs):
     
@@ -315,10 +329,10 @@ class SystemAnalysis(SystemUtilities):
             elif analysisHR.lower() in ['grcaus']:
                 # check how multivariate gc is analyzed; are min, max, mean, median useful?
                 # Apply this to _analyze_grangercausality
-                MeanBestGrCaus, gc_highest_F_idx, gc_matrix_np_F, gc_matrix_np_p = self._analyze_grcaus( 
-                    data, source_signal, target_group, t_idx_start=t_idx_start, t_idx_end=t_idx_end, **kwargs)
+                BestGrCaus, gc_matrix_np_p, gc_matrix_np_latency = self._analyze_grcaus( 
+                    data, source_signal, dt, target_group, t_idx_start=t_idx_start, t_idx_end=t_idx_end, **kwargs)
 
-                data_df.loc[this_index,f'{analysisHR}_' + NG] = MeanBestGrCaus
+                data_df.loc[this_index,f'{analysisHR}_' + NG] = BestGrCaus
 
         return data_df
 

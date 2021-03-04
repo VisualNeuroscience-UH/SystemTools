@@ -29,7 +29,7 @@ Developed by Simo Vanni 2020-2021
 class SystemUtilities():
     
     # Types of data in simulation outputfolder
-    data_types_out = ['results', 'connections', 'metadata', 'meanfr', 'eicurrentdiff']
+    data_types_out = ['results', 'connections', 'metadata', 'meanfr', 'eicurrentdiff', 'grcaus']
 
     def __init__(self, path='./'):
 
@@ -63,7 +63,6 @@ class SystemUtilities():
         updated file of given data_type (a.k.a. containing key substring in filename). 
         Note that the data_type can be timestamp.
         '''
-        
         data_fullpath_filename = None
         path = self.path
         input_folder = self.input_folder

@@ -256,7 +256,7 @@ if __name__=='__main__':
     mat_filename = 'Fig4_workspace.mat'
     connection_skeleton_filename_in = 'Replica_skeleton_connections_20210211_1453238.gz'
     connection_filename_out = 'connections_deneve_ci_constant.gz'
-    input_filename = 'input_quadratic_three_units.mat'
+    input_filename = 'input_noise_210304.mat'
     NG_name_for_vm_on_input = 'NG3_L4_CI_SS2_L4'
 
     P = Project(path=path, input_folder=input_folder, output_folder=output_folder, 
@@ -273,7 +273,7 @@ if __name__=='__main__':
     
     # # Transforms Deneve's simulation connections from .mat file to CxSystem .gz fromat.
     # # Creates connection_filename_out to input folder
-    # P.replace_connections(show_histograms=False, constant_scaling=True, constant_value=1e-9)
+    # P.replace_connections(show_histograms=True, constant_scaling=True, constant_value=1e-9)
 
     # ############################
     # ###### Analysis & Viz ######
@@ -287,9 +287,9 @@ if __name__=='__main__':
     # ## Readout on input ##
     # P.plot_readout_on_input(results_filename=None, normalize=False)
 
-    ## Show spikes and vm ##q
-    P.show_spikes(results_filename=None, savefigname='')
-    P.show_vm(results_filename=None, savefigname='')
+    # ## Show spikes and vm ##q
+    # P.show_spikes(results_filename=None, savefigname='')
+    # P.show_vm(results_filename=None, savefigname='')
 
     # ## Show E and I currents ##
     # neuron_index = None
@@ -299,16 +299,16 @@ if __name__=='__main__':
     # ## Show connections ##
     # P.show_connections(connections_filename=None, hist_from='L4_CI_BC_L4__to__L4_CI_SS_L4_soma', savefigname='')
 
-    # # ## Analyse and show arrayrun data ##
-    # # Available analyses: 'MeanFR':  variable_unit='Hz', 'EICurrentDiff': variable_unit='Amp', 'GrCaus': variable_unit='F value'
-    # extra_GrCaus_attributes = {
-    #     'time_lag': 26,
-    #     'do_downsample': True,
-    #     'test_stationarity': False,
-    #     'test_timelag': False} 
-    # P.analyze_arrayrun(metadata_filename=None, analysis='GrCaus', t_idx_start=0, t_idx_end=None, **extra_GrCaus_attributes)
-    # # P.show_analyzed_arrayrun(csv_filename='MeanFR__20210209_0842282.csv', analysis='MeanFR', variable_unit='Hz', NG_id_list=['NG1']) # Empty NG_id_list for all groups
-    # P.show_analyzed_arrayrun(csv_filename='GrCaus__20210219_0038240.csv', analysis='GrCaus', 
-    #     variable_unit='F value', NG_id_list=['NG3']) # Empty NG_id_list for all groups
+    # ## Analyse and show arrayrun data ##
+    # Available analyses: 'MeanFR':  variable_unit='Hz', 'EICurrentDiff': variable_unit='Amp', 'GrCaus': variable_unit='p value'
+    extra_GrCaus_attributes = {
+        'time_lag': 100,
+        'do_downsample': True,
+        'test_stationarity': False,
+        'test_timelag': False} 
+    P.analyze_arrayrun(metadata_filename=None, analysis='GrCaus', t_idx_start=0, t_idx_end=None, **extra_GrCaus_attributes)
+    # P.show_analyzed_arrayrun(csv_filename='MeanFR__20210209_0842282.csv', analysis='MeanFR', variable_unit='Hz', NG_id_list=['NG1']) # Empty NG_id_list for all groups
+    P.show_analyzed_arrayrun(csv_filename=None, analysis='GrCaus', 
+        variable_unit='p value', NG_id_list=['NG3']) # Empty NG_id_list for all groups
     
     plt.show()
