@@ -125,6 +125,26 @@ class AnalogInput():
 
         return Input
 
+    def create_step_input(self, Nx = 0, Ntime = None):   
+
+        assert Nx != 0, 'N units not set, aborting...'
+        assert Ntime is not None, 'N timepoints not set, aborting...'
+
+        # Create your input here. Zeros and ones at this point.
+        # Create matrix of zeros with shape of Input
+        #### Input=(np.random.multivariate_normal(np.zeros([Nx]), np.eye(Nx), Ntime)).T
+
+        Input = (np.concatenate((np.zeros((Ntime//3,), dtype=int), np.ones((Ntime//3), dtype=int), np.zeros((Ntime//3), dtype=int)), axis=None))
+        Input = (np.concatenate((Input, np.zeros((Ntime-np.size((Input),0),), dtype=int)), axis=None))
+        Input = (np.tile(Input.T, (Nx,1)))
+
+        A = 20 # Amplification, Units = ?
+        Input = A * Input
+        # Input = self._normalize(Input)
+        # self._lineplot(Input.T)
+        # plt.show()
+        return Input
+
     def get_dummy_coordinates(self, Nx = 0):
         # Create dummy coordinates for CxSystem format video input.
         # NOTE: You are safer with local mode on in CxSystem to use these
@@ -188,7 +208,11 @@ class AnalogInput():
 
 if __name__ == "__main__":
 
-    root_path = r'C:\Users\Simo\Laskenta\SimuOut\Deneve\Replica_in'
+    if sys.platform == 'linux':
+        root_path = r'C:\Users\Simo\Laskenta\SimuOut\Deneve\Replica_in'
+    elif sys.platform == 'win32':
+        root_path = r'/opt/tomas/projects/Results/ParameterHuntNL/Replica_in'
+
     # filename_out = 'input_noise_210118.mat'
     filename_out = 'input_quadratic_three_units.mat'
     full_filename_out = os.path.join(root_path, filename_out)
