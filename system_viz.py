@@ -369,8 +369,13 @@ class SystemViz(SystemAnalysis):
         '''
         analysisHR = self.map_analysis_names[analysis.lower()]
         # Get MeanFR_TIMESTAMP_.csv
+
         try:
-            data_df = self.getData(filename=csv_filename, data_type=analysisHR)
+            if csv_filename is None:
+                data_df = self.getData(data_type=analysisHR)
+            else:
+                data_df = self.getData(filename=csv_filename, data_type=None)
+
         # If does not exist, calculate from metadata file list
         except FileNotFoundError as error:
             print(error)
@@ -407,14 +412,22 @@ class SystemViz(SystemAnalysis):
         else:
             two_dim = False
 
+        if analysisHR.lower() in ['grcaus']:
+            variable_unit_dict = {'_p' : 'p value', '_logF' : 'log2(F)', '_latency' : 'latency (s)'}
 
         for this_NG_id, this_NG_name, this_data_column in zip(NG_id_list, NG_name_list, requested_data_column_list):
 
             assert this_NG_id in this_data_column, 'Neuron group does not match data column, aborting ...'
 
+
+            if 'variable_unit_dict' in locals():
+                for this_key in variable_unit_dict.keys():
+                    if this_key in this_NG_name:
+                        variable_unit = variable_unit_dict[this_key]
+
             # Prep figure in subfunction, get axes handles
             fig, axs = self._prep_array_figure(two_dim)
-
+            
             # Table what is necessary, display
             text_keys_list=['Analysis', 'Neuron Group #', 'Neuron Group Name', 'MIN value - (y,x)', 
                 'MAX value - (y,x)', 'MIN at Params', 'MAX at Params']

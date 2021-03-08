@@ -287,7 +287,7 @@ if __name__=='__main__':
     # ## Readout on input ##
     # P.plot_readout_on_input(results_filename=None, normalize=False)
 
-    # ## Show spikes and vm ##q
+    # # ## Show spikes and vm ##q
     # P.show_spikes(results_filename=None, savefigname='')
     # P.show_vm(results_filename=None, savefigname='')
 
@@ -299,15 +299,15 @@ if __name__=='__main__':
     # ## Show connections ##
     # P.show_connections(connections_filename=None, hist_from='L4_CI_BC_L4__to__L4_CI_SS_L4_soma', savefigname='')
 
-    # ## Analyse and show arrayrun data ##
-    # Available analyses: 'MeanFR':  variable_unit='Hz', 'EICurrentDiff': variable_unit='Amp', 'GrCaus': variable_unit='p value'
+    # # ## Analyse and show arrayrun data ##
+    # # Available analyses: 'MeanFR':  variable_unit='Hz', 'EICurrentDiff': variable_unit='Amp', 'GrCaus': variable_unit='p value'
     extra_GrCaus_attributes = {
-        'time_lag': 100,
+        'max_time_lag': 100,
         'do_downsample': True,
         'test_stationarity': False,
         'test_timelag': False} 
     P.analyze_arrayrun(metadata_filename=None, analysis='GrCaus', t_idx_start=0, t_idx_end=None, **extra_GrCaus_attributes)
-    # P.show_analyzed_arrayrun(csv_filename='MeanFR__20210209_0842282.csv', analysis='MeanFR', variable_unit='Hz', NG_id_list=['NG1']) # Empty NG_id_list for all groups
+    # # # P.show_analyzed_arrayrun(csv_filename='MeanFR__20210209_0842282.csv', analysis='MeanFR', variable_unit='Hz', NG_id_list=['NG1']) # Empty NG_id_list for all groups
     P.show_analyzed_arrayrun(csv_filename=None, analysis='GrCaus', 
         variable_unit='p value', NG_id_list=['NG3']) # Empty NG_id_list for all groups
     

@@ -196,7 +196,7 @@ class SystemAnalysis(SystemUtilities):
             print('')
             return time_lag
 
-        max_time_lag = kwargs['time_lag']
+        max_time_lag = kwargs['max_time_lag']
         do_downsample = kwargs['do_downsample'] 
         test_stationarity = kwargs['test_stationarity'] 
         test_timelag = kwargs['test_timelag'] 
@@ -261,7 +261,7 @@ class SystemAnalysis(SystemUtilities):
 
                 # Get best order with Bayesian information criterion
                 try:
-                    best_time_lag = self._return_best_order(signals, max_time_lag, 'hqic')
+                    best_time_lag = self._return_best_order(signals, max_time_lag, 'aic')
                 except:
                     continue
                 pairwise_gc_dict = gc_test(signals, [best_time_lag], verbose=False)
@@ -272,25 +272,32 @@ class SystemAnalysis(SystemUtilities):
                 gc_matrix_np_p[pre_idx, post_idx] = pairwise_gc_dict[best_time_lag][0]['ssr_ftest'][1]
                 gc_matrix_np_latency[pre_idx, post_idx] = best_time_lag * dt * downsampling_factor
 
-        # Find best matching target signal for each input signal
-        # gc_highest_F_row_idx = np.nanargmax(gc_matrix_np_F, axis=1)
-        # gc_highest_F_idx = (gc_highest_F_row_idx, post_idx_array)
-        # gc_highest_logF = np.log(gc_matrix_np_F[gc_highest_F_idx]) # This can be used for magnitude
-        gc_lowest_p_row_idx = np.nanargmin(gc_matrix_np_p, axis=1)
-        gc_lowest_p_idx = (gc_lowest_p_row_idx, post_idx_array)
-        gc_lowest_p = gc_matrix_np_p[gc_lowest_p_row_idx] 
+        
+        # Select one-to-one connectivity from input to "correct" output 
+        gc_eye_idx = np.eye(source_signal.shape[1], target_signal.shape[1], dtype=bool)
 
-        # Calculate mean of best matching gc log(F) values
-        # MeanBestGrCaus = np.mean(gc_highest_logF)
-        BestGrCaus = np.nanmin(gc_lowest_p)
-        print(f'BG: {BestGrCaus}')
-        print(f'gc_matrix_np_p: \n{gc_matrix_np_p}')
-        print(f'gc_matrix_np_latency: \n{gc_matrix_np_latency}')
+        # Magnitude in base 2 log. If error distribution is gaussian, can be interpreted as bits
+        gc_matrix_np_logF = np.log2(gc_matrix_np_F)
+        gc_logF = gc_matrix_np_logF[gc_eye_idx]
+        gc_p = gc_matrix_np_p[gc_eye_idx] 
+        gc_latency = gc_matrix_np_latency[gc_eye_idx] 
+
+        # Get representative value
+        MeanGrCaus_logF = np.nanmean(gc_logF)
+        MedianGrCaus_p = np.nanmedian(gc_p)
+        MeanGrCaus_latency = np.nanmean(gc_latency)
+
+        if 0:
+            print(f'BG log2(F): {MeanGrCaus_logF}')
+            print(f'BG p: {MedianGrCaus_p}')
+            print(f'BG latency: {MeanGrCaus_latency}')
+            print(f'gc_matrix_np_p: \n{gc_matrix_np_p}')
+            print(f'gc_matrix_np_latency: \n{gc_matrix_np_latency}')
 
         # TODO Calculate CV of gc "grandmother index"
 
         # Return one value per analysis (mean of best matching units), indicating GrCaus relation
-        return BestGrCaus, gc_matrix_np_p, gc_matrix_np_latency
+        return MeanGrCaus_logF, MedianGrCaus_p, MeanGrCaus_latency
 
     def get_analyzed_array_as_df(self, data_df, analysisHR=None, t_idx_start=0, t_idx_end=None, **kwargs):
     
@@ -300,20 +307,26 @@ class SystemAnalysis(SystemUtilities):
         NG_list = [n for n in data[self.map_data_types[analysisHR.lower()]].keys() if 'NG' in n]
 
         # Add neuron group columns
-        for NG in NG_list:
-            data_df[f'{analysisHR}_' + NG] = np.nan
+        if analysisHR.lower() in ['meanfr', 'eicurrentdiff']:
+            for NG in NG_list:
+                data_df[f'{analysisHR}_' + NG] = np.nan
+        elif analysisHR.lower() in ['grcaus']:
+            target_group = self.NG_name            
+            data_df[f'{analysisHR}_' + target_group + '_logF'] = np.nan
+            data_df[f'{analysisHR}_' + target_group + '_p'] = np.nan
+            data_df[f'{analysisHR}_' + target_group + '_latency'] = np.nan
+            # Get reference data for granger causality
+            analog_input = self.getData( self.input_filename, data_type=None)
+            source_signal = analog_input['stimulus'].T # We want time x units
+            source_signal_dt = analog_input['frameduration']
+
         dt = self._get_dt(data)
         
         # Get duration
         if t_idx_end is None:
             t_idx_end = int(data['runtime']  / dt)
 
-        # Get reference data for granger causality
-        if analysisHR.lower() in ['grcaus']:
-            analog_input = self.getData( self.input_filename, data_type=None)
-            source_signal = analog_input['stimulus'].T # We want time x units
-            source_signal_dt = analog_input['frameduration']
-            target_group = self.NG_name
+
 
 
         # Loop through datafiles
@@ -329,10 +342,12 @@ class SystemAnalysis(SystemUtilities):
             elif analysisHR.lower() in ['grcaus']:
                 # check how multivariate gc is analyzed; are min, max, mean, median useful?
                 # Apply this to _analyze_grangercausality
-                BestGrCaus, gc_matrix_np_p, gc_matrix_np_latency = self._analyze_grcaus( 
+                MeanGrCaus_logF, MedianGrCaus_p, MeanGrCaus_latency = self._analyze_grcaus( 
                     data, source_signal, dt, target_group, t_idx_start=t_idx_start, t_idx_end=t_idx_end, **kwargs)
 
-                data_df.loc[this_index,f'{analysisHR}_' + NG] = BestGrCaus
+                data_df.loc[this_index,f'{analysisHR}_' + target_group + '_logF'] = MeanGrCaus_logF
+                data_df.loc[this_index,f'{analysisHR}_' + target_group + '_p'] = MedianGrCaus_p
+                data_df.loc[this_index,f'{analysisHR}_' + target_group + '_latency'] = MeanGrCaus_latency
 
         return data_df
 
@@ -346,21 +361,21 @@ class SystemAnalysis(SystemUtilities):
 
         data_df = self.getData(metadata_filename, data_type='metadata')
         # data_df = self.getMeanFR_array(data_df, t_idx_start=t_idx_start, t_idx_end=t_idx_end)
-        data_df = self.get_analyzed_array_as_df(    data_df, analysisHR=analysisHR, t_idx_start=t_idx_start, 
-                                                    t_idx_end=t_idx_end, **kwargs)
+        analyzed_data_df = self.get_analyzed_array_as_df(
+            data_df, analysisHR=analysisHR, t_idx_start=t_idx_start, t_idx_end=t_idx_end, **kwargs)
 
         # Drop Full path column for concise printing
-        mean_df = data_df.drop(['Full path'], axis=1)
+        analyzed_data_df = analyzed_data_df.drop(['Full path'], axis=1)
 
         # # Display values
-        # self.pp_df_full(mean_df)
+        self.pp_df_full(analyzed_data_df)
 
         # Replace metadata with scalar value for MeanFR or EICurrentDiff
         metadata_fullpath_filename = self._parsePath(metadata_filename, data_type='metadata')
         metadataroot, metadataextension = os.path.splitext(metadata_fullpath_filename)
         filename_out = metadataroot.replace('metadata', analysisHR)
         csv_name_out = filename_out + '.csv'
-        mean_df.to_csv(csv_name_out, index=True)
+        analyzed_data_df.to_csv(csv_name_out, index=True)
 
 if __name__=='__main__':
 
