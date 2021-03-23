@@ -303,7 +303,7 @@ class SystemAnalysis(SystemUtilities):
         MedianGrCaus_p = np.nanmedian(gc_p)
         MeanGrCaus_latency = np.nanmean(gc_latency)
 
-        if 0:
+        if 1:
             print(f'BG log2(F): {MeanGrCaus_logF}')
             print(f'BG p: {MedianGrCaus_p}')
             print(f'BG latency: {MeanGrCaus_latency}')

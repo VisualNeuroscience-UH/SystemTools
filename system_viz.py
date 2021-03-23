@@ -86,7 +86,7 @@ class SystemViz(SystemAnalysis):
             ax.text(0.05, 0.95, plot_str, fontsize=8, verticalalignment='top', transform=ax.transAxes,
             bbox=dict(boxstyle="Square,pad=0.2", fc="white", ec="white", lw=1))
 
-    def plot_readout_on_input(self, results_filename=None, normalize=False):
+    def plot_readout_on_input(self, results_filename=None, normalize=False, unit_idx_list=None):
         '''
         Get input, get data. Scaling. turn to df, format df, Plot curves.
         '''
@@ -95,7 +95,7 @@ class SystemViz(SystemAnalysis):
 
         analog_input = self.getData( self.input_filename, data_type=None)
 
-        analog_signal = analog_input['stimulus']
+        analog_signal = analog_input['stimulus'].T
         assert analog_signal.ndim == 2, 'input is not a 2-dim vector, aborting...'
         # analog_timestep = analog_input['frameduration']
 
@@ -104,6 +104,12 @@ class SystemViz(SystemAnalysis):
         assert t.ndim == 1, 'timepoints are not a 1-dim vector, aborting...'
 
         data_vm = data['vm_all'][NG_name]['vm']
+
+        if unit_idx_list is not None:
+            # Get a subsample of units
+            idx = np.asarray(unit_idx_list)
+            analog_signal = analog_signal[:,idx]
+            data_vm = data_vm[:,idx]
 
         if normalize==True:
             analog_signal = (analog_signal - np.min(analog_signal)) / np.ptp(analog_signal)
@@ -138,7 +144,6 @@ class SystemViz(SystemAnalysis):
                                         value_vars=value_vars_vm, 
                                         var_name='units_vm', 
                                         value_name='data_vm')
-
         sns.lineplot(x="t", y='data_in', data=df_from_arr_unpivot_in, hue='units_in', palette = 'dark')
         plt.legend(loc='upper left')
         ax2 = plt.twinx()
