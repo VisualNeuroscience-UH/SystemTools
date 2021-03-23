@@ -29,7 +29,7 @@ Developed by Simo Vanni 2020-2021
 class SystemUtilities():
     
     # Types of data in simulation outputfolder
-    data_types_out = ['results', 'connections', 'metadata', 'meanfr', 'eicurrentdiff', 'grcaus']
+    data_types_out = ['results', 'connections', 'metadata', 'meanfr', 'eicurrentdiff', 'grcaus', 'meanvm']
 
     def __init__(self, path='./'):
 
@@ -69,8 +69,13 @@ class SystemUtilities():
         output_folder = self.output_folder
         if output_folder is not None:
             output_path = os.path.join(path, output_folder)
+        else:
+            # Set current path if run separately from project 
+            output_path = os.path.join(path, './')
         if input_folder is not None:
             input_path = os.path.join(path, input_folder)
+        else:
+            input_path = os.path.join(path, './')
 
         # Check first for direct load in current directory. E.g. for direct ipython testing
         if filename:

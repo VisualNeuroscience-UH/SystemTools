@@ -248,11 +248,12 @@ if __name__=='__main__':
     if sys.platform == 'linux':
         path = r'/opt/tomas/projects/Results/Deneve_param'
     elif sys.platform == 'win32':
-        path = r'C:\Users\Simo\Laskenta\SimuOut\Deneve'
+        path = r'C:\Users\Simo\Laskenta\SimuOut\Deneve\plast_exp'
+        os.chdir(path)
 
-    # Experiment-specific file, folder and neuron group names
+    # Experiment-specific file, folder and neuron group names. Do not use reserved words, such as "results"
     input_folder = 'Replica_in'
-    output_folder = 'Replica_test'
+    output_folder = 'out'
     mat_filename = 'Fig4_workspace.mat'
     connection_skeleton_filename_in = 'Replica_skeleton_connections_20210211_1453238.gz'
     connection_filename_out = 'connections_deneve_ci_constant.gz'
@@ -287,11 +288,19 @@ if __name__=='__main__':
     # ## Readout on input ##
     # P.plot_readout_on_input(results_filename=None, normalize=False)
 
-    # # ## Show spikes and vm ##q
+    # ## Show spikes and vm ##q
     # P.show_spikes(results_filename=None, savefigname='')
-    # P.show_vm(results_filename=None, savefigname='')
+    # P.show_analog_results(results_filename=None, savefigname='',param_name='vm',startswith='NG') 
+    # P.show_analog_results(results_filename=None, savefigname='',param_name='vclamp',startswith='NG') 
+    # P.show_analog_results(results_filename=None, savefigname='',param_name='gclamp',startswith='NG') 
+    # P.show_analog_results(results_filename=None, savefigname='',param_name='v_lowpass1',startswith='NG') 
+    # P.show_analog_results(results_filename=None, savefigname='',param_name='ge_soma',startswith='NG') 
+    # P.show_analog_results(results_filename=None, savefigname='',param_name='v_homeo',startswith='NG') 
+    # P.show_analog_results(results_filename=None, savefigname='',param_name='w_minus',startswith='S') 
+    # P.show_analog_results(results_filename=None, savefigname='',param_name='wght',startswith='S') 
+    # P.show_analog_results(results_filename=None, savefigname='',param_name='A_LTD_u',startswith='S') 
 
-    # ## Show E and I currents ##
+    ## Show E and I currents ##
     # neuron_index = None
     # neuron_index = {'NG1_L4_CI_SS_L4' : 150, 'NG2_L4_CI_BC_L4' : 37, 'NG3_L4_CI_SS2_L4' : 1}
     # P.show_currents(results_filename=None, savefigname='', neuron_index=neuron_index) 
@@ -299,16 +308,18 @@ if __name__=='__main__':
     # ## Show connections ##
     # P.show_connections(connections_filename=None, hist_from='L4_CI_BC_L4__to__L4_CI_SS_L4_soma', savefigname='')
 
-    # # ## Analyse and show arrayrun data ##
-    # # Available analyses: 'MeanFR':  variable_unit='Hz', 'EICurrentDiff': variable_unit='Amp', 'GrCaus': variable_unit='p value'
-    extra_GrCaus_attributes = {
-        'max_time_lag': 100,
-        'do_downsample': True,
-        'test_stationarity': False,
-        'test_timelag': False} 
-    P.analyze_arrayrun(metadata_filename=None, analysis='GrCaus', t_idx_start=0, t_idx_end=None, **extra_GrCaus_attributes)
-    # # # P.show_analyzed_arrayrun(csv_filename='MeanFR__20210209_0842282.csv', analysis='MeanFR', variable_unit='Hz', NG_id_list=['NG1']) # Empty NG_id_list for all groups
-    P.show_analyzed_arrayrun(csv_filename=None, analysis='GrCaus', 
-        variable_unit='p value', NG_id_list=['NG3']) # Empty NG_id_list for all groups
+    # # # ## Analyse and show arrayrun data ##
+    # # # Available analyses: 'MeanFR':  variable_unit='Hz', 'MeanVm':  variable_unit='', 'EICurrentDiff': variable_unit='Amp', 'GrCaus': variable_unit='p value'
+    # extra_GrCaus_attributes = {
+    #     'max_time_lag': 100,
+    #     'do_downsample': True,
+    #     'test_stationarity': False,
+    #     'test_timelag': False} 
+    # P.analyze_arrayrun(metadata_filename=None, analysis='GrCaus', t_idx_start=0, t_idx_end=None, **extra_GrCaus_attributes)
+    # # # # P.show_analyzed_arrayrun(csv_filename='MeanFR__20210209_0842282.csv', analysis='MeanFR', variable_unit='Hz', NG_id_list=['NG1']) # Empty NG_id_list for all groups
+    # P.analyze_arrayrun(metadata_filename=None, analysis='MeanVm', t_idx_start=100, t_idx_end=None)
+    #P.show_analyzed_arrayrun(csv_filename=None, analysis='MeanVm', variable_unit='Volt', NG_id_list=['NG1', 'NG2']) # Empty NG_id_list for all groups
+    # P.show_analyzed_arrayrun(csv_filename='GrCaus__20210304_2312276.csv', analysis='GrCaus', 
+    #     variable_unit='p value', NG_id_list=['NG3']) # Empty NG_id_list for all groups
     
     plt.show()

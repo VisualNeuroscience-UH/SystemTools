@@ -195,11 +195,46 @@ class SystemViz(SystemAnalysis):
 
         for ax, results in zip(axs,NG_list):
             N_monitored_neurons = data['vm_all'][results]['vm'].shape[1]
-            N_neurons = len(data['positions_all']['w_coord'][results])
+            # N_neurons = len(data['positions_all']['w_coord'][results])
 
             im = ax.plot(t, data['vm_all'][results]['vm'])
             ax.set_title(results, fontsize=10)
 
+        if savefigname:
+            self._figsave(figurename=savefigname)
+
+    def show_analog_results(self, results_filename=None, savefigname='',param_name=None,startswith=None):
+        # Shows data on filename. If filename remains None, shows the most recent data.
+
+        assert param_name is not None, 'Parameter param_name not defined, aborting...'
+        assert startswith is not None, 'Parameter startswith not defined. Use "NG" or "S", aborting...'
+        data = self.getData(filename=results_filename, data_type='results')
+
+        # Visualize
+        assert f'{param_name}_all' in data.keys(),f'No {param_name} data found. Was it recorded? Aborting...'
+        group_list = [n for n in data[f'{param_name}_all'].keys() if n.startswith(f'{startswith}')]
+        print(group_list)
+ 
+        t=data[f'{param_name}_all'][group_list[0]]['t']
+        time_array = t / t.get_best_unit()
+        fig, axs = self._prep_group_figure(group_list)
+
+        for ax, results in zip(axs,group_list):
+            N_monitored_neurons = data[f'{param_name}_all'][results][f'{param_name}'].shape[1]
+            this_data =  data[f'{param_name}_all'][results][f'{param_name}']
+            if hasattr(this_data,'get_best_unit'):
+                data_array = this_data / this_data.get_best_unit()
+                this_unit = this_data.get_best_unit()
+            else:
+                data_array = this_data
+                this_unit = '1'
+            im = ax.plot(time_array, data_array)
+            ax.set_title(results, fontsize=10)
+            ax.set_xlabel(t.get_best_unit())
+            ax.set_ylabel(this_unit)
+
+        fig.suptitle(f'{param_name}', fontsize=16)
+        
         if savefigname:
             self._figsave(figurename=savefigname)
 
@@ -337,7 +372,11 @@ class SystemViz(SystemAnalysis):
     def _prep_group_figure(self, NG_list):
 
         n_images = len(NG_list)
-        n_columns = 2
+        if n_images == 1:
+            n_columns = 1
+        else:
+            n_columns = 2
+    
         n_rows = int(np.ceil(n_images/n_columns))
 
         fig, axs = plt.subplots(n_rows, n_columns)

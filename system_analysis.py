@@ -41,8 +41,8 @@ Developed by Simo Vanni 2020-2021
 
 class SystemAnalysis(SystemUtilities):
 
-    map_analysis_names = {'meanfr':'MeanFR', 'eicurrentdiff':'EICurrentDiff', 'grcaus':'GrCaus'}
-    map_data_types = {'meanfr':'spikes_all', 'eicurrentdiff':'vm_all', 'grcaus': 'vm_all'}
+    map_analysis_names = {'meanfr':'MeanFR', 'eicurrentdiff':'EICurrentDiff', 'grcaus':'GrCaus', 'meanvm':'MeanVm'}
+    map_data_types = {'meanfr':'spikes_all', 'eicurrentdiff':'vm_all', 'grcaus': 'vm_all', 'meanvm': 'vm_all'}
 
     def __init__(self, path='./'):
 
@@ -65,6 +65,18 @@ class SystemAnalysis(SystemUtilities):
         MeanFR = spikes.size / (N_neurons * (t_idx_end - t_idx_start) * dt)
 
         return MeanFR
+
+    def  _analyze_meanvm(self, data, NG, t_idx_start, t_idx_end):
+
+        data_by_group = data['vm_all'][NG]
+
+        N_neurons = data_by_group['vm'].shape[1]
+
+        vm = self._get_vm_by_interval(data_by_group, t_idx_start=t_idx_start, t_idx_end=t_idx_end)
+
+        MeanVm = np.mean(vm)
+
+        return MeanVm
 
     def _get_currents_by_interval(self, data, NG, t_idx_start=0, t_idx_end=None):
 
@@ -103,9 +115,13 @@ class SystemAnalysis(SystemUtilities):
  
         return MeanEIdifference
                 
-    def _get_vm_by_interval(self, data, NG, t_idx_start=0, t_idx_end=None):
+    def _get_vm_by_interval(self, data, NG=None, t_idx_start=0, t_idx_end=None):
         
-        vm = data['vm_all'][NG]['vm']
+        if NG is None:
+            vm = data['vm'] # data_by_group already
+        else:
+            vm = data['vm_all'][NG]['vm']
+
         return vm[t_idx_start:t_idx_end,:]
 
     def downsample(self, data, downsampling_factor=10, axis=0):
@@ -307,7 +323,7 @@ class SystemAnalysis(SystemUtilities):
         NG_list = [n for n in data[self.map_data_types[analysisHR.lower()]].keys() if 'NG' in n]
 
         # Add neuron group columns
-        if analysisHR.lower() in ['meanfr', 'eicurrentdiff']:
+        if analysisHR.lower() in ['meanfr', 'meanvm', 'eicurrentdiff']:
             for NG in NG_list:
                 data_df[f'{analysisHR}_' + NG] = np.nan
         elif analysisHR.lower() in ['grcaus']:
@@ -333,7 +349,7 @@ class SystemAnalysis(SystemUtilities):
         for this_index, this_file in zip(data_df.index, data_df['Full path'].values):
             data = self.getData(this_file)
             # Loop through neuron groups 
-            if analysisHR.lower() in ['meanfr', 'eicurrentdiff']:
+            if analysisHR.lower() in ['meanfr', 'meanvm', 'eicurrentdiff']:
                 for NG in NG_list:
                     # _analyze_meanfr or _analyze_eicurrentdiff, analysis by single group
                     analyzed_results = eval(f'self._analyze_{analysisHR.lower()}(data, NG, t_idx_start=t_idx_start, t_idx_end=t_idx_end)')
@@ -376,6 +392,21 @@ class SystemAnalysis(SystemUtilities):
         filename_out = metadataroot.replace('metadata', analysisHR)
         csv_name_out = filename_out + '.csv'
         analyzed_data_df.to_csv(csv_name_out, index=True)
+
+    def analyze_plasticity(self, n_iter=1):
+        '''
+        Run three experiments of plasticity from Clopath_2010_NatNeurosci
+        Voltage clamp, STDP and Burst
+        '''
+
+        # Voltage clamp
+
+        # Pseudocode
+        # Run array experiment. Monitor wght
+        # Get results
+        # Display
+
+
 
 if __name__=='__main__':
 
