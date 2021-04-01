@@ -107,6 +107,9 @@ class SystemUtilities():
 
         print(f'Working on file {data_fullpath_filename}')
 
+        # For easy access
+        self.most_recent_loaded_file = data_fullpath_filename 
+
         return data_fullpath_filename
 
     def _listdir_loop(self, path, data_type):

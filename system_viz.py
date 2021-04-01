@@ -457,7 +457,8 @@ class SystemViz(SystemAnalysis):
             two_dim = False
 
         if analysisHR.lower() in ['grcaus']:
-            variable_unit_dict = {'_p' : 'p value', '_logF' : 'log2(F)', '_latency' : 'latency (s)'}
+            variable_unit_dict = {'_p' : 'p value', '_logF' : 'log2(F)', '_latency' : 'latency (s)', 
+            '_isStationary' : 'boolean', '_target_entropy' : 'entropy (bits)', '_fit_quality' : 'mean fit quality'}
 
         for this_NG_id, this_NG_name, this_data_column in zip(NG_id_list, NG_name_list, requested_data_column_list):
 
@@ -531,58 +532,59 @@ class SystemViz(SystemAnalysis):
 
 if __name__=='__main__':
 
-    path = r'C:\Users\Simo\Laskenta\SimuOut\Deneve\Replica_test'
+    # path = r'C:\Users\Simo\Laskenta\SimuOut\Deneve\Replica_test'
 
-    SV = SystemViz(path=path)
+    # SV = SystemViz(path=path)
 
-    # analysis.printMeanFR(filename=None, t_idx_start=0, t_idx_end=None)
+    # # analysis.printMeanFR(filename=None, t_idx_start=0, t_idx_end=None)
 
-    # Neuron group names 'NG1_L4_SS_L4', 'NG2_L4_BC_L4', 'NG3_L4_SS2_L4'
-    NG_name = 'NG3_L4_SS2_L4'
-    df = SV.plot_readout_on_input(NG_name, normalize=True)
+    # # Neuron group names 'NG1_L4_SS_L4', 'NG2_L4_BC_L4', 'NG3_L4_SS2_L4'
+    # NG_name = 'NG3_L4_SS2_L4'
+    # df = SV.plot_readout_on_input(NG_name, normalize=True)
 
-    # df_long = SV.unpivot_dataframe(df, index_column=['t'], kw_sub_to_unpivot='MeanFR')
-    sns.lineplot(   x="t", y='data', hue='units',
-                    data=df)
+    # # df_long = SV.unpivot_dataframe(df, index_column=['t'], kw_sub_to_unpivot='MeanFR')
+    # sns.lineplot(   x="t", y='data', hue='units',
+    #                 data=df)
 
-    # SV = SystemViz()
+    # # SV = SystemViz()
 
-    # # path = r'/home/tgarnier/CxPytestWorkspace/matrixsearch_L4_BC_noise'
-    # path = r'C:\Users\Simo\Laskenta\SimuOut'
-    # metadata_filename = 'MeanFR__20201203_2029581.csv'
-    # metadata_fullpath = os.path.join(path,metadata_filename)
+    # # # path = r'/home/tgarnier/CxPytestWorkspace/matrixsearch_L4_BC_noise'
+    # # path = r'C:\Users\Simo\Laskenta\SimuOut'
+    # # metadata_filename = 'MeanFR__20201203_2029581.csv'
+    # # metadata_fullpath = os.path.join(path,metadata_filename)
     
-    # df = pd.read_csv(metadata_fullpath, index_col=0)
-    # index_column = ['Dimension-1 Value', 'Dimension-2 Value']
-    # df_long = SV.unpivot_dataframe(df, index_column=index_column, kw_sub_to_unpivot='MeanFR')
-    # print(df_long)
+    # # df = pd.read_csv(metadata_fullpath, index_col=0)
+    # # index_column = ['Dimension-1 Value', 'Dimension-2 Value']
+    # # df_long = SV.unpivot_dataframe(df, index_column=index_column, kw_sub_to_unpivot='MeanFR')
+    # # print(df_long)
 
-    # g = sns.FacetGrid(df_long, col="groupName", col_wrap=2, height=2)    
-    # g.map(sns.pointplot, "Dimension-1 Value", "MeanFR")
+    # # g = sns.FacetGrid(df_long, col="groupName", col_wrap=2, height=2)    
+    # # g.map(sns.pointplot, "Dimension-1 Value", "MeanFR")
 
-    # g2 = sns.FacetGrid(df_long, col="groupName", col_wrap=2, height=2)    
-    # g2.map(sns.pointplot, "Dimension-2 Value", "MeanFR")
-    # groups=['MeanFR_NG0_relay_spikes', 'MeanFR_NG1_L4_SS_L4',
-    #    'MeanFR_NG2_L4_BC_L4', 'MeanFR_NG3_L4_PC1_L4toL1']
-    # group_0 = df.pivot("Dimension-1 Value", "Dimension-2 Value", groups[0])
-    # group_1 = df.pivot("Dimension-1 Value", "Dimension-2 Value", groups[1])
-    # group_2 = df.pivot("Dimension-1 Value", "Dimension-2 Value", groups[2])
-    # group_3 = df.pivot("Dimension-1 Value", "Dimension-2 Value", groups[3])
+    # # g2 = sns.FacetGrid(df_long, col="groupName", col_wrap=2, height=2)    
+    # # g2.map(sns.pointplot, "Dimension-2 Value", "MeanFR")
+    # # groups=['MeanFR_NG0_relay_spikes', 'MeanFR_NG1_L4_SS_L4',
+    # #    'MeanFR_NG2_L4_BC_L4', 'MeanFR_NG3_L4_PC1_L4toL1']
+    # # group_0 = df.pivot("Dimension-1 Value", "Dimension-2 Value", groups[0])
+    # # group_1 = df.pivot("Dimension-1 Value", "Dimension-2 Value", groups[1])
+    # # group_2 = df.pivot("Dimension-1 Value", "Dimension-2 Value", groups[2])
+    # # group_3 = df.pivot("Dimension-1 Value", "Dimension-2 Value", groups[3])
 
-    # plt.figure()
-    # ax = sns.heatmap(group_0)
-    # plt.title(groups[0])
+    # # plt.figure()
+    # # ax = sns.heatmap(group_0)
+    # # plt.title(groups[0])
 
-    # plt.figure()
-    # ax = sns.heatmap(group_1)
-    # plt.title(groups[1])
+    # # plt.figure()
+    # # ax = sns.heatmap(group_1)
+    # # plt.title(groups[1])
 
-    # plt.figure()
-    # ax = sns.heatmap(group_2)
-    # plt.title(groups[2])
+    # # plt.figure()
+    # # ax = sns.heatmap(group_2)
+    # # plt.title(groups[2])
     
-    # plt.figure()
-    # ax = sns.heatmap(group_3)
-    # plt.title(groups[3])
+    # # plt.figure()
+    # # ax = sns.heatmap(group_3)
+    # # plt.title(groups[3])
 
-    plt.show()
+    # plt.show()
+    pass

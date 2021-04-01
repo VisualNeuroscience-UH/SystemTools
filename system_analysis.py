@@ -2,17 +2,24 @@
 import numpy as np
 from matplotlib import pyplot as plt
 import pandas as pd
+from scipy.stats import shapiro, normaltest, ttest_1samp
+import seaborn as sns
+
+# Statistics
 from statsmodels.tsa.stattools import grangercausalitytests as gc_test
 from statsmodels.tsa.stattools import adfuller
-# import statsmodels.api as sm_api
-import statsmodels.api as sm
+from statsmodels.stats.stattools import durbin_watson
 from statsmodels.tsa.api import VAR
-from scipy.signal import decimate
+from statsmodels.graphics.gofplots import qqplot
+from statsmodels.stats.outliers_influence import OLSInfluence
+from statsmodels.stats.diagnostic import kstest_normal, het_breuschpagan
+from statsmodels.compat import lzip
+# import statsmodels.api as sm
+from PyIF import te_compute as te
 
 # Computational neuroscience
 import brian2.units as b2u
 import elephant as el 
-# from elephant.causality.granger import pairwise_granger, conditional_granger
 from neo.core import AnalogSignal
 import quantities as pq
 
@@ -20,6 +27,7 @@ import quantities as pq
 import os
 import pickle
 import sys
+import math
 
 # Current repo
 from system_utilities import SystemUtilities
@@ -124,28 +132,27 @@ class SystemAnalysis(SystemUtilities):
 
         return vm[t_idx_start:t_idx_end,:]
 
-    def downsample(self, data, downsampling_factor=10, axis=0):
-        downsampled_data = decimate(data, downsampling_factor, axis=axis)
-        return downsampled_data
-
-    def _test_time_lag(self, data, max_lag):
+    def _test_time_lag(self, data, max_lag, dt, downsampling_factor):
         
         #instantiate the VAR function on time series data
         model = VAR(data)
+
+        max_lag_samples = int(max_lag / (dt * downsampling_factor))
 
         for i in ['aic', 'bic', 'hqic']:
             #maxlags takes the number of lags we want to test
             #ic takes the information criterion method based on which order would be suggested
             try:
-                results = model.fit(maxlags=max_lag, ic=i, trend='c')
-            except:
-                continue
+                results = model.fit(maxlags=max_lag_samples, ic=i, trend='c')
+            except ValueError:
+                print(f'Error: maxlags {max_lag_samples} is too large for the number of observations {data.shape[0]}')
+                sys.exit()
             order = results.k_ar
 
             print(f"The suggested VAR order from {i} is {order}")
 
             #To test absence of significant residual autocorrelations one can use the test_whiteness method of VARResults
-            test_corr = results.test_whiteness(nlags=max_lag + 1, signif=0.05, adjusted=False)
+            test_corr = results.test_whiteness(nlags=max_lag_samples + 1, signif=0.05, adjusted=False)
 
             ##Print the p-value
             ##There is no serial autocorrelation in residuals if p-value is more than 0.05
@@ -157,29 +164,191 @@ class SystemAnalysis(SystemUtilities):
             
             # print(results.summary())
 
-        # # plot signals
-        # shift = 100
-        # if 1:
-        #     plt.figure()
+    def _return_best_order(self, data, max_lag, ic, dt, downsampling_factor):
 
-        #     plt.plot(data[:-shift,1], label='source')
-        #     plt.plot(data[shift:,0], label='target_shifted')
-        #     plt.legend(loc='upper right', fontsize='x-large')
-
-        # if 1:
-        #     plt.figure()
-        #     plt.plot(data[:,1], label='source')
-        #     plt.plot(data[:,0], label='target')
-        #     plt.legend(loc='upper right', fontsize='x-large')
-        #     plt.show()
-
-    def _return_best_order(self, data, max_lag, ic):
-
+        max_lag_samples = int(max_lag / (dt * downsampling_factor))
         model = VAR(data)
-        results = model.fit(maxlags=max_lag, ic=ic, trend='c')
-        best_time_lag = results.k_ar
+        results = model.fit(maxlags=max_lag_samples, ic=ic, trend='c')
+        best_time_lag_samples = results.k_ar
 
-        return best_time_lag
+        return best_time_lag_samples
+
+    def transfer_entropy(self, data, max_lag):
+        '''
+        FOR UNKNOWN REASON THIS DOES NOT SEEM TO GIVE ANYTHING USEFUL
+        IT SEES ALL INPUT OUTPUT PAIRS AS EQUAL IN TE SENSE. FOR SATURATED
+        SPIKE TRAINS IN GROUP 1 IT GIVES NEGATIVE VALUES 
+        Measures Information transmitted from Y to X
+
+        data: N x 2 matrix, where
+        N is the number of samples
+        data[:,0] is target (X)
+        data[:,1] is source (Y)
+        k: controls the number of neighbors used in KD-tree queries. Keep 1 (best resolution)
+        embedding: controls how many lagged periods are used to estimate transfer entropy
+        GPU: a boolean argument that indicates if CUDA compatible GPUs should be used to estimate transfer entropy instead of your computer's CPUs.
+        safetyCheck: a boolean argument can be used to check for duplicates rows in your dataset. Keep True
+        '''
+
+        transfer_entropy = te.te_compute(data[:,0], data[:,1], k=1, embedding=max_lag, safetyCheck=True, GPU=False)
+
+        return transfer_entropy 
+
+    def vm_entropy(self, data, base=None, bins=None):
+        """ Computes entropy of data distribution. """
+
+        #de-mean data
+        data_demeaned = data - data.mean(axis=0)
+        #flatten data
+        _data = data_demeaned.flatten()
+        n_labels = len(_data)
+
+        if n_labels <= 1:
+            return 0
+
+        # Assuming Vm dynamic range about 30 mV. Assuming a 10-step resolution 
+        # Note, demeaned.   
+        bins = np.linspace(-15,15,11) 
+
+        if bins is not None:
+            counts,foo = np.histogram(_data,bins=bins)
+        else:
+            value,counts = np.unique(_data, return_counts=True)
+
+        probs = counts / n_labels
+        n_classes = np.count_nonzero(probs)
+
+        if n_classes <= 1:
+            return 0
+
+        ent = 0.
+
+        # Compute entropy
+        base = math.e if base is None else base
+
+        for i in probs:
+            # ent change is 0 if P(i) is 0, ie empty bin
+            if i == 0.0:
+                pass
+            else:
+                ent -= i * math.log(i, base)
+
+        if 0:
+            plt.hist(_data,bins=bins)
+            plt.title(f'vm_entropy = {ent}')
+            plt.show()
+
+        return ent
+
+    def _get_passing(self, value, threshold, passing_goes='over'):
+        assert passing_goes in ['under', 'over', 'both'], \
+            'Unkown option for passing_goes parameter, valid options are "over" and "under"'
+
+        if passing_goes=='over':
+            if value <= threshold:
+                passing = 'FAIL'
+            elif value > threshold:
+                passing = 'PASS'
+        elif passing_goes=='under':
+            if value > threshold:
+                passing = 'FAIL'
+            elif value <= threshold:
+                passing = 'PASS'
+        elif passing_goes=='both':
+            if threshold[0] <= value <= threshold[1]:
+                passing = 'PASS'
+            else:
+                passing = 'FAIL'
+                
+        return passing
+
+    def _gc_model_diagnostics(self, gc_stat_dg_data, pre_idx, post_idx, show_figure=False, save_gc_fit_diagnostics=False):
+
+        full_model = 1
+        partial_model = 0
+        current_model = full_model
+
+        _results = gc_stat_dg_data[current_model]
+        _residuals = _results.resid
+        _exog = gc_stat_dg_data[current_model].model.exog
+        _endog = gc_stat_dg_data[current_model].model.endog
+
+        if show_figure is True:
+            # plot preparations
+            fig = plt.figure()
+            plt.rc("figure", figsize=(18,12))
+            plt.rc("font", size=10)
+
+        # Heteroscedasticity
+        # Homoscedasticity is assumed as 0 hypothesis.
+        p_th = 0.001
+        stat_het, p_het, foo1, foo2 = het_breuschpagan(_endog, _exog)
+        het_passing = self._get_passing(p_het, p_th, passing_goes='over')
+        stat_het = self.round_to_n_significant(stat_het)
+        p_het = self.round_to_n_significant(p_het)
+        if show_figure is True:
+            ax12 = plt.subplot(3, 2, (1,2))
+            # plt.plot(_exog[:,:-2],_residuals,'.b') # We skip the last regressor from exog, which is constant 1
+            plt.plot(_exog[:,:-2],_endog,'.b') # We skip the last regressor from exog, which is constant 1
+            ax12.set_title(f'''Heteroscedasticity {het_passing}\npre: {pre_idx}; post: {post_idx},\nstat: {stat_het}; p: {p_het}''')
+
+        # Cook's distance, Influence
+        # cook_cutoff = 4 / _results.nobs
+        cook_cutoff = 1
+        Influence = OLSInfluence(_results)
+        cooks_distance = Influence.cooks_distance[0]
+        cook_passing = self._get_passing(np.max(cooks_distance), cook_cutoff, passing_goes='under')
+        if show_figure is True:
+            ax3 = plt.subplot(3, 2, 3)
+            Influence.plot_influence(ax=ax3, alpha=0.001)
+            ax3.set_title(f'Influence plot (H leverage vs Studentized residuals)')
+            ax3.set_xlabel('', fontsize=10)
+            ax3.set_ylabel('Studentized residuals', fontsize=10)
+
+            ax4 = plt.subplot(3, 2, 4)
+            ax4.plot(cooks_distance,'.b')
+            ax4.hlines(cook_cutoff,0,len(cooks_distance), colors='red', linestyles='dashed')
+            ax4.set_title(f'''Cook's distance {cook_passing}\nmax value: {np.max(cooks_distance)}''')
+
+        # # Normality
+        # # If the pvalue is lower than threshold, we can reject the 
+        # # Null hypothesis that the sample comes from a normal distribution.
+        p_th = 0.001
+        stat_norm, p_norm = kstest_normal(_residuals)
+        stat_norm = self.round_to_n_significant(stat_norm)
+        p_norm = self.round_to_n_significant(p_norm)
+        normality_passing = self._get_passing(p_norm, p_th, passing_goes='over')
+
+        # print(f'Normality of error distribution: p_norm = {p_norm} -- {normality_passing}')
+        if show_figure is True:
+            ax5 = plt.subplot(3, 2, 5)
+            sns.distplot(_residuals, ax=ax5)
+            ax5.set_title(f'Distribution of residuals')
+            ax6 = plt.subplot(3, 2, 6)
+            qqplot(_residuals, line='s', ax=ax6)
+            ax6.set_title(f'Normality of residuals {normality_passing}')
+
+        # Serial autocorrelation
+        limits = [1.5, 2.5]
+        stat_acorr = durbin_watson(_residuals)
+        acorr_passing = self._get_passing(stat_acorr, limits, passing_goes='both')
+        # print(f'Autocorrelation of error distribution: stat = {str(stat_acorr)} -- {acorr_passing}')
+
+        plt.show()
+
+        # Results summary to txt file
+        if save_gc_fit_diagnostics is True:
+            filename_full_path = self.gc_dg_filename
+            results_summary = _results.summary()
+            with open(filename_full_path, "a") as text_file:
+                text_file.write(f'\n{self.most_recent_loaded_file}\npre {pre_idx} -- post {post_idx}\n')
+                text_file.write('\n')
+                text_file.write(f'het {het_passing}, cook {cook_passing}, norm {normality_passing}, acorr {acorr_passing}')
+                text_file.write('\n\n')
+                text_file.write(str(results_summary))
+                text_file.write('\n')
+
+        return het_passing, cook_passing, normality_passing, acorr_passing
 
     def _analyze_grcaus(self, data, source_signal, dt, NG, 
                         t_idx_start=0, t_idx_end=None, **kwargs):
@@ -191,79 +360,76 @@ class SystemAnalysis(SystemUtilities):
         series.
         '''
 
-        def _check_stationarity(signal, stationarity_p, time_lag, time_jump):
-            stationary = False
-            idx = 0
-            while  not stationary:
-                if idx + 1 == signal.shape[1]:
-                    stationary = True
-                # Stationarity test for source signals
+        def _check_stationarity(signal, time_lag):
+
+            stationarity_p = 0.1 # significance to reject non stationarity hypothesis of data
+
+            final_flag=[]
+            # Stationarity test for source and target signals
+            for idx in np.arange(signal.shape[1]):
                 st_result = adfuller(signal[:,idx], time_lag)
                 p_value = st_result[1] 
                 if np.isnan(p_value):
-                    idx += 1
-                    continue
+                    final_flag.append(False)
                 if p_value > stationarity_p:
-                    time_lag += time_jump
+                    final_flag.append(False)
+                    # print(f'\033[31m, p = {p_value}\r\033[39m')
                 elif p_value <= stationarity_p:
-                    idx += 1
-                print(f'time lag: {time_lag} for idx {idx} gives p = {p_value}\r', end="")
+                    final_flag.append(True)
+                    # print(f'\033[32m, p = {p_value}\r\033[39m')
+            # print('\033[97m')
+            stationary = all(final_flag)
 
-            print('')
-            return time_lag
+            return stationary            
 
-        max_time_lag = kwargs['max_time_lag']
-        do_downsample = kwargs['do_downsample'] 
+        max_time_lag_seconds = kwargs['max_time_lag_seconds']
+        downsampling_factor = kwargs['downsampling_factor'] 
         test_stationarity = kwargs['test_stationarity'] 
         test_timelag = kwargs['test_timelag'] 
+        do_bonferroni_correction = kwargs['do_bonferroni_correction'] 
+        gc_significance_level = kwargs['gc_significance_level'] 
+        save_gc_fit_diagnostics = kwargs['save_gc_fit_diagnostics']
+        show_figure = kwargs['show_gc_fit_diagnostics_figure']  
 
         vm_unit = self._get_vm_by_interval(data, NG, t_idx_start=t_idx_start, t_idx_end=t_idx_end)
 
-        # Remove brian2 dimension for gc analysis
-        target_signal = vm_unit / vm_unit.get_best_unit() 
+        # Slice source signal to requested time interval
+        if t_idx_end is None:
+            t_idx_end = -1
+        
+        source_signal = source_signal[t_idx_start:t_idx_end,:]
 
-        gc_matrix_np_F = np.full_like(np.empty((source_signal.shape[1], target_signal.shape[1])),np.nan)
+        target_signal = vm_unit / vm_unit.get_best_unit() 
+        target_signal_entropy = self.vm_entropy(target_signal, base=2)
+
+        gc_matrix_np_F = np.full_like(np.empty((source_signal.shape[1], target_signal.shape[1])),0)
         gc_matrix_np_p = np.full_like(np.empty((source_signal.shape[1], target_signal.shape[1])),np.nan)
         gc_matrix_np_latency = np.full_like(np.empty((source_signal.shape[1], target_signal.shape[1])),np.nan)
+        gc_matrix_np_stationary = np.full_like(np.empty((source_signal.shape[1], target_signal.shape[1])),np.nan) 
+        gc_fitQA = 0
 
-        # Analyze causal effect delay
-
-        downsampling_factor = 1
-        if do_downsample is True:
+        if downsampling_factor > 1:
+            assert isinstance(downsampling_factor,int), 'downsampling_factor must be integer, aborting...'
             # Barnett_2017_JNeurosciMeth: sample-period should be kept at 1/10 or less of
             # causal effect delay for detectability sweet spot. 
-            # For 4.3.2021 manually checked delay is about 
-            downsampling_factor = 10
-            source_signal = self.downsample(source_signal, downsampling_factor=downsampling_factor, axis=0)
-            target_signal = self.downsample(target_signal, downsampling_factor=downsampling_factor, axis=0)
+            source_signal = source_signal[::downsampling_factor,:]
+            target_signal = target_signal[::downsampling_factor,:]
 
         # Preprocessing. Preferentially first-order differencing.
         diff_order = 1
         source_signal_pp = np.diff(source_signal, n=diff_order, axis=0)
         target_signal_pp = np.diff(target_signal, n=diff_order, axis=0)
 
-        if test_stationarity is True:
-            # Search for minimum valid time lag for this dataset
-            stationarity_p = 0.01 # significance to reject non stationarity test
-            time_jump = 20 # If stationarity fails, automatically add this value to max_time_lag and rerun
-            
-            max_time_lag = _check_stationarity(source_signal_pp, stationarity_p, max_time_lag, time_jump)
-
-            print(f'Source min max_time_lag {max_time_lag} time points')
-
-            max_time_lag = _check_stationarity(target_signal_pp, stationarity_p, max_time_lag, time_jump)
-
-            print(f'Source and Target min max_time_lag {max_time_lag} time points')
-
         pre_idx_array =  np.arange(source_signal.shape[1])
         post_idx_array =  np.arange(target_signal.shape[1])
 
+        # Analyze causal effect delay and exit
         if test_timelag is True:
             for pre_idx in pre_idx_array:
                 for post_idx in post_idx_array:
                     _source, _target = source_signal_pp[:,pre_idx], target_signal_pp[:,post_idx]
                     signals = np.vstack([_target, _source]).T
-                    self._test_time_lag(signals, max_time_lag)
+                    self._test_time_lag(signals, max_time_lag_seconds, dt, downsampling_factor)
             sys.exit()
 
         # for each source signal, calculate all target signals.
@@ -277,43 +443,78 @@ class SystemAnalysis(SystemUtilities):
 
                 # Get best order with Bayesian information criterion
                 try:
-                    best_time_lag = self._return_best_order(signals, max_time_lag, 'aic')
+                    best_time_lag_samples = self._return_best_order(signals, max_time_lag_seconds, 'bic', dt, downsampling_factor)
                 except:
                     continue
-                pairwise_gc_dict = gc_test(signals, [best_time_lag], verbose=False)
+                pairwise_gc_dict = gc_test(signals, [best_time_lag_samples], verbose=False)
+
+                # GC quality control, several measures on error distribution
+                gc_stat_dg_data = pairwise_gc_dict[best_time_lag_samples][1]
+                het_passing, cook_passing, normality_passing, acorr_passing = \
+                    self._gc_model_diagnostics(gc_stat_dg_data, pre_idx, post_idx, 
+                    show_figure=show_figure, save_gc_fit_diagnostics=save_gc_fit_diagnostics)
+                gc_fitQA += str([het_passing, cook_passing, normality_passing, acorr_passing]).count('PASS')
 
                 # dict_keys(['ssr_ftest', 'ssr_chi2test', 'lrtest', 'params_ftest'])
                 # test statistic, pvalues, degrees of freedom
-                gc_matrix_np_F[pre_idx, post_idx] = pairwise_gc_dict[best_time_lag][0]['ssr_ftest'][0]
-                gc_matrix_np_p[pre_idx, post_idx] = pairwise_gc_dict[best_time_lag][0]['ssr_ftest'][1]
-                gc_matrix_np_latency[pre_idx, post_idx] = best_time_lag * dt * downsampling_factor
+                gc_test_type = 'ssr_ftest'
+                gc_matrix_np_F[pre_idx, post_idx] = pairwise_gc_dict[best_time_lag_samples][0][gc_test_type][0]
+                gc_matrix_np_p[pre_idx, post_idx] = pairwise_gc_dict[best_time_lag_samples][0][gc_test_type][1]
+                gc_matrix_np_latency[pre_idx, post_idx] = best_time_lag_samples * dt * downsampling_factor
+                stationary_flag = _check_stationarity(signals, best_time_lag_samples)
+                gc_matrix_np_stationary[pre_idx, post_idx] = stationary_flag
+                if 0:
+                    # Plot preprocessed signals
+                    if stationary_flag is False:
+                        fig, ax = plt.subplots()
+                        ax.plot(signals[:,0], label='target'); 
+                        ax.plot(signals[:,1], label='source'); 
+                        ax.legend(loc='upper right')
+                        plt.title(stationary_flag); 
+                        plt.show()
 
+        
+        if do_bonferroni_correction is True:
+            corrected_gc_significance_level = gc_significance_level /  gc_matrix_np_p.size
+        else:
+            corrected_gc_significance_level = gc_significance_level
         
         # Select one-to-one connectivity from input to "correct" output 
         gc_eye_idx = np.eye(source_signal.shape[1], target_signal.shape[1], dtype=bool)
 
         # Magnitude in base 2 log. If error distribution is gaussian, can be interpreted as bits
         gc_matrix_np_logF = np.log2(gc_matrix_np_F)
-        gc_logF = gc_matrix_np_logF[gc_eye_idx]
+        gc_logF = np.nan_to_num(gc_matrix_np_logF[gc_eye_idx], nan=0.0)
         gc_p = gc_matrix_np_p[gc_eye_idx] 
         gc_latency = gc_matrix_np_latency[gc_eye_idx] 
+        gc_matrix_np_stationary = gc_matrix_np_stationary[gc_eye_idx]
 
         # Get representative value
         MeanGrCaus_logF = np.nanmean(gc_logF)
         MedianGrCaus_p = np.nanmedian(gc_p)
+        PassGrCaus_p = np.nanmedian(gc_p) <=  corrected_gc_significance_level
         MeanGrCaus_latency = np.nanmean(gc_latency)
+        MinGrCausStationary = np.nanmin(gc_matrix_np_stationary)
+        MeanGrCaus_fitQA = gc_fitQA / (pre_idx_array.size * post_idx_array.size)
 
         if 1:
             print(f'BG log2(F): {MeanGrCaus_logF}')
-            print(f'BG p: {MedianGrCaus_p}')
             print(f'BG latency: {MeanGrCaus_latency}')
             print(f'gc_matrix_np_p: \n{gc_matrix_np_p}')
-            print(f'gc_matrix_np_latency: \n{gc_matrix_np_latency}')
+            print(f'target_signal_entropy: \n{target_signal_entropy}')
+            print(f'stationary test:')
+            if MinGrCausStationary: print('\033[32mPASS\033[97m')
+            else: print('\033[31mFAIL\033[97m')
+            print(f'significance test:')
+            if PassGrCaus_p: print('\033[32mPASS\033[97m')
+            else: print('\033[31mFAIL\033[97m')
+            print(f'fit quality: {MeanGrCaus_fitQA}')
+            print('***End of analysis***\n\n')
 
         # TODO Calculate CV of gc "grandmother index"
 
         # Return one value per analysis (mean of best matching units), indicating GrCaus relation
-        return MeanGrCaus_logF, MedianGrCaus_p, MeanGrCaus_latency
+        return MeanGrCaus_logF, MedianGrCaus_p, MeanGrCaus_latency, MinGrCausStationary, target_signal_entropy, MeanGrCaus_fitQA
 
     def get_analyzed_array_as_df(self, data_df, analysisHR=None, t_idx_start=0, t_idx_end=None, **kwargs):
     
@@ -331,6 +532,9 @@ class SystemAnalysis(SystemUtilities):
             data_df[f'{analysisHR}_' + target_group + '_logF'] = np.nan
             data_df[f'{analysisHR}_' + target_group + '_p'] = np.nan
             data_df[f'{analysisHR}_' + target_group + '_latency'] = np.nan
+            data_df[f'{analysisHR}_' + target_group + '_isStationary'] = np.nan
+            data_df[f'{analysisHR}_' + target_group + '_target_entropy'] = np.nan
+            data_df[f'{analysisHR}_' + target_group + '_fit_quality'] = np.nan
             # Get reference data for granger causality
             analog_input = self.getData( self.input_filename, data_type=None)
             source_signal = analog_input['stimulus'].T # We want time x units
@@ -341,9 +545,6 @@ class SystemAnalysis(SystemUtilities):
         # Get duration
         if t_idx_end is None:
             t_idx_end = int(data['runtime']  / dt)
-
-
-
 
         # Loop through datafiles
         for this_index, this_file in zip(data_df.index, data_df['Full path'].values):
@@ -358,12 +559,16 @@ class SystemAnalysis(SystemUtilities):
             elif analysisHR.lower() in ['grcaus']:
                 # check how multivariate gc is analyzed; are min, max, mean, median useful?
                 # Apply this to _analyze_grangercausality
-                MeanGrCaus_logF, MedianGrCaus_p, MeanGrCaus_latency = self._analyze_grcaus( 
-                    data, source_signal, dt, target_group, t_idx_start=t_idx_start, t_idx_end=t_idx_end, **kwargs)
+                MeanGrCaus_logF, MedianGrCaus_p, MeanGrCaus_latency, MinGrCausStationary, target_entropy, MeanGrCaus_fitQA = \
+                    self._analyze_grcaus(data, source_signal, dt, target_group, t_idx_start=t_idx_start, 
+                    t_idx_end=t_idx_end, **kwargs)
 
                 data_df.loc[this_index,f'{analysisHR}_' + target_group + '_logF'] = MeanGrCaus_logF
                 data_df.loc[this_index,f'{analysisHR}_' + target_group + '_p'] = MedianGrCaus_p
                 data_df.loc[this_index,f'{analysisHR}_' + target_group + '_latency'] = MeanGrCaus_latency
+                data_df.loc[this_index,f'{analysisHR}_' + target_group + '_isStationary'] = MinGrCausStationary
+                data_df.loc[this_index,f'{analysisHR}_' + target_group + '_target_entropy'] = target_entropy
+                data_df.loc[this_index,f'{analysisHR}_' + target_group + '_fit_quality'] = MeanGrCaus_fitQA
 
         return data_df
 
@@ -375,8 +580,21 @@ class SystemAnalysis(SystemUtilities):
         assert analysis.lower() in self.map_analysis_names.keys(), 'Analysis type not found, aborting...'
         analysisHR = self.map_analysis_names[analysis.lower()]
 
+        # Replace metadata with scalar value for MeanFR or EICurrentDiff
+        metadata_fullpath_filename = self._parsePath(metadata_filename, data_type='metadata')
+        metadataroot, metadataextension = os.path.splitext(metadata_fullpath_filename)
+        filename_out = metadataroot.replace('metadata', analysisHR)
+        csv_name_out = filename_out + '.csv'
+
+        save_gc_fit_diagnostics = kwargs['save_gc_fit_diagnostics']
+        if save_gc_fit_diagnostics is True:
+            diag_filename = 'grcaus_FitDiag.txt'
+            self.gc_dg_filename = os.path.join(self.path, diag_filename)
+            # Flush existing file empty
+            open(self.gc_dg_filename, 'w').close()
+
         data_df = self.getData(metadata_filename, data_type='metadata')
-        # data_df = self.getMeanFR_array(data_df, t_idx_start=t_idx_start, t_idx_end=t_idx_end)
+
         analyzed_data_df = self.get_analyzed_array_as_df(
             data_df, analysisHR=analysisHR, t_idx_start=t_idx_start, t_idx_end=t_idx_end, **kwargs)
 
@@ -386,11 +604,6 @@ class SystemAnalysis(SystemUtilities):
         # # Display values
         self.pp_df_full(analyzed_data_df)
 
-        # Replace metadata with scalar value for MeanFR or EICurrentDiff
-        metadata_fullpath_filename = self._parsePath(metadata_filename, data_type='metadata')
-        metadataroot, metadataextension = os.path.splitext(metadata_fullpath_filename)
-        filename_out = metadataroot.replace('metadata', analysisHR)
-        csv_name_out = filename_out + '.csv'
         analyzed_data_df.to_csv(csv_name_out, index=True)
 
     def analyze_plasticity(self, n_iter=1):
@@ -407,15 +620,15 @@ class SystemAnalysis(SystemUtilities):
         # Display
 
 
-
 if __name__=='__main__':
 
-    path = r'C:\Users\Simo\Laskenta\SimuOut\Deneve\Replica_test'
+    # path = r'C:\Users\Simo\Laskenta\SimuOut\Deneve\Replica_test'
 
-    analysis = SystemAnalysis(path=path)
-    NG_name = 'NG3_L4_SS2_L4'
+    # analysis = SystemAnalysis(path=path)
+    # NG_name = 'NG3_L4_SS2_L4'
 
-    analysis.plot_readout_on_input(NG_name, normalize=False, filename='Replica_test_results_20210114_1750000.gz')    
-    analysis.show_spikes(filename='Replica_test_results_20210114_1750000.gz')
+    # analysis.plot_readout_on_input(NG_name, normalize=False, filename='Replica_test_results_20210114_1750000.gz')    
+    # analysis.show_spikes(filename='Replica_test_results_20210114_1750000.gz')
     
-    plt.show()
+    # plt.show()
+    pass
