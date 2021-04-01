@@ -356,7 +356,7 @@ class SystemAnalysis(SystemUtilities):
         Get input and output timeseries.
         Run grangercausality for relevant pairs. 
         '''
-        
+
         max_time_lag_seconds = kwargs['max_time_lag_seconds']
         downsampling_factor = kwargs['downsampling_factor'] 
         test_timelag = kwargs['test_timelag'] 
@@ -489,7 +489,6 @@ class SystemAnalysis(SystemUtilities):
             data_df[f'{analysisHR}_' + target_group + '_logF'] = np.nan
             data_df[f'{analysisHR}_' + target_group + '_p'] = np.nan
             data_df[f'{analysisHR}_' + target_group + '_latency'] = np.nan
-            data_df[f'{analysisHR}_' + target_group + '_isStationary'] = np.nan
             data_df[f'{analysisHR}_' + target_group + '_target_entropy'] = np.nan
             data_df[f'{analysisHR}_' + target_group + '_fit_quality'] = np.nan
             # Get reference data for granger causality
@@ -516,14 +515,13 @@ class SystemAnalysis(SystemUtilities):
             elif analysisHR.lower() in ['grcaus']:
                 # check how multivariate gc is analyzed; are min, max, mean, median useful?
                 # Apply this to _analyze_grangercausality
-                MeanGrCaus_logF, MedianGrCaus_p, MeanGrCaus_latency, MinGrCausStationary, target_entropy, MeanGrCaus_fitQA = \
+                MeanGrCaus_logF, MedianGrCaus_p, MeanGrCaus_latency, target_entropy, MeanGrCaus_fitQA = \
                     self._analyze_grcaus(data, source_signal, dt, target_group, t_idx_start=t_idx_start, 
                     t_idx_end=t_idx_end, **kwargs)
 
                 data_df.loc[this_index,f'{analysisHR}_' + target_group + '_logF'] = MeanGrCaus_logF
                 data_df.loc[this_index,f'{analysisHR}_' + target_group + '_p'] = MedianGrCaus_p
                 data_df.loc[this_index,f'{analysisHR}_' + target_group + '_latency'] = MeanGrCaus_latency
-                data_df.loc[this_index,f'{analysisHR}_' + target_group + '_isStationary'] = MinGrCausStationary
                 data_df.loc[this_index,f'{analysisHR}_' + target_group + '_target_entropy'] = target_entropy
                 data_df.loc[this_index,f'{analysisHR}_' + target_group + '_fit_quality'] = MeanGrCaus_fitQA
 

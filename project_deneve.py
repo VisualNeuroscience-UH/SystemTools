@@ -310,11 +310,11 @@ if __name__=='__main__':
     # P.show_connections(connections_filename=None, hist_from='L4_CI_BC_L4__to__L4_CI_SS_L4_soma', savefigname='')
 
     # # # # ## Analyse and show arrayrun data ##
-    # # # # Available analyses: 'MeanFR':  variable_unit='Hz', 'MeanVm':  variable_unit='', 'EICurrentDiff': variable_unit='Amp', 'GrCaus': variable_unit='p value'
+    # # # # Available analyses: 'MeanFR':  variable_unit='Hz', 'MeanVm':  variable_unit='', 'EICurrentDiff': variable_unit='Amp', 'GrCaus': multiple units
     extra_GrCaus_attributes = {
         'max_time_lag_seconds': 0.1,
         'downsampling_factor': 10,
-        'test_timelag': True,
+        'test_timelag': False,
         'do_bonferroni_correction': True,
         'gc_significance_level': 0.001,
         'save_gc_fit_diagnostics': True,
