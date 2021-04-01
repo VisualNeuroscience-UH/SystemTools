@@ -314,8 +314,7 @@ if __name__=='__main__':
     extra_GrCaus_attributes = {
         'max_time_lag_seconds': 0.1,
         'downsampling_factor': 10,
-        'test_stationarity': False,
-        'test_timelag': False,
+        'test_timelag': True,
         'do_bonferroni_correction': True,
         'gc_significance_level': 0.001,
         'save_gc_fit_diagnostics': True,

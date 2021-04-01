@@ -355,36 +355,10 @@ class SystemAnalysis(SystemUtilities):
         '''
         Get input and output timeseries.
         Run grangercausality for relevant pairs. 
-
-        Stationary time series is a requirement for gc test. This is tested separately for each time
-        series.
         '''
-
-        def _check_stationarity(signal, time_lag):
-
-            stationarity_p = 0.1 # significance to reject non stationarity hypothesis of data
-
-            final_flag=[]
-            # Stationarity test for source and target signals
-            for idx in np.arange(signal.shape[1]):
-                st_result = adfuller(signal[:,idx], time_lag)
-                p_value = st_result[1] 
-                if np.isnan(p_value):
-                    final_flag.append(False)
-                if p_value > stationarity_p:
-                    final_flag.append(False)
-                    # print(f'\033[31m, p = {p_value}\r\033[39m')
-                elif p_value <= stationarity_p:
-                    final_flag.append(True)
-                    # print(f'\033[32m, p = {p_value}\r\033[39m')
-            # print('\033[97m')
-            stationary = all(final_flag)
-
-            return stationary            
-
+        
         max_time_lag_seconds = kwargs['max_time_lag_seconds']
         downsampling_factor = kwargs['downsampling_factor'] 
-        test_stationarity = kwargs['test_stationarity'] 
         test_timelag = kwargs['test_timelag'] 
         do_bonferroni_correction = kwargs['do_bonferroni_correction'] 
         gc_significance_level = kwargs['gc_significance_level'] 
@@ -430,7 +404,7 @@ class SystemAnalysis(SystemUtilities):
                     _source, _target = source_signal_pp[:,pre_idx], target_signal_pp[:,post_idx]
                     signals = np.vstack([_target, _source]).T
                     self._test_time_lag(signals, max_time_lag_seconds, dt, downsampling_factor)
-            sys.exit()
+            # sys.exit()
 
         # for each source signal, calculate all target signals.
         for pre_idx in pre_idx_array:
@@ -461,18 +435,6 @@ class SystemAnalysis(SystemUtilities):
                 gc_matrix_np_F[pre_idx, post_idx] = pairwise_gc_dict[best_time_lag_samples][0][gc_test_type][0]
                 gc_matrix_np_p[pre_idx, post_idx] = pairwise_gc_dict[best_time_lag_samples][0][gc_test_type][1]
                 gc_matrix_np_latency[pre_idx, post_idx] = best_time_lag_samples * dt * downsampling_factor
-                stationary_flag = _check_stationarity(signals, best_time_lag_samples)
-                gc_matrix_np_stationary[pre_idx, post_idx] = stationary_flag
-                if 0:
-                    # Plot preprocessed signals
-                    if stationary_flag is False:
-                        fig, ax = plt.subplots()
-                        ax.plot(signals[:,0], label='target'); 
-                        ax.plot(signals[:,1], label='source'); 
-                        ax.legend(loc='upper right')
-                        plt.title(stationary_flag); 
-                        plt.show()
-
         
         if do_bonferroni_correction is True:
             corrected_gc_significance_level = gc_significance_level /  gc_matrix_np_p.size
@@ -487,14 +449,12 @@ class SystemAnalysis(SystemUtilities):
         gc_logF = np.nan_to_num(gc_matrix_np_logF[gc_eye_idx], nan=0.0)
         gc_p = gc_matrix_np_p[gc_eye_idx] 
         gc_latency = gc_matrix_np_latency[gc_eye_idx] 
-        gc_matrix_np_stationary = gc_matrix_np_stationary[gc_eye_idx]
 
         # Get representative value
         MeanGrCaus_logF = np.nanmean(gc_logF)
         MedianGrCaus_p = np.nanmedian(gc_p)
         PassGrCaus_p = np.nanmedian(gc_p) <=  corrected_gc_significance_level
         MeanGrCaus_latency = np.nanmean(gc_latency)
-        MinGrCausStationary = np.nanmin(gc_matrix_np_stationary)
         MeanGrCaus_fitQA = gc_fitQA / (pre_idx_array.size * post_idx_array.size)
 
         if 1:
@@ -502,9 +462,6 @@ class SystemAnalysis(SystemUtilities):
             print(f'BG latency: {MeanGrCaus_latency}')
             print(f'gc_matrix_np_p: \n{gc_matrix_np_p}')
             print(f'target_signal_entropy: \n{target_signal_entropy}')
-            print(f'stationary test:')
-            if MinGrCausStationary: print('\033[32mPASS\033[97m')
-            else: print('\033[31mFAIL\033[97m')
             print(f'significance test:')
             if PassGrCaus_p: print('\033[32mPASS\033[97m')
             else: print('\033[31mFAIL\033[97m')
@@ -514,7 +471,7 @@ class SystemAnalysis(SystemUtilities):
         # TODO Calculate CV of gc "grandmother index"
 
         # Return one value per analysis (mean of best matching units), indicating GrCaus relation
-        return MeanGrCaus_logF, MedianGrCaus_p, MeanGrCaus_latency, MinGrCausStationary, target_signal_entropy, MeanGrCaus_fitQA
+        return MeanGrCaus_logF, MedianGrCaus_p, MeanGrCaus_latency, target_signal_entropy, MeanGrCaus_fitQA
 
     def get_analyzed_array_as_df(self, data_df, analysisHR=None, t_idx_start=0, t_idx_end=None, **kwargs):
     
