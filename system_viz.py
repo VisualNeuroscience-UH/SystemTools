@@ -37,7 +37,7 @@ class SystemViz(SystemAnalysis):
         # find columns to unpivot
         columns_to_unpivot = []
         short_var_names = []
-        for column_name in df.columns:
+        for column_name in wide_df.columns:
             if kw_sub_to_unpivot in column_name:
                 columns_to_unpivot.append(column_name)
                 short_var_names.append(column_name.replace(f'{kw_sub_to_unpivot}_',''))
