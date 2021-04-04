@@ -11,7 +11,7 @@ from statsmodels.tsa.stattools import adfuller
 from statsmodels.stats.stattools import durbin_watson
 from statsmodels.tsa.api import VAR
 from statsmodels.graphics.gofplots import qqplot
-from statsmodels.stats.outliers_influence import OLSInfluence
+from statsmodels.stats.outliers_influence import OLSInfluence, variance_inflation_factor
 from statsmodels.stats.diagnostic import kstest_normal, het_breuschpagan
 from statsmodels.compat import lzip
 # import statsmodels.api as sm
@@ -334,6 +334,15 @@ class SystemAnalysis(SystemUtilities):
         acorr_passing = self._get_passing(stat_acorr, limits, passing_goes='both')
         # print(f'Autocorrelation of error distribution: stat = {str(stat_acorr)} -- {acorr_passing}')
 
+        # Multicollinearity
+        # Variance inflation factor
+        VIF = np.zeros_like(_results.model.exog[1])
+        for this_idx in np.arange(len(_results.model.exog[1])):
+            VIF[this_idx] = variance_inflation_factor(_results.model.exog,this_idx)
+        max_VIF = np.max(VIF)
+        VIF_th = 1000
+        vif_passing = self._get_passing(max_VIF, VIF_th, passing_goes='under')
+ 
         plt.show()
 
         # Results summary to txt file
@@ -343,12 +352,12 @@ class SystemAnalysis(SystemUtilities):
             with open(filename_full_path, "a") as text_file:
                 text_file.write(f'\n{self.most_recent_loaded_file}\npre {pre_idx} -- post {post_idx}\n')
                 text_file.write('\n')
-                text_file.write(f'het {het_passing}, cook {cook_passing}, norm {normality_passing}, acorr {acorr_passing}')
+                text_file.write(f'het {het_passing}, cook {cook_passing}, norm {normality_passing}, acorr {acorr_passing}, vif {vif_passing}')
                 text_file.write('\n\n')
                 text_file.write(str(results_summary))
                 text_file.write('\n')
 
-        return het_passing, cook_passing, normality_passing, acorr_passing
+        return het_passing, cook_passing, normality_passing, acorr_passing, vif_passing
 
     def _analyze_grcaus(self, data, source_signal, dt, NG, 
                         t_idx_start=0, t_idx_end=None, **kwargs):
@@ -377,25 +386,25 @@ class SystemAnalysis(SystemUtilities):
         target_signal_entropy = self.vm_entropy(target_signal, base=2)
 
         gc_matrix_np_F = np.full_like(np.empty((source_signal.shape[1], target_signal.shape[1])),0)
-        gc_matrix_np_p = np.full_like(np.empty((source_signal.shape[1], target_signal.shape[1])),np.nan)
+        gc_matrix_np_p = np.full_like(np.empty((source_signal.shape[1], target_signal.shape[1])),np.nan) 
+        gc_matrix_np_te = np.full_like(np.empty((source_signal.shape[1], target_signal.shape[1])),np.nan) 
         gc_matrix_np_latency = np.full_like(np.empty((source_signal.shape[1], target_signal.shape[1])),np.nan)
         gc_matrix_np_stationary = np.full_like(np.empty((source_signal.shape[1], target_signal.shape[1])),np.nan) 
         gc_fitQA = 0
 
-        if downsampling_factor > 1:
-            assert isinstance(downsampling_factor,int), 'downsampling_factor must be integer, aborting...'
-            # Barnett_2017_JNeurosciMeth: sample-period should be kept at 1/10 or less of
-            # causal effect delay for detectability sweet spot. 
-            source_signal = source_signal[::downsampling_factor,:]
-            target_signal = target_signal[::downsampling_factor,:]
+        assert isinstance(downsampling_factor,int), 'downsampling_factor must be integer, aborting...'
+        # Barnett_2017_JNeurosciMeth: sample-period should be kept at 1/10 or less of
+        # causal effect delay for detectability sweet spot. 
+        source_signal_ds = source_signal[::downsampling_factor,:]
+        target_signal_ds = target_signal[::downsampling_factor,:]
 
         # Preprocessing. Preferentially first-order differencing.
         diff_order = 1
-        source_signal_pp = np.diff(source_signal, n=diff_order, axis=0)
-        target_signal_pp = np.diff(target_signal, n=diff_order, axis=0)
+        source_signal_pp = np.diff(source_signal_ds, n=diff_order, axis=0)
+        target_signal_pp = np.diff(target_signal_ds, n=diff_order, axis=0)
 
-        pre_idx_array =  np.arange(source_signal.shape[1])
-        post_idx_array =  np.arange(target_signal.shape[1])
+        pre_idx_array =  np.arange(source_signal_pp.shape[1])
+        post_idx_array =  np.arange(target_signal_pp.shape[1])
 
         # Analyze causal effect delay and exit
         if test_timelag is True:
@@ -420,20 +429,23 @@ class SystemAnalysis(SystemUtilities):
                     best_time_lag_samples = self._return_best_order(signals, max_time_lag_seconds, 'bic', dt, downsampling_factor)
                 except:
                     continue
-                pairwise_gc_dict = gc_test(signals, [best_time_lag_samples], verbose=False)
 
+                pairwise_gc_dict = gc_test(signals, [best_time_lag_samples], verbose=True)
+
+                transfer_entropy_value = self.transfer_entropy(signals, best_time_lag_samples)
                 # GC quality control, several measures on error distribution
                 gc_stat_dg_data = pairwise_gc_dict[best_time_lag_samples][1]
-                het_passing, cook_passing, normality_passing, acorr_passing = \
+                het_passing, cook_passing, normality_passing, acorr_passing, vif_passing = \
                     self._gc_model_diagnostics(gc_stat_dg_data, pre_idx, post_idx, 
                     show_figure=show_figure, save_gc_fit_diagnostics=save_gc_fit_diagnostics)
-                gc_fitQA += str([het_passing, cook_passing, normality_passing, acorr_passing]).count('PASS')
+                gc_fitQA += str([het_passing, cook_passing, normality_passing, acorr_passing, vif_passing]).count('PASS')
 
                 # dict_keys(['ssr_ftest', 'ssr_chi2test', 'lrtest', 'params_ftest'])
                 # test statistic, pvalues, degrees of freedom
                 gc_test_type = 'ssr_ftest'
                 gc_matrix_np_F[pre_idx, post_idx] = pairwise_gc_dict[best_time_lag_samples][0][gc_test_type][0]
                 gc_matrix_np_p[pre_idx, post_idx] = pairwise_gc_dict[best_time_lag_samples][0][gc_test_type][1]
+                gc_matrix_np_te[pre_idx, post_idx] = transfer_entropy_value
                 gc_matrix_np_latency[pre_idx, post_idx] = best_time_lag_samples * dt * downsampling_factor
         
         if do_bonferroni_correction is True:
@@ -457,10 +469,11 @@ class SystemAnalysis(SystemUtilities):
         MeanGrCaus_latency = np.nanmean(gc_latency)
         MeanGrCaus_fitQA = gc_fitQA / (pre_idx_array.size * post_idx_array.size)
 
-        if 1:
+        if 0:
             print(f'BG log2(F): {MeanGrCaus_logF}')
             print(f'BG latency: {MeanGrCaus_latency}')
-            print(f'gc_matrix_np_p: \n{gc_matrix_np_p}')
+            print(f'gc_matrix_np_p: \n{gc_matrix_np_p}')  
+            # print(f'gc_matrix_np_te: \n{gc_matrix_np_te}')  
             print(f'target_signal_entropy: \n{target_signal_entropy}')
             print(f'significance test:')
             if PassGrCaus_p: print('\033[32mPASS\033[97m')

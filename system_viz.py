@@ -426,8 +426,12 @@ class SystemViz(SystemAnalysis):
             print('Conducting necessary analysis first. Using most recent metadata file and full duration')
             self.analyze_arrayrun(analysis=analysisHR)
             data_df = self.getData(data_type=analysisHR)
+        pdb.set_trace()
+        if analysisHR.lower() in ['meanfr', 'meanvm', 'eicurrentdiff']:
+            print(f'Creating one figure for each neuron group')
+        elif analysisHR.lower() in ['grcaus']:
+            print(f'Creating one figure for each analysis')
 
-        print(f'Creating one figure for each neuron group')
         analyses_for_zipping = [analysisHR] * len(data_df.columns)
         available_data_column_list = [  ng for (dtype, ng) in zip(analyses_for_zipping, data_df.columns) 
                                         if dtype.lower() in ng.lower()]

@@ -319,7 +319,7 @@ if __name__=='__main__':
         'gc_significance_level': 0.001,
         'save_gc_fit_diagnostics': True,
         'show_gc_fit_diagnostics_figure': False} 
-    P.analyze_arrayrun(metadata_filename=None, analysis='GrCaus', t_idx_start=5000, t_idx_end=None, **extra_GrCaus_attributes)
+    # P.analyze_arrayrun(metadata_filename=None, analysis='GrCaus', t_idx_start=5000, t_idx_end=None, **extra_GrCaus_attributes)
     #P.show_analyzed_arrayrun(csv_filename=None, analysis='MeanFR', variable_unit='Hz', NG_id_list=['NG1', 'NG2']) # Empty NG_id_list for all groups
     # P.analyze_arrayrun(metadata_filename=None, analysis='MeanVm', t_idx_start=100, t_idx_end=None)
     # P.show_analyzed_arrayrun(csv_filename=None, analysis='MeanVm', variable_unit='Volt', NG_id_list=['NG1', 'NG2']) # Empty NG_id_list for all groups
