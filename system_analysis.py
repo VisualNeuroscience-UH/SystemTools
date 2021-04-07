@@ -3,6 +3,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 import pandas as pd
 from scipy.stats import shapiro, normaltest, ttest_1samp
+from scipy.signal import decimate, resample
 import seaborn as sns
 
 # Statistics
@@ -56,20 +57,22 @@ class SystemAnalysis(SystemUtilities):
 
         self.path=path
 
-    def _get_spikes_by_interval(self, data_by_group, t_idx_start, t_idx_end):
-        spikes = data_by_group['t'][np.logical_and(data_by_group['t'] > t_idx_start * b2u.second, data_by_group['t'] < t_idx_end * b2u.second)]
+    def _get_spikes_by_interval(self, data_by_group, t_start, t_end):
+
+        spikes = data_by_group['t'][np.logical_and(data_by_group['t'] > t_start * b2u.second, data_by_group['t'] < t_end * b2u.second)]
+
         return spikes
 
     def  _analyze_meanfr(self, data, NG, t_idx_start, t_idx_end):
-
+        
         data_by_group = data['spikes_all'][NG]
+
         # Get and mark MeanFR to df
         N_neurons = data_by_group['count'].size
 
-        spikes = self._get_spikes_by_interval(data_by_group, t_idx_start=t_idx_start, t_idx_end=t_idx_end)
-
+        # spikes by interval needs seconds, thus we need to multiply with dt
         dt = self._get_dt(data)
-
+        spikes = self._get_spikes_by_interval(data_by_group, t_start=t_idx_start * dt, t_end=t_idx_end * dt)
         MeanFR = spikes.size / (N_neurons * (t_idx_end - t_idx_start) * dt)
 
         return MeanFR
@@ -240,11 +243,22 @@ class SystemAnalysis(SystemUtilities):
 
         return ent
 
+    def downsample(self, data, downsampling_factor=1, axis=0):
+        # Note, using finite impulse response filter type
+        # downsampled_data = decimate(data, downsampling_factor, axis=axis, ftype='fir',)
+        N_time_points = data.shape[0]
+        num = N_time_points // downsampling_factor
+        downsampled_data =  resample(data, num)
+        # pdb.set_trace()
+        return downsampled_data
+
     def _get_passing(self, value, threshold, passing_goes='over'):
         assert passing_goes in ['under', 'over', 'both'], \
             'Unkown option for passing_goes parameter, valid options are "over" and "under"'
 
-        if passing_goes=='over':
+        if np.isnan(value):
+                passing = 'FAIL'        
+        elif passing_goes=='over':
             if value <= threshold:
                 passing = 'FAIL'
             elif value > threshold:
@@ -259,7 +273,7 @@ class SystemAnalysis(SystemUtilities):
                 passing = 'PASS'
             else:
                 passing = 'FAIL'
-                
+
         return passing
 
     def _gc_model_diagnostics(self, gc_stat_dg_data, pre_idx, post_idx, show_figure=False, save_gc_fit_diagnostics=False):
@@ -374,34 +388,44 @@ class SystemAnalysis(SystemUtilities):
         save_gc_fit_diagnostics = kwargs['save_gc_fit_diagnostics']
         show_figure = kwargs['show_gc_fit_diagnostics_figure']  
 
-        vm_unit = self._get_vm_by_interval(data, NG, t_idx_start=t_idx_start, t_idx_end=t_idx_end)
-
-        # Slice source signal to requested time interval
-        if t_idx_end is None:
-            t_idx_end = -1
-        
-        source_signal = source_signal[t_idx_start:t_idx_end,:]
+        # vm_unit = self._get_vm_by_interval(data, NG, t_idx_start=t_idx_start, t_idx_end=t_idx_end)
+        vm_unit = self._get_vm_by_interval(data, NG, t_idx_start=0, t_idx_end=-1) # full length for fourier downsampling
 
         target_signal = vm_unit / vm_unit.get_best_unit() 
         target_signal_entropy = self.vm_entropy(target_signal, base=2)
 
-        gc_matrix_np_F = np.full_like(np.empty((source_signal.shape[1], target_signal.shape[1])),0)
-        gc_matrix_np_p = np.full_like(np.empty((source_signal.shape[1], target_signal.shape[1])),np.nan) 
-        gc_matrix_np_te = np.full_like(np.empty((source_signal.shape[1], target_signal.shape[1])),np.nan) 
-        gc_matrix_np_latency = np.full_like(np.empty((source_signal.shape[1], target_signal.shape[1])),np.nan)
-        gc_matrix_np_stationary = np.full_like(np.empty((source_signal.shape[1], target_signal.shape[1])),np.nan) 
-        gc_fitQA = 0
-
         assert isinstance(downsampling_factor,int), 'downsampling_factor must be integer, aborting...'
         # Barnett_2017_JNeurosciMeth: sample-period should be kept at 1/10 or less of
-        # causal effect delay for detectability sweet spot. 
-        source_signal_ds = source_signal[::downsampling_factor,:]
-        target_signal_ds = target_signal[::downsampling_factor,:]
+        # causal effect delay for detectability sweet spot.
+        source_signal_ds = self.downsample(source_signal, downsampling_factor=downsampling_factor, axis=0)
+        target_signal_ds = self.downsample(target_signal, downsampling_factor=downsampling_factor, axis=0) 
+        # source_signal_ds = source_signal[::downsampling_factor,:]
+        # target_signal_ds = target_signal[::downsampling_factor,:]
+        # pdb.set_trace()
 
         # Preprocessing. Preferentially first-order differencing.
         diff_order = 1
         source_signal_pp = np.diff(source_signal_ds, n=diff_order, axis=0)
         target_signal_pp = np.diff(target_signal_ds, n=diff_order, axis=0)
+
+        # Slice source signal to requested time interval
+        if t_idx_end is None:
+            t_idx_end = vm_unit.shape[0]
+        elif t_idx_end < 0:
+            t_idx_end = vm_unit.shape[0] + t_idx_end + 1
+        
+        # Set start and end to nearest allowed integer
+        # TÄHÄN JÄIT
+        
+        # Cut to requested length after preprocessing
+        source_signal_pp = source_signal_pp[t_idx_start // downsampling_factor:t_idx_end // downsampling_factor,:]
+        target_signal_pp = target_signal_pp[t_idx_start // downsampling_factor:t_idx_end // downsampling_factor,:]
+
+        # time_vector = np.arange(t_idx_start,t_idx_end)
+        # plt.plot(time_vector, target_signal[t_idx_start:t_idx_end,0])
+        # # plt.plot(time_vector[::downsampling_factor], target_signal_ds[t_idx_start // downsampling_factor:t_idx_end // downsampling_factor,0])
+        # plt.plot(time_vector[::downsampling_factor], target_signal_ds[:,0])
+        # plt.show()
 
         pre_idx_array =  np.arange(source_signal_pp.shape[1])
         post_idx_array =  np.arange(target_signal_pp.shape[1])
@@ -414,6 +438,13 @@ class SystemAnalysis(SystemUtilities):
                     signals = np.vstack([_target, _source]).T
                     self._test_time_lag(signals, max_time_lag_seconds, dt, downsampling_factor)
             # sys.exit()
+
+        gc_matrix_np_F = np.full_like(np.empty((source_signal_pp.shape[1], target_signal_pp.shape[1])),0)
+        gc_matrix_np_p = np.full_like(np.empty((source_signal_pp.shape[1], target_signal_pp.shape[1])),np.nan) 
+        gc_matrix_np_te = np.full_like(np.empty((source_signal_pp.shape[1], target_signal_pp.shape[1])),np.nan) 
+        gc_matrix_np_latency = np.full_like(np.empty((source_signal_pp.shape[1], target_signal_pp.shape[1])),np.nan)
+        gc_matrix_np_stationary = np.full_like(np.empty((source_signal_pp.shape[1], target_signal_pp.shape[1])),np.nan) 
+        gc_fitQA = 0
 
         # for each source signal, calculate all target signals.
         for pre_idx in pre_idx_array:
@@ -457,20 +488,22 @@ class SystemAnalysis(SystemUtilities):
         gc_eye_idx = np.eye(source_signal.shape[1], target_signal.shape[1], dtype=bool)
 
         # Magnitude in base 2 log. If error distribution is gaussian, can be interpreted as bits
-        gc_matrix_np_logF = np.log2(gc_matrix_np_F)
-        gc_logF = np.nan_to_num(gc_matrix_np_logF[gc_eye_idx], nan=0.0)
+        # Multiplied with sample frequency, gives information transfer rate. Lionell Barnett, personal communication
+        final_sampling_frequency = 1 / (dt * downsampling_factor)
+        gc_matrix_np_InfoRate = np.log2(gc_matrix_np_F) * final_sampling_frequency 
+        gc_InfoRate = np.nan_to_num(gc_matrix_np_InfoRate[gc_eye_idx], nan=0.0)
         gc_p = gc_matrix_np_p[gc_eye_idx] 
         gc_latency = gc_matrix_np_latency[gc_eye_idx] 
 
         # Get representative value
-        MeanGrCaus_logF = np.nanmean(gc_logF)
+        MeanGrCaus_InfoRate = np.floor(np.nanmean(gc_InfoRate))
         MedianGrCaus_p = np.nanmedian(gc_p)
         PassGrCaus_p = np.nanmedian(gc_p) <=  corrected_gc_significance_level
         MeanGrCaus_latency = np.nanmean(gc_latency)
         MeanGrCaus_fitQA = gc_fitQA / (pre_idx_array.size * post_idx_array.size)
 
         if 0:
-            print(f'BG log2(F): {MeanGrCaus_logF}')
+            print(f'BG log2(F): {MeanGrCaus_InfoRate}')
             print(f'BG latency: {MeanGrCaus_latency}')
             print(f'gc_matrix_np_p: \n{gc_matrix_np_p}')  
             # print(f'gc_matrix_np_te: \n{gc_matrix_np_te}')  
@@ -484,7 +517,7 @@ class SystemAnalysis(SystemUtilities):
         # TODO Calculate CV of gc "grandmother index"
 
         # Return one value per analysis (mean of best matching units), indicating GrCaus relation
-        return MeanGrCaus_logF, MedianGrCaus_p, MeanGrCaus_latency, target_signal_entropy, MeanGrCaus_fitQA
+        return MeanGrCaus_InfoRate, MedianGrCaus_p, MeanGrCaus_latency, target_signal_entropy, MeanGrCaus_fitQA
 
     def get_analyzed_array_as_df(self, data_df, analysisHR=None, t_idx_start=0, t_idx_end=None, **kwargs):
     
@@ -499,7 +532,7 @@ class SystemAnalysis(SystemUtilities):
                 data_df[f'{analysisHR}_' + NG] = np.nan
         elif analysisHR.lower() in ['grcaus']:
             target_group = self.NG_name            
-            data_df[f'{analysisHR}_' + target_group + '_logF'] = np.nan
+            data_df[f'{analysisHR}_' + target_group + '_InfoRate'] = np.nan
             data_df[f'{analysisHR}_' + target_group + '_p'] = np.nan
             data_df[f'{analysisHR}_' + target_group + '_latency'] = np.nan
             data_df[f'{analysisHR}_' + target_group + '_target_entropy'] = np.nan
@@ -528,11 +561,11 @@ class SystemAnalysis(SystemUtilities):
             elif analysisHR.lower() in ['grcaus']:
                 # check how multivariate gc is analyzed; are min, max, mean, median useful?
                 # Apply this to _analyze_grangercausality
-                MeanGrCaus_logF, MedianGrCaus_p, MeanGrCaus_latency, target_entropy, MeanGrCaus_fitQA = \
+                MeanGrCaus_InfoRate, MedianGrCaus_p, MeanGrCaus_latency, target_entropy, MeanGrCaus_fitQA = \
                     self._analyze_grcaus(data, source_signal, dt, target_group, t_idx_start=t_idx_start, 
                     t_idx_end=t_idx_end, **kwargs)
 
-                data_df.loc[this_index,f'{analysisHR}_' + target_group + '_logF'] = MeanGrCaus_logF
+                data_df.loc[this_index,f'{analysisHR}_' + target_group + '_InfoRate'] = MeanGrCaus_InfoRate
                 data_df.loc[this_index,f'{analysisHR}_' + target_group + '_p'] = MedianGrCaus_p
                 data_df.loc[this_index,f'{analysisHR}_' + target_group + '_latency'] = MeanGrCaus_latency
                 data_df.loc[this_index,f'{analysisHR}_' + target_group + '_target_entropy'] = target_entropy

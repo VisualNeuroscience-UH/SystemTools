@@ -426,7 +426,7 @@ class SystemViz(SystemAnalysis):
             print('Conducting necessary analysis first. Using most recent metadata file and full duration')
             self.analyze_arrayrun(analysis=analysisHR)
             data_df = self.getData(data_type=analysisHR)
-        pdb.set_trace()
+
         if analysisHR.lower() in ['meanfr', 'meanvm', 'eicurrentdiff']:
             print(f'Creating one figure for each neuron group')
         elif analysisHR.lower() in ['grcaus']:
@@ -461,8 +461,8 @@ class SystemViz(SystemAnalysis):
             two_dim = False
 
         if analysisHR.lower() in ['grcaus']:
-            variable_unit_dict = {'_p' : 'p value', '_logF' : 'log2(F)', '_latency' : 'latency (s)', 
-            '_isStationary' : 'boolean', '_target_entropy' : 'entropy (bits)', '_fit_quality' : 'mean fit quality'}
+            variable_unit_dict = {'_p' : 'p value', '_InfoRate' : 'rate (bit/s)', '_latency' : 'latency (s)', 
+            '_isStationary' : 'boolean', '_target_entropy' : 'target signal entropy (bits)', '_fit_quality' : 'mean fit quality'}
 
         for this_NG_id, this_NG_name, this_data_column in zip(NG_id_list, NG_name_list, requested_data_column_list):
 

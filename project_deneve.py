@@ -287,7 +287,7 @@ if __name__=='__main__':
     # P.pp_df_full(metadata_df)
     
     # ## Readout on input ##
-    # P.plot_readout_on_input(results_filename='out_results_20210401_1029328_V_res-60mV.gz', normalize=False, unit_idx_list=[2])
+    # P.plot_readout_on_input(results_filename='out_results_20210406_2117054_V_res-70mV.gz', normalize=False, unit_idx_list=[0])
 
     # ## Show spikes and vm ##q
     # P.show_spikes(results_filename='out_results_20210401_0918024_V_res-30mV.gz', savefigname='')
@@ -313,13 +313,13 @@ if __name__=='__main__':
     # # # # Available analyses: 'MeanFR':  variable_unit='Hz', 'MeanVm':  variable_unit='', 'EICurrentDiff': variable_unit='Amp', 'GrCaus': multiple units
     extra_GrCaus_attributes = {
         'max_time_lag_seconds': 0.1,
-        'downsampling_factor': 10,
-        'test_timelag': False,
+        'downsampling_factor': 40,
+        'test_timelag': True,
         'do_bonferroni_correction': True,
         'gc_significance_level': 0.001,
         'save_gc_fit_diagnostics': True,
         'show_gc_fit_diagnostics_figure': False} 
-    # P.analyze_arrayrun(metadata_filename=None, analysis='GrCaus', t_idx_start=5000, t_idx_end=None, **extra_GrCaus_attributes)
+    # P.analyze_arrayrun(metadata_filename=None, analysis='GrCaus', t_idx_start=100, t_idx_end=-100, **extra_GrCaus_attributes)
     #P.show_analyzed_arrayrun(csv_filename=None, analysis='MeanFR', variable_unit='Hz', NG_id_list=['NG1', 'NG2']) # Empty NG_id_list for all groups
     # P.analyze_arrayrun(metadata_filename=None, analysis='MeanVm', t_idx_start=100, t_idx_end=None)
     # P.show_analyzed_arrayrun(csv_filename=None, analysis='MeanVm', variable_unit='Volt', NG_id_list=['NG1', 'NG2']) # Empty NG_id_list for all groups
