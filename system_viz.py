@@ -515,8 +515,8 @@ class SystemViz(SystemAnalysis):
             text_values_list.append(f'{max_value_rounded} {variable_unit} - {max_idx}')
 
             if two_dim:
-                text_values_list.append(f'{y_label} = {df_2d.columns[min_idx[0]]}; {x_label} = {df_2d.index[min_idx[1]]}')
-                text_values_list.append(f'{y_label} = {df_2d.columns[max_idx[0]]}; {x_label} = {df_2d.index[max_idx[1]]}')
+                text_values_list.append(f'{y_label} = {df_2d.index[min_idx[0]]}; {x_label} = {df_2d.columns[min_idx[1]]}')
+                text_values_list.append(f'{y_label} = {df_2d.index[max_idx[0]]}; {x_label} = {df_2d.columns[max_idx[1]]}')
             else:
                 text_values_list.append(f'{x_label} = {data_df["Dimension-1 Value"][min_idx[0]]}')
                 text_values_list.append(f'{x_label} = {data_df["Dimension-1 Value"][max_idx[0]]}')

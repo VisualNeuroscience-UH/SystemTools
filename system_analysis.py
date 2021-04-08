@@ -72,6 +72,9 @@ class SystemAnalysis(SystemUtilities):
 
         # spikes by interval needs seconds, thus we need to multiply with dt
         dt = self._get_dt(data)
+        n_samples = data['time_vector'].shape[0]
+        t_idx_end = self._end2idx(t_idx_end, n_samples)
+
         spikes = self._get_spikes_by_interval(data_by_group, t_start=t_idx_start * dt, t_end=t_idx_end * dt)
         MeanFR = spikes.size / (N_neurons * (t_idx_end - t_idx_start) * dt)
 
@@ -373,6 +376,14 @@ class SystemAnalysis(SystemUtilities):
 
         return het_passing, cook_passing, normality_passing, acorr_passing, vif_passing
 
+    def _end2idx(self, t_idx_end, n_samples):
+
+        if t_idx_end is None:
+            t_idx_end = n_samples
+        elif t_idx_end < 0:
+            t_idx_end = n_samples + t_idx_end + 1
+        return t_idx_end
+
     def _analyze_grcaus(self, data, source_signal, dt, NG, 
                         t_idx_start=0, t_idx_end=None, **kwargs):
         '''
@@ -409,10 +420,8 @@ class SystemAnalysis(SystemUtilities):
         target_signal_pp = np.diff(target_signal_ds, n=diff_order, axis=0)
 
         # Slice source signal to requested time interval
-        if t_idx_end is None:
-            t_idx_end = vm_unit.shape[0]
-        elif t_idx_end < 0:
-            t_idx_end = vm_unit.shape[0] + t_idx_end + 1
+        t_idx_end = self._end2idx(t_idx_end, vm_unit.shape[0])
+
         
         # Set start and end to nearest allowed integer
         # TÄHÄN JÄIT
@@ -587,12 +596,13 @@ class SystemAnalysis(SystemUtilities):
         filename_out = metadataroot.replace('metadata', analysisHR)
         csv_name_out = filename_out + '.csv'
 
-        save_gc_fit_diagnostics = kwargs['save_gc_fit_diagnostics']
-        if save_gc_fit_diagnostics is True:
-            diag_filename = 'grcaus_FitDiag.txt'
-            self.gc_dg_filename = os.path.join(self.path, diag_filename)
-            # Flush existing file empty
-            open(self.gc_dg_filename, 'w').close()
+        if analysisHR.lower() in ['grcaus']:
+            save_gc_fit_diagnostics = kwargs['save_gc_fit_diagnostics']
+            if save_gc_fit_diagnostics is True:
+                diag_filename = 'grcaus_FitDiag.txt'
+                self.gc_dg_filename = os.path.join(self.path, diag_filename)
+                # Flush existing file empty
+                open(self.gc_dg_filename, 'w').close()
 
         data_df = self.getData(metadata_filename, data_type='metadata')
 

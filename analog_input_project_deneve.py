@@ -17,7 +17,7 @@ import sys
 import pdb
 
 sys.path.append(r'C:\Users\Simo\Laskenta\Git_Repos\MacaqueRetina_Git') # temp
-#from macaque_retina import MosaicConstructor, FunctionalMosaic
+from macaque_retina import MosaicConstructor, FunctionalMosaic
 
 
 class AnalogInput():
@@ -28,7 +28,7 @@ class AnalogInput():
     '''
     def __init__(   self, 
                     Nrequested_units = 3, 
-                    Ntime = 200000, 
+                    Ntime = 10000, 
                     filename_out = 'my_video.mat', 
                     input_type = 'quadratic_oscillation',
                     coord_type = 'dummy',
@@ -95,13 +95,6 @@ class AnalogInput():
         for d in np.arange(Nx):
             Input[d,:] = A * np.convolve(Input[d,:],w,'same')
 
-        # Input = self._normalize(Input)
-        minI = np.min(Input)
-        maxI = np.max(Input)
-        print(f'minI = {minI}')
-        print(f'maxI = {maxI}')
-        # self._lineplot(Input.T)
-        # plt.show()
         return Input
 
 
@@ -125,12 +118,6 @@ class AnalogInput():
             zero_padded_input_stack = np.vstack((Input, stack_to_add))
             Input = zero_padded_input_stack
 
-        # self._lineplot(Input.T)
-        # plt.show()
-        minI = np.min(Input)
-        maxI = np.max(Input)
-        print(f'minI = {minI}')
-        print(f'maxI = {maxI}')
         return Input
 
     def create_step_input(self, Nx = 0, Ntime = None):   
@@ -140,17 +127,13 @@ class AnalogInput():
 
         # Create your input here. Zeros and ones at this point.
         # Create matrix of zeros with shape of Input
-        #### Input=(np.random.multivariate_normal(np.zeros([Nx]), np.eye(Nx), Ntime)).T
-
         Input = (np.concatenate((np.zeros((Ntime//3,), dtype=int), np.ones((Ntime//3), dtype=int), np.zeros((Ntime//3), dtype=int)), axis=None))
         Input = (np.concatenate((Input, np.zeros((Ntime-np.size((Input),0),), dtype=int)), axis=None))
         Input = (np.tile(Input.T, (Nx,1)))
 
         A = 5 # Amplification, Units = ?
         Input = A * Input
-        # Input = self._normalize(Input)
-        # self._lineplot(Input.T)
-        # plt.show()
+
         minI = np.min(Input)
         maxI = np.max(Input)
         print(f'minI = {minI}')
@@ -223,15 +206,15 @@ if __name__ == "__main__":
     if sys.platform == 'linux':
         root_path = r'/opt/tomas/projects/Results/ParameterHuntNL/Replica_in'
     elif sys.platform == 'win32':
-        root_path = r'C:\Users\Simo\Laskenta\SimuOut\Deneve\Replica_in'
+        root_path = r'C:\Users\Simo\Laskenta\SimuOut\Deneve\Replica_test\Replica_in'
 
-    filename_out = 'noise_210406.mat'
-    # filename_out = 'input_quadratic_three_units.mat'
+    # filename_out = 'input_noise_210408.mat'
+    filename_out = 'input_quadratic_three_units_2s.mat'
     full_filename_out = os.path.join(root_path, filename_out)
     Nrequested_units = 3
     Ntime = 20000
-    input_type = 'noise' # 'quadratic_oscillation' or 'noise' or 'step_current'
-    Ncycles = 2
+    input_type = 'quadratic_oscillation' # 'quadratic_oscillation' or 'noise' or 'step_current'
+    Ncycles = 4
     dt = 0.1 # IMPORTANT: assuming milliseconds
 
     AnalogInput(
@@ -242,9 +225,3 @@ if __name__ == "__main__":
         Ncycles = Ncycles,
         frameduration = dt)
 
-
-    # start_time = time.time()
-    # end_time = time.time(); print(f'Took {end_time - start_time} seconds')
-
-    # w_coord, z_coord =  (   np.array([21.31223543+0.06119037j, 21.4557212 -0.06050105j, 21.58177968+0.06729933j]), 
-    #                         np.array([4.80173051+0.02880511j, 4.86967583-0.0288177j, 4.93001344+0.03238888j]))

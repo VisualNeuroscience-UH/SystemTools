@@ -258,7 +258,7 @@ if __name__=='__main__':
     mat_filename = 'Fig4_workspace.mat'
     connection_skeleton_filename_in = 'Replica_skeleton_connections_20210211_1453238.gz'
     connection_filename_out = 'connections_deneve_ci_constant.gz'
-    input_filename = 'input_noise_210304.mat' # 'input_quadratic_three_units.mat' # 'input_noise_210304.mat'
+    input_filename = 'input_noise_210408.mat' # 'input_quadratic_three_units_2s.mat' # 'input_noise_210408.mat'
     NG_name_for_vm_on_input = 'NG3_L4_CI_SS2_L4'
 
     P = Project(path=path, input_folder=input_folder, output_folder=output_folder, 
@@ -287,11 +287,11 @@ if __name__=='__main__':
     # P.pp_df_full(metadata_df)
     
     # ## Readout on input ##
-    # P.plot_readout_on_input(results_filename='out_results_20210406_2117054_V_res-70mV.gz', normalize=False, unit_idx_list=[0])
+    # P.plot_readout_on_input(results_filename='out_results_20210408_1900044_multiply_weight31.gz', normalize=False, unit_idx_list=[0])
 
     # ## Show spikes and vm ##q
-    # P.show_spikes(results_filename='out_results_20210401_0918024_V_res-30mV.gz', savefigname='')
-    # P.show_analog_results(results_filename='out_results_20210401_0918024_V_res-30mV.gz', savefigname='',param_name='vm',startswith='NG') 
+    # P.show_spikes(results_filename='out_results_20210408_1900044_multiply_weight81.gz', savefigname='')
+    # P.show_analog_results(results_filename='out_results_20210408_1900044_multiply_weight81.gz', savefigname='',param_name='vm',startswith='NG') 
     # P.show_analog_results(results_filename=None, savefigname='',param_name='vclamp',startswith='NG') 
     # P.show_analog_results(results_filename=None, savefigname='',param_name='gclamp',startswith='NG') 
     # P.show_analog_results(results_filename=None, savefigname='',param_name='v_lowpass1',startswith='NG') 
@@ -314,15 +314,16 @@ if __name__=='__main__':
     extra_GrCaus_attributes = {
         'max_time_lag_seconds': 0.1,
         'downsampling_factor': 40,
-        'test_timelag': True,
+        'test_timelag': False,
         'do_bonferroni_correction': True,
         'gc_significance_level': 0.001,
         'save_gc_fit_diagnostics': True,
         'show_gc_fit_diagnostics_figure': False} 
     # P.analyze_arrayrun(metadata_filename=None, analysis='GrCaus', t_idx_start=100, t_idx_end=-100, **extra_GrCaus_attributes)
-    #P.show_analyzed_arrayrun(csv_filename=None, analysis='MeanFR', variable_unit='Hz', NG_id_list=['NG1', 'NG2']) # Empty NG_id_list for all groups
-    # P.analyze_arrayrun(metadata_filename=None, analysis='MeanVm', t_idx_start=100, t_idx_end=None)
+    # P.analyze_arrayrun(metadata_filename=None, analysis='MeanFR', t_idx_start=100, t_idx_end=-100)
+    # P.show_analyzed_arrayrun(csv_filename=None, analysis='MeanFR', variable_unit='Hz', NG_id_list=['NG1', 'NG2', 'NG3']) # Empty NG_id_list for all groups
+    # P.analyze_arrayrun(metadata_filename=None, analysis='MeanVm', t_idx_start=100, t_idx_end=-100)
     # P.show_analyzed_arrayrun(csv_filename=None, analysis='MeanVm', variable_unit='Volt', NG_id_list=['NG1', 'NG2']) # Empty NG_id_list for all groups
-    P.show_analyzed_arrayrun(csv_filename=None, analysis='GrCaus', NG_id_list=['NG3']) 
+    P.show_analyzed_arrayrun(csv_filename='GrCaus__20210408_1909160.csv', analysis='GrCaus', NG_id_list=['NG3']) 
     
     plt.show()
