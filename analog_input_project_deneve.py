@@ -17,7 +17,7 @@ import sys
 import pdb
 
 sys.path.append(r'C:\Users\Simo\Laskenta\Git_Repos\MacaqueRetina_Git') # temp
-from macaque_retina import MosaicConstructor, FunctionalMosaic
+#from macaque_retina import MosaicConstructor, FunctionalMosaic
 
 
 class AnalogInput():
@@ -28,7 +28,7 @@ class AnalogInput():
     '''
     def __init__(   self, 
                     Nrequested_units = 3, 
-                    Ntime = 100000, 
+                    Ntime = 200000, 
                     filename_out = 'my_video.mat', 
                     input_type = 'quadratic_oscillation',
                     coord_type = 'dummy',
@@ -91,12 +91,15 @@ class AnalogInput():
 
         # Get gaussian filter, apply
         w = self._gaussian_filter()
-        A = 20 # Deneve project was 2000, from their Learning.py file
+        A = 15 # Deneve project was 2000, from their Learning.py file
         for d in np.arange(Nx):
             Input[d,:] = A * np.convolve(Input[d,:],w,'same')
 
         # Input = self._normalize(Input)
-
+        minI = np.min(Input)
+        maxI = np.max(Input)
+        print(f'minI = {minI}')
+        print(f'maxI = {maxI}')
         # self._lineplot(Input.T)
         # plt.show()
         return Input
@@ -110,12 +113,13 @@ class AnalogInput():
 
         freq = Ncycles * 2 * np.pi * 1/Ntime # frequency, this gives Ncycles over all time points
         time = np.arange(Ntime)
+        A = 5 # Deneve project was 2000, from their Learning.py file
 
         sine_wave = np.sin(freq * time)
         cosine_wave = np.cos(freq * time)
 
         if Nx > 2:
-            Input = np.array([sine_wave, cosine_wave])
+            Input = A * np.array([sine_wave, cosine_wave])
             unit_zero_input = np.zeros(sine_wave.shape)
             stack_to_add = np.tile(unit_zero_input, (Nx - 2, 1))
             zero_padded_input_stack = np.vstack((Input, stack_to_add))
@@ -123,7 +127,10 @@ class AnalogInput():
 
         # self._lineplot(Input.T)
         # plt.show()
-
+        minI = np.min(Input)
+        maxI = np.max(Input)
+        print(f'minI = {minI}')
+        print(f'maxI = {maxI}')
         return Input
 
     def create_step_input(self, Nx = 0, Ntime = None):   
@@ -139,11 +146,15 @@ class AnalogInput():
         Input = (np.concatenate((Input, np.zeros((Ntime-np.size((Input),0),), dtype=int)), axis=None))
         Input = (np.tile(Input.T, (Nx,1)))
 
-        A = 20 # Amplification, Units = ?
+        A = 5 # Amplification, Units = ?
         Input = A * Input
         # Input = self._normalize(Input)
         # self._lineplot(Input.T)
         # plt.show()
+        minI = np.min(Input)
+        maxI = np.max(Input)
+        print(f'minI = {minI}')
+        print(f'maxI = {maxI}')
         return Input
 
     def get_dummy_coordinates(self, Nx = 0):
@@ -214,11 +225,11 @@ if __name__ == "__main__":
     elif sys.platform == 'win32':
         root_path = r'C:\Users\Simo\Laskenta\SimuOut\Deneve\Replica_in'
 
-    filename_out = 'input_noise_210304.mat'
+    filename_out = 'noise_210406.mat'
     # filename_out = 'input_quadratic_three_units.mat'
     full_filename_out = os.path.join(root_path, filename_out)
     Nrequested_units = 3
-    Ntime = 10000
+    Ntime = 20000
     input_type = 'noise' # 'quadratic_oscillation' or 'noise' or 'step_current'
     Ncycles = 2
     dt = 0.1 # IMPORTANT: assuming milliseconds
