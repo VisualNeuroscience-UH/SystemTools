@@ -191,6 +191,10 @@ class SystemUtilities():
         dt = (data['time_vector'][1] - data['time_vector'][0]) / b2u.second
         return dt
 
+    def _get_nsamples(self, data):
+        nsamples = len(data['time_vector'])
+        return nsamples
+
     def close(self):
         plt.close('all')
 

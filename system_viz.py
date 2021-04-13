@@ -144,6 +144,7 @@ class SystemViz(SystemAnalysis):
                                         value_vars=value_vars_vm, 
                                         var_name='units_vm', 
                                         value_name='data_vm')
+
         sns.lineplot(x="t", y='data_in', data=df_from_arr_unpivot_in, hue='units_in', palette = 'dark')
         plt.legend(loc='upper left')
         ax2 = plt.twinx()
@@ -154,12 +155,40 @@ class SystemViz(SystemAnalysis):
             EL = data['Neuron_Groups_Parameters'][NG_name]['namespace']['EL'] 
             VT = data['Neuron_Groups_Parameters'][NG_name]['namespace']['VT']
             plt.ylim(EL, VT)
-        # plt.show()
 
     def lineplot(self, data):
         data_df = pd.DataFrame(data)
         sns.lineplot(data=data_df)
         plt.show()
+
+    def show_coherence_of_two_signals(self, f, Cxy, Pwelch_spec_x, Pwelch_spec_y, Pxy, lags, corr):
+
+        fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2,2)
+        
+        # ax1.semilogy(f,Cxy)
+        ax1.plot(f,Cxy)
+        ax1.set_xlabel('frequency [Hz]')
+        ax1.set_ylabel('Coherence')
+        ax1.set_title('Coherence')
+
+        # ax2.semilogy(f,Pwelch_spec_x/np.max(Pwelch_spec_x))
+        ax2.plot(f,Pwelch_spec_x/np.max(Pwelch_spec_x))
+        # ax2.semilogy(f,Pwelch_spec_y/np.max(Pwelch_spec_y))
+        ax2.plot(f,Pwelch_spec_y/np.max(Pwelch_spec_y))
+        ax2.set_xlabel('frequency [Hz]')
+        ax2.set_ylabel('PSD')
+        ax2.set_title('Scaled power spectra')
+
+        # ax3.semilogy(f,np.abs(Pxy))
+        ax3.plot(f,np.abs(Pxy))
+        ax3.set_xlabel('frequency [Hz]')
+        ax3.set_ylabel('CSD [V**2/Hz]')
+        ax3.set_title('Cross spectral density')
+
+        ax4.plot(lags, corr)
+        ax4.set_xlabel('samples')
+        ax4.set_ylabel('correlation')
+        ax4.set_title('Cross correlation')
 
     def show_spikes(self, results_filename=None, savefigname='', t_idx_start=0, t_idx_end=10000):
 
@@ -533,6 +562,40 @@ class SystemViz(SystemAnalysis):
                 axs[1].plot(x_values, data_nd_array)
                 axs[1].set_xlabel(f'{x_label}' )
                 axs[1].set_ylabel(f'{variable_name} ({variable_unit})' )
+
+    def show_input_to_readout_coherence(self, results_filename=None, savefigname='', signal_pair=[0,0]):
+
+        data_dict = self.getData(filename=results_filename, data_type='results')
+
+        analog_input = self.getData( self.input_filename, data_type=None)
+        source_signal = analog_input['stimulus'].T # We want time x units
+        # source_signal_dt = analog_input['frameduration']
+
+        dt = self._get_dt(data_dict)
+
+        NG = [n for n in data_dict['vm_all'].keys() if 'NG3' in n]
+        # vm_unit = self._get_vm_by_interval(data_dict, NG[0], t_idx_start=0, t_idx_end=-1)
+        vm_unit = self._get_vm_by_interval(data_dict, NG[0])
+
+        target_signal = vm_unit / vm_unit.get_best_unit() 
+
+        cut_length = 100
+        x = source_signal[cut_length:-cut_length,signal_pair[0]]
+        y = target_signal[cut_length:-cut_length,signal_pair[1]]
+
+        x_scaled = self.standard_scaler(x)
+        y_scaled = self.standard_scaler(y)
+
+        high_cutoff = 100 # Frequency in Hz
+        nsamples = self._get_nsamples(data_dict) # self._get_nsamples(data_dict) // downsampling_factor
+        nperseg = nsamples//6 
+        samp_freq = 1.0 / dt # 1.0/(dt * downsampling_factor) 
+        f, Cxy, Pwelch_spec_x, Pwelch_spec_y, Pxy, lags, corr = \
+            self.get_coherence_of_two_signals(x_scaled, y_scaled, samp_freq=samp_freq, nperseg=nperseg, high_cutoff=high_cutoff)
+        self.show_coherence_of_two_signals(f, Cxy, Pwelch_spec_x, Pwelch_spec_y, Pxy, lags, corr)
+
+        if savefigname:
+            self._figsave(figurename=savefigname)
 
 if __name__=='__main__':
 

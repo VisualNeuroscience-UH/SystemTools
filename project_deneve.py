@@ -243,6 +243,7 @@ class Project(SystemViz):
                         'stimulus_duration_in_seconds' : input_dict['stimulus_duration_in_seconds']}
         sio.savemat(current_injection_filename_full, mat_out_dict)
 
+
 if __name__=='__main__':
 
     if sys.platform == 'linux':
@@ -288,6 +289,7 @@ if __name__=='__main__':
     
     # ## Readout on input ##
     # P.plot_readout_on_input(results_filename='out_results_20210408_1900044_multiply_weight31.gz', normalize=False, unit_idx_list=[0])
+    P.show_input_to_readout_coherence(results_filename=None, savefigname='',signal_pair=[1,1])
 
     # ## Show spikes and vm ##q
     # P.show_spikes(results_filename='out_results_20210408_1900044_multiply_weight81.gz', savefigname='')
@@ -324,6 +326,6 @@ if __name__=='__main__':
     # P.show_analyzed_arrayrun(csv_filename=None, analysis='MeanFR', variable_unit='Hz', NG_id_list=['NG1', 'NG2', 'NG3']) # Empty NG_id_list for all groups
     # P.analyze_arrayrun(metadata_filename=None, analysis='MeanVm', t_idx_start=100, t_idx_end=-100)
     # P.show_analyzed_arrayrun(csv_filename=None, analysis='MeanVm', variable_unit='Volt', NG_id_list=['NG1', 'NG2']) # Empty NG_id_list for all groups
-    P.show_analyzed_arrayrun(csv_filename='GrCaus__20210408_1909160.csv', analysis='GrCaus', NG_id_list=['NG3']) 
+    # P.show_analyzed_arrayrun(csv_filename='GrCaus__20210408_1909160.csv', analysis='GrCaus', NG_id_list=['NG3']) 
     
     plt.show()

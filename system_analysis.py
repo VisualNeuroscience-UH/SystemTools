@@ -3,12 +3,12 @@ import numpy as np
 from matplotlib import pyplot as plt
 import pandas as pd
 from scipy.stats import shapiro, normaltest, ttest_1samp
-from scipy.signal import decimate, resample
+from scipy.signal import decimate, resample, coherence, csd, correlate, welch
 import seaborn as sns
 
 # Statistics
 from statsmodels.tsa.stattools import grangercausalitytests as gc_test
-from statsmodels.tsa.stattools import adfuller
+from statsmodels.tsa.stattools import adfuller, ccf
 from statsmodels.stats.stattools import durbin_watson
 from statsmodels.tsa.api import VAR
 from statsmodels.graphics.gofplots import qqplot
@@ -17,6 +17,9 @@ from statsmodels.stats.diagnostic import kstest_normal, het_breuschpagan
 from statsmodels.compat import lzip
 # import statsmodels.api as sm
 from PyIF import te_compute as te
+
+# Machine learning
+from sklearn.preprocessing import scale
 
 # Computational neuroscience
 import brian2.units as b2u
@@ -57,13 +60,21 @@ class SystemAnalysis(SystemUtilities):
 
         self.path=path
 
+    def standard_scaler(self, data):
+        # From sklearn.preprocessing
+        # Standardize data by removing the mean and scaling to unit variance
+        # Data is assumed to be [samples or time, features or regressors]
+
+        data_scaled = scale(data)
+        return data_scaled
+
     def _get_spikes_by_interval(self, data_by_group, t_start, t_end):
 
         spikes = data_by_group['t'][np.logical_and(data_by_group['t'] > t_start * b2u.second, data_by_group['t'] < t_end * b2u.second)]
 
         return spikes
 
-    def  _analyze_meanfr(self, data, NG, t_idx_start, t_idx_end):
+    def _analyze_meanfr(self, data, NG, t_idx_start, t_idx_end):
         
         data_by_group = data['spikes_all'][NG]
 
@@ -80,7 +91,7 @@ class SystemAnalysis(SystemUtilities):
 
         return MeanFR
 
-    def  _analyze_meanvm(self, data, NG, t_idx_start, t_idx_end):
+    def _analyze_meanvm(self, data, NG, t_idx_start, t_idx_end):
 
         data_by_group = data['vm_all'][NG]
 
@@ -116,7 +127,7 @@ class SystemAnalysis(SystemUtilities):
 
         return I_e[t_idx_start:t_idx_end,:], I_i[t_idx_start:t_idx_end,:], I_leak[t_idx_start:t_idx_end,:]
 
-    def  _analyze_eicurrentdiff(self, data, NG, t_idx_start=0, t_idx_end=None):
+    def _analyze_eicurrentdiff(self, data, NG, t_idx_start=0, t_idx_end=None):
 
         I_e, I_i, I_leak = self._get_currents_by_interval(data, NG, t_idx_start=t_idx_start, t_idx_end=t_idx_end)
 
@@ -252,12 +263,12 @@ class SystemAnalysis(SystemUtilities):
         N_time_points = data.shape[0]
         num = N_time_points // downsampling_factor
         downsampled_data =  resample(data, num)
-        # pdb.set_trace()
+
         return downsampled_data
 
     def _get_passing(self, value, threshold, passing_goes='over'):
         assert passing_goes in ['under', 'over', 'both'], \
-            'Unkown option for passing_goes parameter, valid options are "over" and "under"'
+            'Unknown option for passing_goes parameter, valid options are "over" and "under"'
 
         if np.isnan(value):
                 passing = 'FAIL'        
@@ -384,6 +395,61 @@ class SystemAnalysis(SystemUtilities):
             t_idx_end = n_samples + t_idx_end + 1
         return t_idx_end
 
+    def _correlation_lags(self, in1_len, in2_len, mode='full'):
+        # Copied from scipy.signal correlation_lags, mode full or same
+
+        if mode == 'full':
+            lags = np.arange(-in2_len + 1, in1_len)        
+        elif mode == 'same':
+            # the output is the same size as `in1`, centered
+            # with respect to the 'full' output.
+            # calculate the full output
+            lags = np.arange(-in2_len + 1, in1_len)
+            # determine the midpoint in the full output
+            mid = lags.size // 2
+            # determine lag_bound to be used with respect
+            # to the midpoint
+            lag_bound = in1_len // 2
+            # calculate lag ranges for even and odd scenarios
+            if in1_len % 2 == 0:
+                lags = lags[(mid-lag_bound):(mid+lag_bound)]
+            else:
+                lags = lags[(mid-lag_bound):(mid+lag_bound)+1]
+
+        return lags
+
+    def get_coherence_of_two_signals(self, x, y, samp_freq=1.0, nperseg=64, high_cutoff=None):
+        '''
+        Coherence, cross spectral density, cross correlation
+        '''
+
+        # Coherence
+        f, Cxy = coherence(x, y, fs=samp_freq, window='hann', nperseg=nperseg)
+        
+        # Cross spectral density
+        f, Pxy = csd(x, y, fs=samp_freq, nperseg=nperseg, scaling='density')
+
+        # Cross correlation
+        corr = correlate(y, x, mode='full')
+        lags = self._correlation_lags(len(x), len(y))
+        corr /= np.max(corr)
+
+        # Power spectrum of input and output signals
+        f, Pwelch_spec_x = welch(x, fs=samp_freq, nperseg=nperseg, scaling='density')
+        f, Pwelch_spec_y = welch(y, fs=samp_freq, nperseg=nperseg, scaling='density')
+
+        if high_cutoff is not None:
+            indexes = f < high_cutoff
+            f = f[indexes]
+            Cxy = Cxy[indexes] 
+            Pxy = Pxy[indexes] 
+            Pwelch_spec_x = Pwelch_spec_x[indexes] 
+            Pwelch_spec_y = Pwelch_spec_y[indexes] 
+            
+        coherence_sum = np.sum(Cxy)
+
+        return f, Cxy, Pwelch_spec_x, Pwelch_spec_y, Pxy, lags, corr
+
     def _analyze_grcaus(self, data, source_signal, dt, NG, 
                         t_idx_start=0, t_idx_end=None, **kwargs):
         '''
@@ -406,35 +472,24 @@ class SystemAnalysis(SystemUtilities):
         target_signal_entropy = self.vm_entropy(target_signal, base=2)
 
         assert isinstance(downsampling_factor,int), 'downsampling_factor must be integer, aborting...'
-        # Barnett_2017_JNeurosciMeth: sample-period should be kept at 1/10 or less of
-        # causal effect delay for detectability sweet spot.
+        # Barnett personal communication: sample-period should be kept reasonable in relation to information transfer.
         source_signal_ds = self.downsample(source_signal, downsampling_factor=downsampling_factor, axis=0)
         target_signal_ds = self.downsample(target_signal, downsampling_factor=downsampling_factor, axis=0) 
-        # source_signal_ds = source_signal[::downsampling_factor,:]
-        # target_signal_ds = target_signal[::downsampling_factor,:]
-        # pdb.set_trace()
 
         # Preprocessing. Preferentially first-order differencing.
         diff_order = 1
         source_signal_pp = np.diff(source_signal_ds, n=diff_order, axis=0)
         target_signal_pp = np.diff(target_signal_ds, n=diff_order, axis=0)
 
-        # Slice source signal to requested time interval
+        # Turn sample idx relative to end, such as -100, to actual end sample idx
         t_idx_end = self._end2idx(t_idx_end, vm_unit.shape[0])
-
         
         # Set start and end to nearest allowed integer
-        # TÄHÄN JÄIT
+        # TODO
         
         # Cut to requested length after preprocessing
         source_signal_pp = source_signal_pp[t_idx_start // downsampling_factor:t_idx_end // downsampling_factor,:]
         target_signal_pp = target_signal_pp[t_idx_start // downsampling_factor:t_idx_end // downsampling_factor,:]
-
-        # time_vector = np.arange(t_idx_start,t_idx_end)
-        # plt.plot(time_vector, target_signal[t_idx_start:t_idx_end,0])
-        # # plt.plot(time_vector[::downsampling_factor], target_signal_ds[t_idx_start // downsampling_factor:t_idx_end // downsampling_factor,0])
-        # plt.plot(time_vector[::downsampling_factor], target_signal_ds[:,0])
-        # plt.show()
 
         pre_idx_array =  np.arange(source_signal_pp.shape[1])
         post_idx_array =  np.arange(target_signal_pp.shape[1])
@@ -472,6 +527,8 @@ class SystemAnalysis(SystemUtilities):
 
                 pairwise_gc_dict = gc_test(signals, [best_time_lag_samples], verbose=True)
 
+                # self.get_coherence_of_two_signals(_source, _target, samp_freq=1.0 / (dt * downsampling_factor))
+
                 transfer_entropy_value = self.transfer_entropy(signals, best_time_lag_samples)
                 # GC quality control, several measures on error distribution
                 gc_stat_dg_data = pairwise_gc_dict[best_time_lag_samples][1]
@@ -504,7 +561,7 @@ class SystemAnalysis(SystemUtilities):
         gc_p = gc_matrix_np_p[gc_eye_idx] 
         gc_latency = gc_matrix_np_latency[gc_eye_idx] 
 
-        # Get representative value
+        # Get representative values
         MeanGrCaus_InfoRate = np.floor(np.nanmean(gc_InfoRate))
         MedianGrCaus_p = np.nanmedian(gc_p)
         PassGrCaus_p = np.nanmedian(gc_p) <=  corrected_gc_significance_level
