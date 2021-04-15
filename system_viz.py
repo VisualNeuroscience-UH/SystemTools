@@ -237,7 +237,27 @@ class SystemViz(SystemAnalysis):
         if savefigname:
             self._figsave(figurename=savefigname)
 
-    def show_analog_results(self, results_filename=None, savefigname='',param_name=None,startswith=None):
+    def _get_n_neurons_and_data_array(self, data, this_group, param_name, neuron_index=None):
+
+        assert neuron_index is None or (isinstance(neuron_index, dict) and \
+        (isinstance(neuron_index[this_group], int) or \
+        isinstance(neuron_index[this_group], list))), \
+        ''' neuron index for each group must be either None, dict[group_name]=int  
+        eg {"NG1_L4_CI_SS_L4" : 150} or dict[group_name]=list of ints'''
+
+        if neuron_index is None:
+            N_monitored_neurons = data[f'{param_name}_all'][this_group][f'{param_name}'].shape[1]
+            this_data =  data[f'{param_name}_all'][this_group][f'{param_name}']
+        elif isinstance(neuron_index[this_group], int):
+            N_monitored_neurons = 1
+            this_data =  data[f'{param_name}_all'][this_group][f'{param_name}'][:,neuron_index[this_group]]
+        elif isinstance(neuron_index[this_group], list):
+            N_monitored_neurons = len(neuron_index[this_group])
+            this_data =  data[f'{param_name}_all'][this_group][f'{param_name}'][:,neuron_index[this_group]]
+
+        return N_monitored_neurons, this_data
+
+    def show_analog_results(self, results_filename=None, savefigname='',param_name=None,startswith=None, neuron_index=None):
         # Shows data on filename. If filename remains None, shows the most recent data.
 
         assert param_name is not None, 'Parameter param_name not defined, aborting...'
@@ -253,9 +273,10 @@ class SystemViz(SystemAnalysis):
         time_array = t / t.get_best_unit()
         fig, axs = self._prep_group_figure(group_list)
 
-        for ax, results in zip(axs,group_list):
-            N_monitored_neurons = data[f'{param_name}_all'][results][f'{param_name}'].shape[1]
-            this_data =  data[f'{param_name}_all'][results][f'{param_name}']
+        for ax, this_group in zip(axs,group_list):
+
+            N_monitored_neurons, this_data = self._get_n_neurons_and_data_array(data, this_group, param_name, neuron_index=neuron_index)
+
             if hasattr(this_data,'get_best_unit'):
                 data_array = this_data / this_data.get_best_unit()
                 this_unit = this_data.get_best_unit()
@@ -263,7 +284,7 @@ class SystemViz(SystemAnalysis):
                 data_array = this_data
                 this_unit = '1'
             im = ax.plot(time_array, data_array)
-            ax.set_title(results, fontsize=10)
+            ax.set_title(this_group, fontsize=10)
             ax.set_xlabel(t.get_best_unit())
             ax.set_ylabel(this_unit)
 
@@ -590,7 +611,7 @@ class SystemViz(SystemAnalysis):
         nsamples = self._get_nsamples(data_dict) # self._get_nsamples(data_dict) // downsampling_factor
         nperseg = nsamples//6 
         samp_freq = 1.0 / dt # 1.0/(dt * downsampling_factor) 
-        f, Cxy, Pwelch_spec_x, Pwelch_spec_y, Pxy, lags, corr = \
+        f, Cxy, Pwelch_spec_x, Pwelch_spec_y, Pxy, lags, corr, coherence_sum = \
             self.get_coherence_of_two_signals(x_scaled, y_scaled, samp_freq=samp_freq, nperseg=nperseg, high_cutoff=high_cutoff)
         self.show_coherence_of_two_signals(f, Cxy, Pwelch_spec_x, Pwelch_spec_y, Pxy, lags, corr)
 

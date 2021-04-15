@@ -260,12 +260,12 @@ if __name__=='__main__':
     connection_skeleton_filename_in = 'Replica_skeleton_connections_20210211_1453238.gz'
     connection_filename_out = 'connections_deneve_ci_constant.gz'
     input_filename = 'input_noise_210408.mat' # 'input_quadratic_three_units_2s.mat' # 'input_noise_210408.mat'
-    NG_name_for_vm_on_input = 'NG3_L4_CI_SS2_L4'
+    NG_name_for_output = 'NG3_L4_CI_SS2_L4'
 
     P = Project(path=path, input_folder=input_folder, output_folder=output_folder, 
                 mat_filename=mat_filename, connection_skeleton_filename_in=connection_skeleton_filename_in, 
                 connection_filename_out=connection_filename_out, input_filename=input_filename, 
-                NG_name=NG_name_for_vm_on_input)
+                NG_name=NG_name_for_output)
 
     # ############################
     # ### Create project files ###
@@ -288,12 +288,13 @@ if __name__=='__main__':
     # P.pp_df_full(metadata_df)
     
     # ## Readout on input ##
-    # P.plot_readout_on_input(results_filename='out_results_20210408_1900044_multiply_weight31.gz', normalize=False, unit_idx_list=[0])
+    # P.plot_readout_on_input(results_filename=None, normalize=False, unit_idx_list=[0])
     P.show_input_to_readout_coherence(results_filename=None, savefigname='',signal_pair=[1,1])
 
     # ## Show spikes and vm ##q
-    # P.show_spikes(results_filename='out_results_20210408_1900044_multiply_weight81.gz', savefigname='')
-    # P.show_analog_results(results_filename='out_results_20210408_1900044_multiply_weight81.gz', savefigname='',param_name='vm',startswith='NG') 
+    # P.show_spikes(results_filename=None, savefigname='')
+    # neuron_index = {'NG1_L4_CI_SS_L4' : 150, 'NG2_L4_CI_BC_L4' : 37, 'NG3_L4_CI_SS2_L4' : 1}
+    # P.show_analog_results(results_filename=None, savefigname='',param_name='vm',startswith='NG', neuron_index=neuron_index) 
     # P.show_analog_results(results_filename=None, savefigname='',param_name='vclamp',startswith='NG') 
     # P.show_analog_results(results_filename=None, savefigname='',param_name='gclamp',startswith='NG') 
     # P.show_analog_results(results_filename=None, savefigname='',param_name='v_lowpass1',startswith='NG') 
@@ -323,6 +324,7 @@ if __name__=='__main__':
         'show_gc_fit_diagnostics_figure': False} 
     # P.analyze_arrayrun(metadata_filename=None, analysis='GrCaus', t_idx_start=100, t_idx_end=-100, **extra_GrCaus_attributes)
     # P.analyze_arrayrun(metadata_filename=None, analysis='MeanFR', t_idx_start=100, t_idx_end=-100)
+    # P.analyze_arrayrun(metadata_filename=None, analysis='Coherence', t_idx_start=100, t_idx_end=-100)
     # P.show_analyzed_arrayrun(csv_filename=None, analysis='MeanFR', variable_unit='Hz', NG_id_list=['NG1', 'NG2', 'NG3']) # Empty NG_id_list for all groups
     # P.analyze_arrayrun(metadata_filename=None, analysis='MeanVm', t_idx_start=100, t_idx_end=-100)
     # P.show_analyzed_arrayrun(csv_filename=None, analysis='MeanVm', variable_unit='Volt', NG_id_list=['NG1', 'NG2']) # Empty NG_id_list for all groups

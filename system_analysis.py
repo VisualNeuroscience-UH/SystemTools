@@ -448,7 +448,7 @@ class SystemAnalysis(SystemUtilities):
             
         coherence_sum = np.sum(Cxy)
 
-        return f, Cxy, Pwelch_spec_x, Pwelch_spec_y, Pxy, lags, corr
+        return f, Cxy, Pwelch_spec_x, Pwelch_spec_y, Pxy, lags, corr, coherence_sum
 
     def _analyze_grcaus(self, data, source_signal, dt, NG, 
                         t_idx_start=0, t_idx_end=None, **kwargs):
@@ -527,8 +527,6 @@ class SystemAnalysis(SystemUtilities):
 
                 pairwise_gc_dict = gc_test(signals, [best_time_lag_samples], verbose=True)
 
-                # self.get_coherence_of_two_signals(_source, _target, samp_freq=1.0 / (dt * downsampling_factor))
-
                 transfer_entropy_value = self.transfer_entropy(signals, best_time_lag_samples)
                 # GC quality control, several measures on error distribution
                 gc_stat_dg_data = pairwise_gc_dict[best_time_lag_samples][1]
@@ -596,6 +594,8 @@ class SystemAnalysis(SystemUtilities):
         if analysisHR.lower() in ['meanfr', 'meanvm', 'eicurrentdiff']:
             for NG in NG_list:
                 data_df[f'{analysisHR}_' + NG] = np.nan
+        # elif analysisHR.lower() in ['coherence']:
+            
         elif analysisHR.lower() in ['grcaus']:
             target_group = self.NG_name            
             data_df[f'{analysisHR}_' + target_group + '_InfoRate'] = np.nan
@@ -653,6 +653,7 @@ class SystemAnalysis(SystemUtilities):
         filename_out = metadataroot.replace('metadata', analysisHR)
         csv_name_out = filename_out + '.csv'
 
+        # Init txt file for Granger causality fit quality diagnostics
         if analysisHR.lower() in ['grcaus']:
             save_gc_fit_diagnostics = kwargs['save_gc_fit_diagnostics']
             if save_gc_fit_diagnostics is True:
