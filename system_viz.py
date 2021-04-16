@@ -168,8 +168,8 @@ class SystemViz(SystemAnalysis):
         # ax1.semilogy(f,Cxy)
         ax1.plot(f,Cxy)
         ax1.set_xlabel('frequency [Hz]')
-        ax1.set_ylabel('Coherence')
-        ax1.set_title('Coherence')
+        ax1.set_ylabel('MedianCoherence')
+        ax1.set_title('MedianCoherence')
 
         # ax2.semilogy(f,Pwelch_spec_x/np.max(Pwelch_spec_x))
         ax2.plot(f,Pwelch_spec_x/np.max(Pwelch_spec_x))
@@ -461,6 +461,9 @@ class SystemViz(SystemAnalysis):
         Plot 2D
         Plot 3D
         '''
+
+        assert analysis.lower() in SystemAnalysis.map_analysis_names.keys(), 'Unknown analysis, aborting...'
+
         analysisHR = self.map_analysis_names[analysis.lower()]
         # Get MeanFR_TIMESTAMP_.csv
 
@@ -590,9 +593,7 @@ class SystemViz(SystemAnalysis):
 
         analog_input = self.getData( self.input_filename, data_type=None)
         source_signal = analog_input['stimulus'].T # We want time x units
-        # source_signal_dt = analog_input['frameduration']
 
-        dt = self._get_dt(data_dict)
 
         NG = [n for n in data_dict['vm_all'].keys() if 'NG3' in n]
         # vm_unit = self._get_vm_by_interval(data_dict, NG[0], t_idx_start=0, t_idx_end=-1)
@@ -610,7 +611,9 @@ class SystemViz(SystemAnalysis):
         high_cutoff = 100 # Frequency in Hz
         nsamples = self._get_nsamples(data_dict) # self._get_nsamples(data_dict) // downsampling_factor
         nperseg = nsamples//6 
+        dt = self._get_dt(data_dict)
         samp_freq = 1.0 / dt # 1.0/(dt * downsampling_factor) 
+
         f, Cxy, Pwelch_spec_x, Pwelch_spec_y, Pxy, lags, corr, coherence_sum = \
             self.get_coherence_of_two_signals(x_scaled, y_scaled, samp_freq=samp_freq, nperseg=nperseg, high_cutoff=high_cutoff)
         self.show_coherence_of_two_signals(f, Cxy, Pwelch_spec_x, Pwelch_spec_y, Pxy, lags, corr)

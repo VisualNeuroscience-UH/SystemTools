@@ -53,8 +53,8 @@ Developed by Simo Vanni 2020-2021
 
 class SystemAnalysis(SystemUtilities):
 
-    map_analysis_names = {'meanfr':'MeanFR', 'eicurrentdiff':'EICurrentDiff', 'grcaus':'GrCaus', 'meanvm':'MeanVm'}
-    map_data_types = {'meanfr':'spikes_all', 'eicurrentdiff':'vm_all', 'grcaus': 'vm_all', 'meanvm': 'vm_all'}
+    map_analysis_names = {'meanfr':'MeanFR', 'eicurrentdiff':'EICurrentDiff', 'grcaus':'GrCaus', 'meanvm':'MeanVm', 'mediancoherence':'MedianCoherence'}
+    map_data_types = {'meanfr':'spikes_all', 'eicurrentdiff':'vm_all', 'grcaus': 'vm_all', 'meanvm': 'vm_all', 'mediancoherence': 'vm_all'}
 
     def __init__(self, path='./'):
 
@@ -418,9 +418,13 @@ class SystemAnalysis(SystemUtilities):
 
         return lags
 
-    def get_coherence_of_two_signals(self, x, y, samp_freq=1.0, nperseg=64, high_cutoff=None):
+    def get_coherence_of_two_signals(self, x, y, samp_freq=1.0, nperseg=64, high_cutoff=100):
         '''
         Coherence, cross spectral density, cross correlation
+
+        From scipy-signal.coherence documentation: Cxy = abs(Pxy)**2/(Pxx*Pyy), 
+        where Pxx and Pyy are power spectral density estimates of X and Y, and 
+        Pxy is the cross spectral density estimate of X and Y.
         '''
 
         # Coherence
@@ -450,11 +454,11 @@ class SystemAnalysis(SystemUtilities):
 
         return f, Cxy, Pwelch_spec_x, Pwelch_spec_y, Pxy, lags, corr, coherence_sum
 
-    def _analyze_grcaus(self, data, source_signal, dt, NG, 
+    def _analyze_grcaus(self, data, source_signal, dt, target_group, 
                         t_idx_start=0, t_idx_end=None, **kwargs):
         '''
-        Get input and output timeseries.
-        Run grangercausality for relevant pairs. 
+        Granger causality analysis between source and target of correctly classified units
+        Assuming that the correctly classified units are on the diagonal indexes [0->0, 1->1 ..., n->n]
         '''
 
         max_time_lag_seconds = kwargs['max_time_lag_seconds']
@@ -465,9 +469,7 @@ class SystemAnalysis(SystemUtilities):
         save_gc_fit_diagnostics = kwargs['save_gc_fit_diagnostics']
         show_figure = kwargs['show_gc_fit_diagnostics_figure']  
 
-        # vm_unit = self._get_vm_by_interval(data, NG, t_idx_start=t_idx_start, t_idx_end=t_idx_end)
-        vm_unit = self._get_vm_by_interval(data, NG, t_idx_start=0, t_idx_end=-1) # full length for fourier downsampling
-
+        vm_unit = self._get_vm_by_interval(data, target_group, t_idx_start=0, t_idx_end=-1) # full length for fourier downsampling
         target_signal = vm_unit / vm_unit.get_best_unit() 
         target_signal_entropy = self.vm_entropy(target_signal, base=2)
 
@@ -548,16 +550,16 @@ class SystemAnalysis(SystemUtilities):
         else:
             corrected_gc_significance_level = gc_significance_level
         
-        # Select one-to-one connectivity from input to "correct" output 
-        gc_eye_idx = np.eye(source_signal.shape[1], target_signal.shape[1], dtype=bool)
+        # Index to diagonal, ie "correctly" classified units 
+        eye_idx = np.eye(source_signal.shape[1], target_signal.shape[1], dtype=bool)
 
         # Magnitude in base 2 log. If error distribution is gaussian, can be interpreted as bits
         # Multiplied with sample frequency, gives information transfer rate. Lionell Barnett, personal communication
         final_sampling_frequency = 1 / (dt * downsampling_factor)
         gc_matrix_np_InfoRate = np.log2(gc_matrix_np_F) * final_sampling_frequency 
-        gc_InfoRate = np.nan_to_num(gc_matrix_np_InfoRate[gc_eye_idx], nan=0.0)
-        gc_p = gc_matrix_np_p[gc_eye_idx] 
-        gc_latency = gc_matrix_np_latency[gc_eye_idx] 
+        gc_InfoRate = np.nan_to_num(gc_matrix_np_InfoRate[eye_idx], nan=0.0)
+        gc_p = gc_matrix_np_p[eye_idx] 
+        gc_latency = gc_matrix_np_latency[eye_idx] 
 
         # Get representative values
         MeanGrCaus_InfoRate = np.floor(np.nanmean(gc_InfoRate))
@@ -583,36 +585,85 @@ class SystemAnalysis(SystemUtilities):
         # Return one value per analysis (mean of best matching units), indicating GrCaus relation
         return MeanGrCaus_InfoRate, MedianGrCaus_p, MeanGrCaus_latency, target_signal_entropy, MeanGrCaus_fitQA
 
+
+    def _analyze_coherence(self, data_dict, source_signal, dt, target_group, t_idx_start=0, t_idx_end=-1):
+        '''
+        Median sum of coherence spectrum between source and target of correctly classified units
+        Assuming that the correctly classified units are on the diagonal indexes [0->0, 1->1 ..., n->n]
+        '''
+        
+        vm_unit = self._get_vm_by_interval(data_dict, target_group, t_idx_start=0, t_idx_end=-1) 
+        target_signal = vm_unit / vm_unit.get_best_unit() 
+
+        nsamples = self._get_nsamples(data_dict) 
+        nperseg = nsamples//6 
+        samp_freq = 1.0 / dt  
+
+        # Cut to requested length 
+        source_signal = source_signal[t_idx_start:t_idx_end,:]
+        target_signal = target_signal[t_idx_start:t_idx_end,:]
+
+        # Init data matrix
+        coherence_matrix_np = np.full_like(np.empty((source_signal.shape[1], target_signal.shape[1])),0)
+
+        # Loop units. For each source signal, calculate all target signals.
+        pre_idx_array =  np.arange(source_signal.shape[1])
+        post_idx_array =  np.arange(target_signal.shape[1])
+
+        for pre_idx in pre_idx_array:
+            for post_idx in post_idx_array:
+                _source, _target = source_signal[:,pre_idx], target_signal[:,post_idx]
+
+                f, Cxy, Pwelch_spec_x, Pwelch_spec_y, Pxy, lags, corr, coherence_sum = \
+                            self.get_coherence_of_two_signals(_source, _target, samp_freq=samp_freq, nperseg=nperseg)
+        
+                coherence_matrix_np[pre_idx, post_idx] = coherence_sum
+
+        # Index to diagonal, ie "correctly" classified units and get median of values on diagonal 
+        eye_idx = np.eye(source_signal.shape[1], target_signal.shape[1], dtype=bool)
+        coherences_on_diagonal = coherence_matrix_np[eye_idx] 
+        MedianCoherenceSum = np.nanmedian(coherences_on_diagonal)
+        print(f'coherence_matrix_np = {coherence_matrix_np}')
+        return MedianCoherenceSum
+
     def get_analyzed_array_as_df(self, data_df, analysisHR=None, t_idx_start=0, t_idx_end=None, **kwargs):
+        '''
+        Call necessary analysis and build dataframe
+        '''
     
         # Get neuron group names
         filename_0 = data_df['Full path'].values[0]
         data = self.getData(filename_0)
         NG_list = [n for n in data[self.map_data_types[analysisHR.lower()]].keys() if 'NG' in n]
+        target_group = self.NG_name            
 
         # Add neuron group columns
         if analysisHR.lower() in ['meanfr', 'meanvm', 'eicurrentdiff']:
             for NG in NG_list:
                 data_df[f'{analysisHR}_' + NG] = np.nan
-        # elif analysisHR.lower() in ['coherence']:
-            
+        elif analysisHR.lower() in ['coherence']:
+                data_df[f'{analysisHR}_' + target_group] = np.nan            
         elif analysisHR.lower() in ['grcaus']:
-            target_group = self.NG_name            
             data_df[f'{analysisHR}_' + target_group + '_InfoRate'] = np.nan
             data_df[f'{analysisHR}_' + target_group + '_p'] = np.nan
             data_df[f'{analysisHR}_' + target_group + '_latency'] = np.nan
             data_df[f'{analysisHR}_' + target_group + '_target_entropy'] = np.nan
             data_df[f'{analysisHR}_' + target_group + '_fit_quality'] = np.nan
-            # Get reference data for granger causality
+
+        target_signal_dt = self._get_dt(data)
+
+        if analysisHR.lower() in ['coherence', 'grcaus']:
+            # Get reference data for granger causality and coherence analyses
             analog_input = self.getData( self.input_filename, data_type=None)
             source_signal = analog_input['stimulus'].T # We want time x units
-            source_signal_dt = analog_input['frameduration']
+            source_signal_dt = analog_input['frameduration'] / 1000 # assuming input dt in milliseconds
 
-        dt = self._get_dt(data)
-        
+            assert target_signal_dt == source_signal_dt, \
+                'Different sampling rates in input and output has not been implemented, aborting...'
+
         # Get duration
         if t_idx_end is None:
-            t_idx_end = int(data['runtime']  / dt)
+            t_idx_end = int(data['runtime']  / target_signal_dt)
 
         # Loop through datafiles
         for this_index, this_file in zip(data_df.index, data_df['Full path'].values):
@@ -624,11 +675,15 @@ class SystemAnalysis(SystemUtilities):
                     analyzed_results = eval(f'self._analyze_{analysisHR.lower()}(data, NG, t_idx_start=t_idx_start, t_idx_end=t_idx_end)')
                     data_df.loc[this_index,f'{analysisHR}_' + NG] = analyzed_results
             # _analyze__grcaus, analysis between two groups
+            elif analysisHR.lower() in ['coherence']:
+                MedianCoherenceSum = self._analyze_coherence(data, source_signal, target_signal_dt, target_group, \
+                    t_idx_start=t_idx_start, t_idx_end=t_idx_end)
+                data_df.loc[this_index,f'{analysisHR}_' + target_group] = MedianCoherenceSum
             elif analysisHR.lower() in ['grcaus']:
                 # check how multivariate gc is analyzed; are min, max, mean, median useful?
                 # Apply this to _analyze_grangercausality
                 MeanGrCaus_InfoRate, MedianGrCaus_p, MeanGrCaus_latency, target_entropy, MeanGrCaus_fitQA = \
-                    self._analyze_grcaus(data, source_signal, dt, target_group, t_idx_start=t_idx_start, 
+                    self._analyze_grcaus(data, source_signal, target_signal_dt, target_group, t_idx_start=t_idx_start, 
                     t_idx_end=t_idx_end, **kwargs)
 
                 data_df.loc[this_index,f'{analysisHR}_' + target_group + '_InfoRate'] = MeanGrCaus_InfoRate

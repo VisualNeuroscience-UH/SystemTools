@@ -289,7 +289,7 @@ if __name__=='__main__':
     
     # ## Readout on input ##
     # P.plot_readout_on_input(results_filename=None, normalize=False, unit_idx_list=[0])
-    P.show_input_to_readout_coherence(results_filename=None, savefigname='',signal_pair=[1,1])
+    # P.show_input_to_readout_coherence(results_filename=None, savefigname='',signal_pair=[1,1])
 
     # ## Show spikes and vm ##q
     # P.show_spikes(results_filename=None, savefigname='')
@@ -312,8 +312,8 @@ if __name__=='__main__':
     # ## Show connections ##
     # P.show_connections(connections_filename=None, hist_from='L4_CI_BC_L4__to__L4_CI_SS_L4_soma', savefigname='')
 
-    # # # # ## Analyse and show arrayrun data ##
-    # # # # Available analyses: 'MeanFR':  variable_unit='Hz', 'MeanVm':  variable_unit='', 'EICurrentDiff': variable_unit='Amp', 'GrCaus': multiple units
+    ## Analyse and show arrayrun data ##
+    # Available analyses: 'MeanFR', 'MeanVm', 'EICurrentDiff', 'GrCaus', 'MedianCoherence'
     extra_GrCaus_attributes = {
         'max_time_lag_seconds': 0.1,
         'downsampling_factor': 40,
@@ -322,12 +322,11 @@ if __name__=='__main__':
         'gc_significance_level': 0.001,
         'save_gc_fit_diagnostics': True,
         'show_gc_fit_diagnostics_figure': False} 
-    # P.analyze_arrayrun(metadata_filename=None, analysis='GrCaus', t_idx_start=100, t_idx_end=-100, **extra_GrCaus_attributes)
     # P.analyze_arrayrun(metadata_filename=None, analysis='MeanFR', t_idx_start=100, t_idx_end=-100)
-    # P.analyze_arrayrun(metadata_filename=None, analysis='Coherence', t_idx_start=100, t_idx_end=-100)
     # P.show_analyzed_arrayrun(csv_filename=None, analysis='MeanFR', variable_unit='Hz', NG_id_list=['NG1', 'NG2', 'NG3']) # Empty NG_id_list for all groups
-    # P.analyze_arrayrun(metadata_filename=None, analysis='MeanVm', t_idx_start=100, t_idx_end=-100)
-    # P.show_analyzed_arrayrun(csv_filename=None, analysis='MeanVm', variable_unit='Volt', NG_id_list=['NG1', 'NG2']) # Empty NG_id_list for all groups
-    # P.show_analyzed_arrayrun(csv_filename='GrCaus__20210408_1909160.csv', analysis='GrCaus', NG_id_list=['NG3']) 
+    # P.analyze_arrayrun(metadata_filename=None, analysis='MedianCoherence', t_idx_start=100, t_idx_end=-100)
+    # P.show_analyzed_arrayrun(csv_filename=None, analysis='MedianCoherence', NG_id_list=['NG3']) 
+    P.analyze_arrayrun(metadata_filename=None, analysis='GrCaus', t_idx_start=100, t_idx_end=-100, **extra_GrCaus_attributes)
+    P.show_analyzed_arrayrun(csv_filename=None, analysis='GrCaus', NG_id_list=['NG3']) 
     
     plt.show()
