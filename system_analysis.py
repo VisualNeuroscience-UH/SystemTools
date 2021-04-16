@@ -53,8 +53,8 @@ Developed by Simo Vanni 2020-2021
 
 class SystemAnalysis(SystemUtilities):
 
-    map_analysis_names = {'meanfr':'MeanFR', 'eicurrentdiff':'EICurrentDiff', 'grcaus':'GrCaus', 'meanvm':'MeanVm', 'mediancoherence':'MedianCoherence'}
-    map_data_types = {'meanfr':'spikes_all', 'eicurrentdiff':'vm_all', 'grcaus': 'vm_all', 'meanvm': 'vm_all', 'mediancoherence': 'vm_all'}
+    map_analysis_names = {'meanfr':'MeanFR', 'eicurrentdiff':'EICurrentDiff', 'grcaus':'GrCaus', 'meanvm':'MeanVm', 'coherence':'Coherence'}
+    map_data_types = {'meanfr':'spikes_all', 'eicurrentdiff':'vm_all', 'grcaus': 'vm_all', 'meanvm': 'vm_all', 'coherence': 'vm_all'}
 
     def __init__(self, path='./'):
 
@@ -146,6 +146,10 @@ class SystemAnalysis(SystemUtilities):
             vm = data['vm'] # data_by_group already
         else:
             vm = data['vm_all'][NG]['vm']
+
+        n_samples =vm.shape[0]
+
+        t_idx_end = self._end2idx(t_idx_end, n_samples)
 
         return vm[t_idx_start:t_idx_end,:]
 
@@ -418,6 +422,34 @@ class SystemAnalysis(SystemUtilities):
 
         return lags
 
+    def _get_error(self, source_signal, target_signal, dt, shift_in_seconds = 0, epoch_in_seconds=1.5):
+
+        shift_in_samples = int(shift_in_seconds / dt)
+        epoch_in_samples = int(epoch_in_seconds / dt)
+
+        assert len(source_signal) == len(target_signal), 'Unequal sample lengths, aborting...'
+        nsamples = len(source_signal)
+
+        # If shift makes no sense/too long, return -1. Probably noise.
+        if  shift_in_samples + epoch_in_samples > nsamples:
+            return -1
+
+        target_start_idx = shift_in_samples
+        target_end_idx = shift_in_samples + epoch_in_samples
+        target_shifted_backwards = target_signal[target_start_idx:target_end_idx]
+        source_cut = source_signal[:epoch_in_samples] # source does not shift
+
+        # Deneve error
+        # sum(var(xT-xestE,0,2))/(sum(var(xT,0,2))*Trials) # Mean across trials
+        error = np.var(source_cut - target_shifted_backwards) / np.var(source_cut)
+
+        if 1:
+            plt.plot(source_cut)
+            plt.plot(target_shifted_backwards)
+            self._string_on_plot(plt.gca(), variable_name='error', variable_value=error, variable_unit='unitless')
+            plt.show()
+        return error
+
     def get_coherence_of_two_signals(self, x, y, samp_freq=1.0, nperseg=64, high_cutoff=100):
         '''
         Coherence, cross spectral density, cross correlation
@@ -426,21 +458,23 @@ class SystemAnalysis(SystemUtilities):
         where Pxx and Pyy are power spectral density estimates of X and Y, and 
         Pxy is the cross spectral density estimate of X and Y.
         '''
+        x_scaled = self.standard_scaler(x)
+        y_scaled = self.standard_scaler(y)
 
         # Coherence
-        f, Cxy = coherence(x, y, fs=samp_freq, window='hann', nperseg=nperseg)
+        f, Cxy = coherence(x_scaled, y_scaled, fs=samp_freq, window='hann', nperseg=nperseg)
         
         # Cross spectral density
-        f, Pxy = csd(x, y, fs=samp_freq, nperseg=nperseg, scaling='density')
+        f, Pxy = csd(x_scaled, y_scaled, fs=samp_freq, nperseg=nperseg, scaling='density')
 
         # Cross correlation
-        corr = correlate(y, x, mode='full')
-        lags = self._correlation_lags(len(x), len(y))
+        corr = correlate(y_scaled, x_scaled, mode='full')
+        lags = self._correlation_lags(len(x_scaled), len(y_scaled))
         corr /= np.max(corr)
 
         # Power spectrum of input and output signals
-        f, Pwelch_spec_x = welch(x, fs=samp_freq, nperseg=nperseg, scaling='density')
-        f, Pwelch_spec_y = welch(y, fs=samp_freq, nperseg=nperseg, scaling='density')
+        f, Pwelch_spec_x = welch(x_scaled, fs=samp_freq, nperseg=nperseg, scaling='density')
+        f, Pwelch_spec_y = welch(y_scaled, fs=samp_freq, nperseg=nperseg, scaling='density')
 
         if high_cutoff is not None:
             indexes = f < high_cutoff
@@ -452,7 +486,7 @@ class SystemAnalysis(SystemUtilities):
             
         coherence_sum = np.sum(Cxy)
 
-        return f, Cxy, Pwelch_spec_x, Pwelch_spec_y, Pxy, lags, corr, coherence_sum
+        return f, Cxy, Pwelch_spec_x, Pwelch_spec_y, Pxy, lags, corr, coherence_sum, x_scaled, y_scaled
 
     def _analyze_grcaus(self, data, source_signal, dt, target_group, 
                         t_idx_start=0, t_idx_end=None, **kwargs):
@@ -585,7 +619,6 @@ class SystemAnalysis(SystemUtilities):
         # Return one value per analysis (mean of best matching units), indicating GrCaus relation
         return MeanGrCaus_InfoRate, MedianGrCaus_p, MeanGrCaus_latency, target_signal_entropy, MeanGrCaus_fitQA
 
-
     def _analyze_coherence(self, data_dict, source_signal, dt, target_group, t_idx_start=0, t_idx_end=-1):
         '''
         Median sum of coherence spectrum between source and target of correctly classified units
@@ -604,7 +637,10 @@ class SystemAnalysis(SystemUtilities):
         target_signal = target_signal[t_idx_start:t_idx_end,:]
 
         # Init data matrix
-        coherence_matrix_np = np.full_like(np.empty((source_signal.shape[1], target_signal.shape[1])),0)
+        coherence_matrix_np_sum = np.full_like(np.empty((source_signal.shape[1], target_signal.shape[1])),0)
+        coherence_matrix_np_latency = np.full_like(np.empty((source_signal.shape[1], target_signal.shape[1])),0)
+        coherence_matrix_np_error = np.full_like(np.empty((source_signal.shape[1], target_signal.shape[1])),0)
+        coherence_matrix_np_errorShifted = np.full_like(np.empty((source_signal.shape[1], target_signal.shape[1])),0)
 
         # Loop units. For each source signal, calculate all target signals.
         pre_idx_array =  np.arange(source_signal.shape[1])
@@ -614,17 +650,46 @@ class SystemAnalysis(SystemUtilities):
             for post_idx in post_idx_array:
                 _source, _target = source_signal[:,pre_idx], target_signal[:,post_idx]
 
-                f, Cxy, Pwelch_spec_x, Pwelch_spec_y, Pxy, lags, corr, coherence_sum = \
+                f, Cxy, Pwelch_spec_x, Pwelch_spec_y, Pxy, lags, corr, coherence_sum, _source_scaled, _target_scaled = \
                             self.get_coherence_of_two_signals(_source, _target, samp_freq=samp_freq, nperseg=nperseg)
-        
-                coherence_matrix_np[pre_idx, post_idx] = coherence_sum
+                shift_in_seconds = self._get_cross_corr_latency(lags, corr, dt)
+                error = self._get_error(_source_scaled, _target_scaled, dt, shift_in_seconds=0)
+                errorShifted = self._get_error(_source_scaled, _target_scaled, dt, shift_in_seconds=shift_in_seconds)
+
+                coherence_matrix_np_sum[pre_idx, post_idx] = coherence_sum
+                coherence_matrix_np_latency[pre_idx, post_idx] = shift_in_seconds
+                coherence_matrix_np_error[pre_idx, post_idx] = error
+                coherence_matrix_np_errorShifted[pre_idx, post_idx] = errorShifted
 
         # Index to diagonal, ie "correctly" classified units and get median of values on diagonal 
         eye_idx = np.eye(source_signal.shape[1], target_signal.shape[1], dtype=bool)
-        coherences_on_diagonal = coherence_matrix_np[eye_idx] 
+        coherences_on_diagonal = coherence_matrix_np_sum[eye_idx] 
         MedianCoherenceSum = np.nanmedian(coherences_on_diagonal)
-        print(f'coherence_matrix_np = {coherence_matrix_np}')
-        return MedianCoherenceSum
+        latencies_on_diagonal = coherence_matrix_np_latency[eye_idx] 
+        MedianCoherenceLatency = np.nanmedian(latencies_on_diagonal)
+        error_on_diagonal = coherence_matrix_np_error[eye_idx] 
+        MedianError = np.nanmedian(error_on_diagonal)
+        errorShifted_on_diagonal = coherence_matrix_np_errorShifted[eye_idx] 
+        MedianErrorShifted = np.nanmedian(errorShifted_on_diagonal)
+
+        if 1:
+            print(f'coherence_matrix_np_sum = {coherence_matrix_np_sum}')
+            print(f'coherence_matrix_np_latency = {coherence_matrix_np_latency}')
+            print(f'coherence_matrix_np_error = {coherence_matrix_np_error}')
+            print(f'coherence_matrix_np_errorShifted = {coherence_matrix_np_errorShifted}')
+
+        return MedianCoherenceSum, MedianCoherenceLatency, MedianError, MedianErrorShifted
+
+    def _get_cross_corr_latency(self, lags, corr, dt):
+        
+        idx = lags>=0
+        corr_on_positive_lags = corr[idx]
+        positive_lags = lags[idx]
+        idx2 = np.argmax(corr_on_positive_lags)
+        shift_in_samples = positive_lags[idx2]
+        shift_in_seconds = shift_in_samples * dt
+
+        return shift_in_seconds
 
     def get_analyzed_array_as_df(self, data_df, analysisHR=None, t_idx_start=0, t_idx_end=None, **kwargs):
         '''
@@ -642,7 +707,10 @@ class SystemAnalysis(SystemUtilities):
             for NG in NG_list:
                 data_df[f'{analysisHR}_' + NG] = np.nan
         elif analysisHR.lower() in ['coherence']:
-                data_df[f'{analysisHR}_' + target_group] = np.nan            
+            data_df[f'{analysisHR}_' + target_group + '_Sum'] = np.nan            
+            data_df[f'{analysisHR}_' + target_group + '_Latency'] = np.nan            
+            data_df[f'{analysisHR}_' + target_group + '_error'] = np.nan            
+            data_df[f'{analysisHR}_' + target_group + '_errorShifted'] = np.nan            
         elif analysisHR.lower() in ['grcaus']:
             data_df[f'{analysisHR}_' + target_group + '_InfoRate'] = np.nan
             data_df[f'{analysisHR}_' + target_group + '_p'] = np.nan
@@ -676,9 +744,13 @@ class SystemAnalysis(SystemUtilities):
                     data_df.loc[this_index,f'{analysisHR}_' + NG] = analyzed_results
             # _analyze__grcaus, analysis between two groups
             elif analysisHR.lower() in ['coherence']:
-                MedianCoherenceSum = self._analyze_coherence(data, source_signal, target_signal_dt, target_group, \
+                MedianCoherenceSum, MedianCoherenceLatency, MedianError, MedianErrorShifted = \
+                    self._analyze_coherence(data, source_signal, target_signal_dt, target_group, \
                     t_idx_start=t_idx_start, t_idx_end=t_idx_end)
-                data_df.loc[this_index,f'{analysisHR}_' + target_group] = MedianCoherenceSum
+                data_df.loc[this_index,f'{analysisHR}_' + target_group + '_Sum'] = MedianCoherenceSum
+                data_df.loc[this_index,f'{analysisHR}_' + target_group + '_Latency'] = MedianCoherenceLatency
+                data_df.loc[this_index,f'{analysisHR}_' + target_group + '_error'] = MedianError
+                data_df.loc[this_index,f'{analysisHR}_' + target_group + '_errorShifted'] = MedianErrorShifted
             elif analysisHR.lower() in ['grcaus']:
                 # check how multivariate gc is analyzed; are min, max, mean, median useful?
                 # Apply this to _analyze_grangercausality

@@ -82,9 +82,9 @@ class SystemViz(SystemAnalysis):
 
     def _string_on_plot(self, ax, variable_name=None, variable_value=None, variable_unit=None):
 
-            plot_str = f'{variable_name} = {variable_value:6.2f} {variable_unit}'
-            ax.text(0.05, 0.95, plot_str, fontsize=8, verticalalignment='top', transform=ax.transAxes,
-            bbox=dict(boxstyle="Square,pad=0.2", fc="white", ec="white", lw=1))
+        plot_str = f'{variable_name} = {variable_value:6.2f} {variable_unit}'
+        ax.text(0.05, 0.95, plot_str, fontsize=8, verticalalignment='top', transform=ax.transAxes,
+        bbox=dict(boxstyle="Square,pad=0.2", fc="white", ec="white", lw=1))
 
     def plot_readout_on_input(self, results_filename=None, normalize=False, unit_idx_list=None):
         '''
@@ -161,15 +161,16 @@ class SystemViz(SystemAnalysis):
         sns.lineplot(data=data_df)
         plt.show()
 
-    def show_coherence_of_two_signals(self, f, Cxy, Pwelch_spec_x, Pwelch_spec_y, Pxy, lags, corr):
+    def _show_coherence_of_two_signals(self, f, Cxy, Pwelch_spec_x, Pwelch_spec_y, Pxy, lags, \
+        corr, latency, x, y, x_scaled, y_scaled):
 
-        fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2,2)
+        fig, ((ax1, ax2), (ax3, ax4), (ax5, ax6)) = plt.subplots(3,2)
         
         # ax1.semilogy(f,Cxy)
         ax1.plot(f,Cxy)
         ax1.set_xlabel('frequency [Hz]')
-        ax1.set_ylabel('MedianCoherence')
-        ax1.set_title('MedianCoherence')
+        ax1.set_ylabel('Coherence')
+        ax1.set_title('Coherence')
 
         # ax2.semilogy(f,Pwelch_spec_x/np.max(Pwelch_spec_x))
         ax2.plot(f,Pwelch_spec_x/np.max(Pwelch_spec_x))
@@ -189,6 +190,21 @@ class SystemViz(SystemAnalysis):
         ax4.set_xlabel('samples')
         ax4.set_ylabel('correlation')
         ax4.set_title('Cross correlation')
+
+        ax5.plot(x)
+        ax5.plot(y)
+        ax5.set_xlabel('time (samples)')
+        ax5.set_ylabel('signal')
+        ax5.set_title('Original signals')
+
+        ax6.plot(x_scaled)
+        ax6.plot(y_scaled)
+        ax6.set_xlabel('time (samples)')
+        ax6.set_ylabel('signal')
+        ax6.set_title('Zero mean - unit variance signals')
+
+        self._string_on_plot(ax4, variable_name='Latency', variable_value=latency, variable_unit='s')
+
 
     def show_spikes(self, results_filename=None, savefigname='', t_idx_start=0, t_idx_end=10000):
 
@@ -605,18 +621,17 @@ class SystemViz(SystemAnalysis):
         x = source_signal[cut_length:-cut_length,signal_pair[0]]
         y = target_signal[cut_length:-cut_length,signal_pair[1]]
 
-        x_scaled = self.standard_scaler(x)
-        y_scaled = self.standard_scaler(y)
-
         high_cutoff = 100 # Frequency in Hz
         nsamples = self._get_nsamples(data_dict) # self._get_nsamples(data_dict) // downsampling_factor
         nperseg = nsamples//6 
         dt = self._get_dt(data_dict)
         samp_freq = 1.0 / dt # 1.0/(dt * downsampling_factor) 
 
-        f, Cxy, Pwelch_spec_x, Pwelch_spec_y, Pxy, lags, corr, coherence_sum = \
-            self.get_coherence_of_two_signals(x_scaled, y_scaled, samp_freq=samp_freq, nperseg=nperseg, high_cutoff=high_cutoff)
-        self.show_coherence_of_two_signals(f, Cxy, Pwelch_spec_x, Pwelch_spec_y, Pxy, lags, corr)
+        f, Cxy, Pwelch_spec_x, Pwelch_spec_y, Pxy, lags, corr, coherence_sum, x_scaled, y_scaled = \
+            self.get_coherence_of_two_signals(x, y, samp_freq=samp_freq, nperseg=nperseg, high_cutoff=high_cutoff)
+        shift_in_seconds = self._get_cross_corr_latency(lags, corr, dt)
+        self._show_coherence_of_two_signals(f, Cxy, Pwelch_spec_x, Pwelch_spec_y, Pxy, lags, corr, \
+            shift_in_seconds, x, y, x_scaled, y_scaled)
 
         if savefigname:
             self._figsave(figurename=savefigname)
