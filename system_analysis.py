@@ -815,6 +815,171 @@ class SystemAnalysis(SystemUtilities):
         # Get results
         # Display
 
+    def _get_spikes_with_leak(self, spikes, Lambda, dt):
+
+        rO = np.zeros(spikes.shape)
+        n_time_points = spikes.shape[0]
+
+        # Filtered spike train from spikes
+        time_vector = np.arange(n_time_points)
+        for t in time_vector[1:]:
+            rO[t-1,:] += spikes[t-1,:]
+
+            # the filtered spike train has a leak time constant of Lambda (time points)
+            rO[t,:] = (1 - Lambda * dt) * rO[t-1,:] 
+        
+        return rO 
+
+    def _get_input_with_leak(self, Input, Lambda, dt):
+        # Get target output by leaky integration of the input %%
+        # for t=2:TimeT
+        #     xT(:,t) = (1 - lambda * dt) * xT(:, t-1) + dt * Input(:, t-1); 
+        # end
+        xL = np.zeros(Input.shape)
+        n_time_points = Input.shape[0]
+
+        # Filtered input
+        time_vector = np.arange(n_time_points)
+        for t in time_vector[1:]:
+            # the filtered input has a leak time constant of Lambda (time points)
+            xL[t,:] = (1 - Lambda * dt) * xL[t-1,:] + dt * Input[t-1,:]
+        
+        return xL
+
+    def _check_readout_group(self, simulation_engine, readout_group):
+
+        if simulation_engine.lower() in ['cxsystem']:
+            if readout_group.lower() in ['e', 'excitatory']:
+                readout_group = 'NG1'
+            elif readout_group.lower() in ['i', 'inhibitory']:
+                readout_group = 'NG2'
+            elif 'NG1' not in readout_group and 'NG2' not in readout_group:
+                raise ValueError(f'{readout_group} is not valid readout_group for simulation_engine {simulation_engine}, aborting...')
+        elif simulation_engine.lower() in ['matlab']:
+            if readout_group.lower() in ['ng1','excitatory']:
+                readout_group = 'E'
+            elif readout_group.lower() in ['ng2', 'inhibitory']:
+                readout_group = 'I'
+            elif 'E' not in readout_group and 'I' not in readout_group:
+                raise ValueError(f'{readout_group} is not valid readout_group for simulation_engine {simulation_engine}, aborting...')
+        else:
+            raise ValueError(f'{simulation_engine} is not a valid simulation_engine, aborting...')
+
+        return readout_group
+
+    def get_MSE(self, results_filename=None, simulation_engine='CxSystem', readout_group='NG1', decoding_method='least_squares'):
+        '''
+        Pseudocode:
+        COde modified from Brendel_2020_PLoSComputBiol GitHub repo 
+        %% Get input %%
+        % we generate a new input
+        Input=A * (mvnrnd(zeros(1,Nx), eye(Nx), TimeT))'; 
+
+        % we smooth the new input
+        Input(k,:) = conv(Input(k,:), w, 'same'); 
+
+
+        %% Filtered spike train from simulation %%
+        % If the postsynaptic neuron  (idx = k) spikes
+        % the filtered spike train of the is incremented to one
+        rO(k,t) = rO(k,t) + 1; 
+
+        % the filtered spike train has a leak of lambda
+        rO(:,t) = (1 - lambda * dt) * rO(:,t-1); 
+
+
+        %% Computing optimal decoders %%
+        Decs(:,:) = (rO' \ xL')'; % xL is the input smoothed with membrane leak; Note: (rO' \ xL')' = xL / rO 
+
+
+        %% Get output estimate from optimal decoders %%
+        xest = Decs * rO; 
+
+
+        %% Get target output by leaky integration of the input %%
+        for t=2:TimeT
+            xT(:,t) = (1 - lambda * dt) * xT(:, t-1) + dt * Input(:, t-1); 
+        end
+
+
+        %% Get MSE error %%
+        %we compute the variance of the error normalized by the variance of the target population
+        Error(1,i) = Error(1,i) + sum(var(xT - xestE, 0, 2)) / sum(var(xT, 0, 2)) ;
+        '''
+        
+        #  Get input. This is always the project analog input file
+        Input =  self.read_input_matfile(filename=self.input_filename, variable='stimulus')
+        n_input_time_points = Input.shape[0]
+
+        # Check readoutgroup name, standardize
+        readout_group = self._check_readout_group(simulation_engine, readout_group)
+
+
+        # Get filtered spike train from simulation. 
+        if 'matlab' in simulation_engine.lower():
+            assert results_filename is not None, 'For matlab, you need to provide the workspace data as "results_filename", aborting...'
+            # Input scaling factor A is 2000 for matlab results
+            data_dict = self.getData(filename=results_filename)
+            target_rO_name = f'rO{readout_group}'
+            rO = data_dict[target_rO_name].T
+            Lambda = data_dict['lambda']
+            dt = data_dict['dt']
+            n_time_points = rO.shape[0]
+
+        elif 'cxsystem' in simulation_engine.lower():
+            # Input scaling factor A is 15 for python results
+            data_dict = self.getData(filename=results_filename, data_type='results')
+            n_time_points = self._get_nsamples(data_dict)
+            NG_name = [n for n in data_dict['spikes_all'].keys() if f'{readout_group}' in n ][0]
+            n_neurons = data_dict['Neuron_Groups_Parameters'][NG_name]['number_of_neurons']
+
+            # Get dt
+            dt = self._get_dt(data_dict)
+
+            # Get Lambda, a.k.a. tau_soma, but in time points. Can be float.
+            Lambda_unit = self._get_namespace_variable(data_dict, readout_group, variable_name='taum_soma')
+            Lambda = Lambda_unit.base / dt
+
+            # Get spikes
+            spike_idx = data_dict['spikes_all'][NG_name]['i']
+            spike_times = data_dict['spikes_all'][NG_name]['t']
+            spike_times_idx = np.array(spike_times / (dt * b2u.second) , dtype=int)
+
+            # Create spike vector 
+            spikes = np.zeros([n_time_points, n_neurons])
+            spikes[spike_times_idx, spike_idx] = 1
+            # Spikes with leak
+            rO = self._get_spikes_with_leak(spikes, Lambda, dt)
+
+        # Get input with leak, a.k.a. the target output
+        xL = self._get_input_with_leak(Input, Lambda, dt)
+
+        # Computing optimal decoders
+        # Decs(:,:) = (rO' \ xL')'; % xL is the input smoothed with membrane leak; Note: (rO' \ xL')' = xL / rO 
+        # xL = D * rO which can be solved for D: xb = a: solve b.T x.T = a.T instead 
+        # b: rO; a: xL; x: Decs
+        # From numpy for matlab users (numpy site)
+        # Matlab: b/a; Python: Solve a.T x.T = b.T instead, which is a solution of x a = b for x
+
+        if decoding_method in ['least_squares', 'lstsq']:
+            Decs = np.linalg.lstsq(rO, xL)[0]
+        elif decoding_method in ['pseudoinverse', 'pinv']:
+            Decs = np.dot(xL.T, np.linalg.pinv(rO.T)) 
+            Decs = Decs.T
+        else:
+            raise NotImplementedError('Unknown method for decoding, try "least_squares", aborting...')
+
+        # Get estimated output
+        xest = np.dot(Decs.T, rO.T)
+        xest=xest.T
+
+        # Get MSE error 
+        # we compute the variance of the error normalized by the variance of the target population
+        Error = np.sum(np.var(xL - xest, axis=0)) / np.sum(np.var(xL,axis=0))
+
+        assert n_input_time_points == n_time_points, 'input and simulation data time vector lengths do not match, aborting...'
+
+        return Error, xL, xest
 
 if __name__=='__main__':
 

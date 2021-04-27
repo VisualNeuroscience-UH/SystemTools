@@ -57,8 +57,7 @@ Developed by Simo Vanni 2021
 class Project(SystemViz):
 
     def __init__(self, path='./', input_folder=None, output_folder=None, mat_filename=None, 
-                connection_skeleton_filename_in=None, connection_filename_out=None, 
-                input_filename=None, NG_name=None):
+                connection_skeleton_filename_in=None, connection_filename_out=None, input_filename=None, NG_name=None):
 
         self.path = path
         self.input_folder = input_folder
@@ -243,14 +242,25 @@ class Project(SystemViz):
                         'stimulus_duration_in_seconds' : input_dict['stimulus_duration_in_seconds']}
         sio.savemat(current_injection_filename_full, mat_out_dict)
 
+    def read_input_matfile(self, filename=None, variable='stimulus'):
+        print(filename)
+        assert filename is not None, 'Filename not defined for read_input_matfile(), aborting...'
+        
+        analog_input = self.getData(filename, data_type=None)
+        analog_signal = analog_input[variable].T
+        assert analog_signal.ndim == 2, 'input is not a 2-dim vector, aborting...'
+        # analog_timestep = analog_input['frameduration']
+
+        return analog_signal
+
 
 if __name__=='__main__':
 
     if sys.platform == 'linux':
         path = r'/opt/tomas/projects/Results/Deneve_param'
     elif sys.platform == 'win32':
-        # path = r'C:\Users\Simo\Laskenta\SimuOut\Deneve\plast_exp'
         path = r'C:\Users\Simo\Laskenta\SimuOut\Deneve\Replica_test'
+        # path = r'C:\Users\Simo\Laskenta\SimuOut\Deneve\Replica_test'
         os.chdir(path)
 
     # Experiment-specific file, folder and neuron group names. Do not use reserved words, such as "results"
@@ -259,7 +269,7 @@ if __name__=='__main__':
     mat_filename = 'Fig4_workspace.mat'
     connection_skeleton_filename_in = 'Replica_skeleton_connections_20210211_1453238.gz'
     connection_filename_out = 'connections_deneve_ci_constant.gz'
-    input_filename = 'input_noise_210408.mat' # 'input_quadratic_three_units_2s.mat' # 'input_noise_210408.mat'
+    input_filename = 'noise_210406.mat' # 'input_noise_210408.mat' # 'input_quadratic_three_units_2s.mat' # 'input_noise_210408.mat'
     NG_name_for_output = 'NG3_L4_CI_SS2_L4'
 
     P = Project(path=path, input_folder=input_folder, output_folder=output_folder, 
@@ -278,6 +288,7 @@ if __name__=='__main__':
     # # Creates connection_filename_out to input folder
     # P.replace_connections(show_histograms=True, constant_scaling=True, constant_value=1e-9)
 
+
     # ############################
     # ###### Analysis & Viz ######
     # ############################
@@ -289,10 +300,12 @@ if __name__=='__main__':
     
     # ## Readout on input ##
     # P.plot_readout_on_input(results_filename=None, normalize=False, unit_idx_list=[0])
-    # P.show_input_to_readout_coherence(results_filename='out_results_20210416_1129128_V_res-60mV_V_res-60mV.gz', savefigname='',signal_pair=[1,1])
+    # P.show_input_to_readout_coherence(results_filename=None, savefigname='',signal_pair=[1,1])
+    P.show_MSE(results_filename=None, simulation_engine='cxsystem', readout_group='I', decoding_method='least_squares', unit_idx_list=[1]) 
+
 
     # ## Show spikes and vm ##q
-    # P.show_spikes(results_filename=None, savefigname='')
+    # P.show_spikes(results_filename='', savefigname='')
     # neuron_index = {'NG1_L4_CI_SS_L4' : 150, 'NG2_L4_CI_BC_L4' : 37, 'NG3_L4_CI_SS2_L4' : 1}
     # P.show_analog_results(results_filename=None, savefigname='',param_name='vm',startswith='NG', neuron_index=neuron_index) 
     # P.show_analog_results(results_filename=None, savefigname='',param_name='vclamp',startswith='NG') 
@@ -324,9 +337,9 @@ if __name__=='__main__':
         'show_gc_fit_diagnostics_figure': False} 
     # P.analyze_arrayrun(metadata_filename=None, analysis='MeanFR', t_idx_start=100, t_idx_end=-100)
     # P.show_analyzed_arrayrun(csv_filename=None, analysis='MeanFR', variable_unit='Hz', NG_id_list=['NG1', 'NG2', 'NG3']) # Empty NG_id_list for all groups
-    P.analyze_arrayrun(metadata_filename=None, analysis='Coherence', t_idx_start=100, t_idx_end=-100)
-    P.show_analyzed_arrayrun(csv_filename=None, analysis='Coherence', NG_id_list=['NG3']) 
-    # P.analyze_arrayrun(metadata_filename=None, analysis='GrCaus', t_idx_start=100, t_idx_end=-100, **extra_GrCaus_attributes)
-    # P.show_analyzed_arrayrun(csv_filename=None, analysis='GrCaus', NG_id_list=['NG3']) 
+    # P.analyze_arrayrun(metadata_filename=None, analysis='Coherence', t_idx_start=100, t_idx_end=-100)
+    # P.show_analyzed_arrayrun(csv_filename=None, analysis='Coherence', NG_id_list=['NG3']) 
+    # P.analyze_arrayrun(metadata_filename='metadata__20210420_2134507.gz', analysis='GrCaus', t_idx_start=100, t_idx_end=-100, **extra_GrCaus_attributes)
+    # P.show_analyzed_arrayrun(csv_filename='GrCaus_noconn_20210420_2134507.csv', analysis='GrCaus', NG_id_list=['NG3']) 
     
     plt.show()

@@ -93,11 +93,7 @@ class SystemViz(SystemAnalysis):
         # Get data and input
         data = self.getData(filename=results_filename, data_type='results')
 
-        analog_input = self.getData( self.input_filename, data_type=None)
-
-        analog_signal = analog_input['stimulus'].T
-        assert analog_signal.ndim == 2, 'input is not a 2-dim vector, aborting...'
-        # analog_timestep = analog_input['frameduration']
+        analog_signal =  self.read_input_matfile(filename=self.input_filename, variable='stimulus')
 
         NG_name = self.NG_name
         t = data['vm_all'][NG_name]['t'] # All timesteps
@@ -204,7 +200,6 @@ class SystemViz(SystemAnalysis):
         ax6.set_title('Zero mean - unit variance signals')
 
         self._string_on_plot(ax4, variable_name='Latency', variable_value=latency, variable_unit='s')
-
 
     def show_spikes(self, results_filename=None, savefigname='', t_idx_start=0, t_idx_end=10000):
 
@@ -635,6 +630,20 @@ class SystemViz(SystemAnalysis):
 
         if savefigname:
             self._figsave(figurename=savefigname)
+
+    def show_MSE(   self, results_filename=None, simulation_engine='cxsystem', readout_group='E', 
+                    decoding_method='least_squares', unit_idx_list=[0]):
+
+        Error, xL, xest = self.get_MSE( results_filename=results_filename, simulation_engine=simulation_engine, 
+                                        readout_group=readout_group, decoding_method=decoding_method) 
+        fig, ax = plt.subplots(nrows=1,ncols=1)
+        ax.plot(xL[:,unit_idx_list])
+        ax.plot(xest[:,unit_idx_list])
+
+        self._string_on_plot(ax, variable_name='Error', variable_value=Error, variable_unit='a.u.')
+        
+        if len(unit_idx_list) == 1:
+            plt.legend(['Target', 'Estimate'])
 
 if __name__=='__main__':
 

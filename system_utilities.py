@@ -166,7 +166,7 @@ class SystemUtilities():
             data_type = data_type.lower()
         # Explore which is the most recent file in path of data_type and add full path to filename 
         data_fullpath_filename = self._parsePath(filename, data_type=data_type)
-        # If extension is .gz, open pickle, else assume .mat
+        # Open file by extension type
         filename_root, filename_extension = os.path.splitext(data_fullpath_filename)
         if 'gz' in filename_extension:           
             try:
@@ -184,7 +184,6 @@ class SystemUtilities():
         else:
             raise TypeError('U r trying to input unknown filetype, aborting...')
 
-        # print(f'Acquiring data from {data_fullpath_filename}')
         return data
 
     def _get_dt(self, data):
@@ -194,6 +193,13 @@ class SystemUtilities():
     def _get_nsamples(self, data):
         nsamples = len(data['time_vector'])
         return nsamples
+
+    def _get_namespace_variable(self, data, readout_group, variable_name='taum_soma'):
+
+        NG_name = [n for n in data['Neuron_Groups_Parameters'].keys() if f'{readout_group}' in n ][0]
+        variable_value_unit = data['Neuron_Groups_Parameters'][NG_name]['namespace'][variable_name]
+
+        return variable_value_unit
 
     def close(self):
         plt.close('all')
