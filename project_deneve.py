@@ -299,9 +299,9 @@ if __name__=='__main__':
     # P.pp_df_full(metadata_df)
     
     # ## Readout on input ##
-    # P.plot_readout_on_input(results_filename=None, normalize=False, unit_idx_list=[0])
+    # P.show_readout_on_input(results_filename=None, normalize=False, unit_idx_list=[0])
+    P.show_estimate_on_input(results_filename='out_results_20210420_2137263_V_res-70mV.gz', simulation_engine='cxsystem', readout_group='E', unit_idx_list=[1]) 
     # P.show_input_to_readout_coherence(results_filename=None, savefigname='',signal_pair=[1,1])
-    P.show_MSE(results_filename=None, simulation_engine='cxsystem', readout_group='I', decoding_method='least_squares', unit_idx_list=[1]) 
 
 
     # ## Show spikes and vm ##q
@@ -326,7 +326,7 @@ if __name__=='__main__':
     # P.show_connections(connections_filename=None, hist_from='L4_CI_BC_L4__to__L4_CI_SS_L4_soma', savefigname='')
 
     ## Analyse and show arrayrun data ##
-    # Available analyses: 'MeanFR', 'MeanVm', 'EICurrentDiff', 'GrCaus', 'Coherence'
+    # Available analyses: 'MeanFR', 'MeanVm', 'EICurrentDiff', 'GrCaus', 'Coherence', 'MeanError'
     extra_GrCaus_attributes = {
         'max_time_lag_seconds': 0.1,
         'downsampling_factor': 40,
@@ -334,7 +334,11 @@ if __name__=='__main__':
         'do_bonferroni_correction': True,
         'gc_significance_level': 0.001,
         'save_gc_fit_diagnostics': True,
-        'show_gc_fit_diagnostics_figure': False} 
+        'show_gc_fit_diagnostics_figure': False}  
+    extra_MeanError_attributes = {
+        'decoding_method':'least_squares'} 
+    # P.analyze_arrayrun(metadata_filename=None, analysis='MeanError', **extra_MeanError_attributes)
+    # P.show_analyzed_arrayrun(csv_filename=None, analysis='MeanError', variable_unit='a.u.') # Empty NG_id_list for all groups
     # P.analyze_arrayrun(metadata_filename=None, analysis='MeanFR', t_idx_start=100, t_idx_end=-100)
     # P.show_analyzed_arrayrun(csv_filename=None, analysis='MeanFR', variable_unit='Hz', NG_id_list=['NG1', 'NG2', 'NG3']) # Empty NG_id_list for all groups
     # P.analyze_arrayrun(metadata_filename=None, analysis='Coherence', t_idx_start=100, t_idx_end=-100)

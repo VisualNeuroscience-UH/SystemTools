@@ -86,7 +86,7 @@ class SystemViz(SystemAnalysis):
         ax.text(0.05, 0.95, plot_str, fontsize=8, verticalalignment='top', transform=ax.transAxes,
         bbox=dict(boxstyle="Square,pad=0.2", fc="white", ec="white", lw=1))
 
-    def plot_readout_on_input(self, results_filename=None, normalize=False, unit_idx_list=None):
+    def show_readout_on_input(self, results_filename=None, normalize=False, unit_idx_list=None):
         '''
         Get input, get data. Scaling. turn to df, format df, Plot curves.
         '''
@@ -631,8 +631,8 @@ class SystemViz(SystemAnalysis):
         if savefigname:
             self._figsave(figurename=savefigname)
 
-    def show_MSE(   self, results_filename=None, simulation_engine='cxsystem', readout_group='E', 
-                    decoding_method='least_squares', unit_idx_list=[0]):
+    def show_estimate_on_input( self, results_filename=None, simulation_engine='cxsystem', readout_group='E', 
+                                decoding_method='least_squares', unit_idx_list=[0]):
 
         Error, xL, xest = self.get_MSE( results_filename=results_filename, simulation_engine=simulation_engine, 
                                         readout_group=readout_group, decoding_method=decoding_method) 
@@ -655,7 +655,7 @@ if __name__=='__main__':
 
     # # Neuron group names 'NG1_L4_SS_L4', 'NG2_L4_BC_L4', 'NG3_L4_SS2_L4'
     # NG_name = 'NG3_L4_SS2_L4'
-    # df = SV.plot_readout_on_input(NG_name, normalize=True)
+    # df = SV.show_readout_on_input(NG_name, normalize=True)
 
     # # df_long = SV.unpivot_dataframe(df, index_column=['t'], kw_sub_to_unpivot='MeanFR')
     # sns.lineplot(   x="t", y='data', hue='units',
