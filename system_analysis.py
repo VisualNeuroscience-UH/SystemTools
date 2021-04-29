@@ -449,7 +449,7 @@ class SystemAnalysis(SystemUtilities):
         # Deneve error
         error = np.var(source_cut - target_shifted_backwards) / np.var(source_cut)
 
-        if 1:
+        if 0:
             plt.plot(source_cut)
             plt.plot(target_shifted_backwards)
             self._string_on_plot(plt.gca(), variable_name='error', variable_value=error, variable_unit='unitless')
@@ -825,6 +825,7 @@ class SystemAnalysis(SystemUtilities):
         target_output = input_leak
 
         # Get output
+        assert output_type in ['estimated', 'simulated'], 'Unknown output type, should be "estimated" or "simulated", aborting...'
         if output_type == 'estimated':
             # Get optimal decoders with analytical method
             Decs = self. _get_optimal_decoders(target_output, spikes_leak, decoding_method)

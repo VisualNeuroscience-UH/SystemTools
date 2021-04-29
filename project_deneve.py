@@ -299,8 +299,10 @@ if __name__=='__main__':
     # P.pp_df_full(metadata_df)
     
     # ## Readout on input ##
-    # P.show_readout_on_input(results_filename=None, normalize=False, unit_idx_list=[0])
-    P.show_estimate_on_input(results_filename='out_results_20210420_2137263_V_res-70mV.gz', simulation_engine='cxsystem', readout_group='E', unit_idx_list=[1]) 
+    # P.show_readout_on_input(results_filename='out_results_20210420_2137263_V_res-70mV.gz', normalize=False, unit_idx_list=[0])
+    # # Available simulation_engines: 'cxsystem' and 'matlab'. Matlab needs filename. Available readout_groups 'E' and 'I'. 
+    # # Target output is always input_leak
+    # P.show_estimate_on_input(results_filename='out_results_20210420_2137263_V_res-70mV.gz', simulation_engine='cxsystem', readout_group='E', unit_idx_list=[0]) 
     # P.show_input_to_readout_coherence(results_filename=None, savefigname='',signal_pair=[1,1])
 
 
@@ -341,8 +343,8 @@ if __name__=='__main__':
     # P.show_analyzed_arrayrun(csv_filename=None, analysis='MeanError', variable_unit='a.u.') # Empty NG_id_list for all groups
     # P.analyze_arrayrun(metadata_filename=None, analysis='MeanFR', t_idx_start=100, t_idx_end=-100)
     # P.show_analyzed_arrayrun(csv_filename=None, analysis='MeanFR', variable_unit='Hz', NG_id_list=['NG1', 'NG2', 'NG3']) # Empty NG_id_list for all groups
-    # P.analyze_arrayrun(metadata_filename=None, analysis='Coherence', t_idx_start=100, t_idx_end=-100)
-    # P.show_analyzed_arrayrun(csv_filename=None, analysis='Coherence', NG_id_list=['NG3']) 
+    P.analyze_arrayrun(metadata_filename=None, analysis='Coherence', t_idx_start=100, t_idx_end=-100)
+    P.show_analyzed_arrayrun(csv_filename=None, analysis='Coherence', NG_id_list=['NG3']) 
     # P.analyze_arrayrun(metadata_filename='metadata__20210420_2134507.gz', analysis='GrCaus', t_idx_start=100, t_idx_end=-100, **extra_GrCaus_attributes)
     # P.show_analyzed_arrayrun(csv_filename='GrCaus_noconn_20210420_2134507.csv', analysis='GrCaus', NG_id_list=['NG3']) 
     

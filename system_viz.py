@@ -632,10 +632,10 @@ class SystemViz(SystemAnalysis):
             self._figsave(figurename=savefigname)
 
     def show_estimate_on_input( self, results_filename=None, simulation_engine='cxsystem', readout_group='E', 
-                                decoding_method='least_squares', unit_idx_list=[0]):
+                                decoding_method='least_squares', output_type='estimated', unit_idx_list=[0]):
 
         Error, xL, xest = self.get_MSE( results_filename=results_filename, simulation_engine=simulation_engine, 
-                                        readout_group=readout_group, decoding_method=decoding_method) 
+                                        readout_group=readout_group, decoding_method=decoding_method, output_type=output_type) 
         fig, ax = plt.subplots(nrows=1,ncols=1)
         ax.plot(xL[:,unit_idx_list])
         ax.plot(xest[:,unit_idx_list])
