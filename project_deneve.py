@@ -299,17 +299,17 @@ if __name__=='__main__':
     # P.pp_df_full(metadata_df)
     
     # ## Readout on input ##
-    # P.show_readout_on_input(results_filename='out_results_20210420_2137263_V_res-70mV.gz', normalize=False, unit_idx_list=[0])
+    # P.show_readout_on_input(results_filename=None, normalize=False, unit_idx_list=[0])
     # # Available simulation_engines: 'cxsystem' and 'matlab'. Matlab needs filename. Available readout_groups 'E' and 'I'. 
     # # Target output is always input_leak
-    # P.show_estimate_on_input(results_filename='out_results_20210420_2137263_V_res-70mV.gz', simulation_engine='cxsystem', readout_group='E', unit_idx_list=[0]) 
-    # P.show_input_to_readout_coherence(results_filename=None, savefigname='',signal_pair=[1,1])
+    # P.show_estimate_on_input(results_filename=None, simulation_engine='cxsystem', readout_group='E', unit_idx_list=[0]) 
+    # P.show_input_to_readout_coherence(results_filename='out_results_20210429_1825009_gL2nS_gL40nS.gz', savefigname='',signal_pair=[0,0])
 
 
     # ## Show spikes and vm ##q
-    # P.show_spikes(results_filename='', savefigname='')
+    # P.show_spikes(results_filename=None, savefigname='')
     # neuron_index = {'NG1_L4_CI_SS_L4' : 150, 'NG2_L4_CI_BC_L4' : 37, 'NG3_L4_CI_SS2_L4' : 1}
-    # P.show_analog_results(results_filename=None, savefigname='',param_name='vm',startswith='NG', neuron_index=neuron_index) 
+    # P.show_analog_results(results_filename='out_results_20210429_1825009_gL2nS_gL40nS.gz', savefigname='',param_name='vm',startswith='NG', neuron_index=neuron_index) 
     # P.show_analog_results(results_filename=None, savefigname='',param_name='vclamp',startswith='NG') 
     # P.show_analog_results(results_filename=None, savefigname='',param_name='gclamp',startswith='NG') 
     # P.show_analog_results(results_filename=None, savefigname='',param_name='v_lowpass1',startswith='NG') 
@@ -341,11 +341,21 @@ if __name__=='__main__':
         'decoding_method':'least_squares'} 
     # P.analyze_arrayrun(metadata_filename=None, analysis='MeanError', **extra_MeanError_attributes)
     # P.show_analyzed_arrayrun(csv_filename=None, analysis='MeanError', variable_unit='a.u.') # Empty NG_id_list for all groups
-    # P.analyze_arrayrun(metadata_filename=None, analysis='MeanFR', t_idx_start=100, t_idx_end=-100)
-    # P.show_analyzed_arrayrun(csv_filename=None, analysis='MeanFR', variable_unit='Hz', NG_id_list=['NG1', 'NG2', 'NG3']) # Empty NG_id_list for all groups
-    P.analyze_arrayrun(metadata_filename=None, analysis='Coherence', t_idx_start=100, t_idx_end=-100)
-    P.show_analyzed_arrayrun(csv_filename=None, analysis='Coherence', NG_id_list=['NG3']) 
-    # P.analyze_arrayrun(metadata_filename='metadata__20210420_2134507.gz', analysis='GrCaus', t_idx_start=100, t_idx_end=-100, **extra_GrCaus_attributes)
-    # P.show_analyzed_arrayrun(csv_filename='GrCaus_noconn_20210420_2134507.csv', analysis='GrCaus', NG_id_list=['NG3']) 
+
+    # P.analyze_arrayrun(metadata_filename=None, analysis='MeanFR', t_idx_start=0, t_idx_end=-1)
+    # P.show_analyzed_arrayrun(csv_filename=None, analysis='MeanFR', variable_unit='Hz', NG_id_list=['NG1', 'NG2']) # Empty NG_id_list for all groups
+   
+    # P.analyze_arrayrun(metadata_filename=None, analysis='Coherence', t_idx_start=0, t_idx_end=-1)
+    # P.show_analyzed_arrayrun(csv_filename=None, analysis='Coherence', NG_id_list=['NG3']) 
+    
+    # P.analyze_arrayrun(metadata_filename=None, analysis='GrCaus', t_idx_start=0, t_idx_end=-1, **extra_GrCaus_attributes)
+    # P.show_analyzed_arrayrun(csv_filename=None, analysis='GrCaus', NG_id_list=['NG3']) 
+
+    #  TÄHÄN JÄIT: MITEN KLASSIFOIDA? gc INFON PERUSTEELLA? VAI MSE:N? VAI TRANSFER ENTROPYN? VAI NN:N? Vai spike frequencyn?
+    # Lue Rodrigo Quian Quiroga* and Stefano Panzeri review -09 ja katso ketkä viittaavat
+    # P.analyze_arrayrun(metadata_filename=None, analysis='Classification', t_idx_start=0, t_idx_end=-1)
+    # P.show_analyzed_arrayrun(csv_filename=None, analysis='Classification', NG_id_list=['NG3']) 
+    
+
     
     plt.show()

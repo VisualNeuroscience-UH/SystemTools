@@ -16,10 +16,12 @@ from statsmodels.stats.outliers_influence import OLSInfluence, variance_inflatio
 from statsmodels.stats.diagnostic import kstest_normal, het_breuschpagan
 from statsmodels.compat import lzip
 # import statsmodels.api as sm
-from PyIF import te_compute as te
+
+import pyinform as pin
 
 # Machine learning
 from sklearn.preprocessing import scale, MinMaxScaler
+from sklearn.metrics import roc_auc_score
 
 # Computational neuroscience
 import brian2.units as b2u
@@ -54,9 +56,9 @@ Developed by Simo Vanni 2020-2021
 class SystemAnalysis(SystemUtilities):
 
     map_analysis_names = {  'meanfr':'MeanFR', 'eicurrentdiff':'EICurrentDiff', 'grcaus':'GrCaus', 
-                            'meanvm':'MeanVm', 'coherence':'Coherence', 'meanerror':'MeanError'}
+                            'meanvm':'MeanVm', 'coherence':'Coherence', 'meanerror':'MeanError', 'classification':'Classification'}
     map_data_types = {  'meanfr':'spikes_all', 'eicurrentdiff':'vm_all', 'grcaus': 'vm_all', 
-                        'meanvm': 'vm_all', 'coherence': 'vm_all', 'meanerror': 'vm_all'}
+                        'meanvm': 'vm_all', 'coherence': 'vm_all', 'meanerror': 'vm_all', 'classification':'vm_all'}
 
     def __init__(self, path='./'):
 
@@ -201,26 +203,41 @@ class SystemAnalysis(SystemUtilities):
 
         return best_time_lag_samples
 
-    def transfer_entropy(self, data, max_lag):
+    # def _return_and_apply_best_order(self, target_signal_pp, source_signal_pp, max_lag, ic, dt, downsampling_factor):
+
+    #     max_lag_samples = int(max_lag / (dt * downsampling_factor))
+    #     # model = VAR(data)
+    #     model = VAR(target_signal_pp, exog=source_signal_pp)
+    #     results = model.fit(maxlags=max_lag_samples, ic=ic, trend='c')
+    #     best_time_lag_samples = results.k_ar
+    #     # xx=results.test_causality(['y1'], causing=['x1'])
+    #     pdb.set_trace()
+    #     # TÄHÄN JÄIT: GC METRIIKKA ON AUKI. LOG(F), REALLY?
+    #     return best_time_lag_samples
+
+    #     # 
+
+    def pin_time_series_analysis(self, target, source, best_time_lag_samples, base=2):
+
         '''
-        FOR UNKNOWN REASON THIS DOES NOT SEEM TO GIVE ANYTHING USEFUL
-        IT SEES ALL INPUT OUTPUT PAIRS AS EQUAL IN TE SENSE. FOR SATURATED
-        SPIKE TRAINS IN GROUP 1 IT GIVES NEGATIVE VALUES 
-        Measures Information transmitted from Y to X
-
-        data: N x 2 matrix, where
-        N is the number of samples
-        data[:,0] is target (X)
-        data[:,1] is source (Y)
-        k: controls the number of neighbors used in KD-tree queries. Keep 1 (best resolution)
-        embedding: controls how many lagged periods are used to estimate transfer entropy
-        GPU: a boolean argument that indicates if CUDA compatible GPUs should be used to estimate transfer entropy instead of your computer's CPUs.
-        safetyCheck: a boolean argument can be used to check for duplicates rows in your dataset. Keep True
+        Pyinform implementation of transfer_entropy
+        The local option enables looking at timepointwise transfer
+        Start from https://elife-asu.github.io/PyInform/dist.html
+        Ref: Moore et al. Front Rob AI, June 2018 | Volume 5 | Article 60
+        Ref: J.T. Lizier et al. Information Sciences 208 (2012) 39–54
         '''
+        def _data2bins(data, base):
+            # Base to bin edges
+            bins = np.linspace(np.min(data), np.max(data),num=base + 1, endpoint=True)
+            # Get digitized values
+            inds = np.digitize(data, bins)
+            return inds
 
-        transfer_entropy = te.te_compute(data[:,0], data[:,1], k=1, embedding=max_lag, safetyCheck=True, GPU=False)
+        binned_source = _data2bins(source, base)
+        binned_target = _data2bins(target, base)
 
-        return transfer_entropy 
+        pin_te = pin.transferentropy.transfer_entropy(binned_source, binned_target, best_time_lag_samples, condition=None, local=False)
+        return pin_te
 
     def vm_entropy(self, data, base=None, bins=None):
         """ Computes entropy of data distribution. """
@@ -398,6 +415,28 @@ class SystemAnalysis(SystemUtilities):
 
         return het_passing, cook_passing, normality_passing, acorr_passing, vif_passing
 
+    def _gc_FYX_magnitude(self, gc_stat_dg_data, pre_idx, post_idx): # UNDER CONSTRUCTION
+        '''
+        Calculate the magnitude of Granger causality (equivalent to information transfer/transfer entropy in Gaussian case) 
+        log  det(cov(residual_restricted)) / det(cov(residual_full))
+        '''
+        full_model = 1
+        partial_model = 0
+        # Get residuals
+        _results_partial = gc_stat_dg_data[partial_model]
+        _residuals_partial = _results_partial.resid
+        _results_full = gc_stat_dg_data[full_model]
+        _residuals_full = _results_full.resid
+        # Get covariance matrices
+        _cov_partial = np.cov(_residuals_partial)
+        pdb.set_trace()
+        _det_cov_partial = np.linalg.det(_cov_partial)
+        _cov_full = np.cov(_residuals_partial, rowvar=False)
+        _det_cov_full = np.linalg.det(_cov_full)
+
+        pass
+
+
     def _end2idx(self, t_idx_end, n_samples):
 
         if t_idx_end is None:
@@ -429,29 +468,31 @@ class SystemAnalysis(SystemUtilities):
 
         return lags
 
-    def _get_error(self, source_signal, target_signal, dt, shift_in_seconds = 0, epoch_in_seconds=1.5):
+    def _get_error(self, input_signal, output_signal, dt, shift_in_seconds = 0, epoch_in_seconds=1.5):
 
         shift_in_samples = int(shift_in_seconds / dt)
         epoch_in_samples = int(epoch_in_seconds / dt)
 
-        assert len(source_signal) == len(target_signal), 'Unequal sample lengths, aborting...'
-        nsamples = len(source_signal)
+        assert len(input_signal) == len(output_signal), 'Unequal sample lengths, aborting...'
+        nsamples = len(input_signal)
 
         # If shift makes no sense/too long, return -1. Probably noise.
         if  shift_in_samples + epoch_in_samples > nsamples:
             return -1
 
-        target_start_idx = shift_in_samples
-        target_end_idx = shift_in_samples + epoch_in_samples
-        target_shifted_backwards = target_signal[target_start_idx:target_end_idx]
-        source_cut = source_signal[:epoch_in_samples] # source does not shift
+        output_start_idx = shift_in_samples
+        output_end_idx = shift_in_samples + epoch_in_samples
+        output_shifted_backwards = output_signal[output_start_idx:output_end_idx]
+        input_cut = input_signal[:epoch_in_samples] # input does not shift
 
-        # Deneve error
-        error = np.var(source_cut - target_shifted_backwards) / np.var(source_cut)
+        error = self.get_normalized_error_variance(input_cut, output_shifted_backwards)
+
+        # # Deneve error
+        # error = np.var(input_cut - output_shifted_backwards) / np.var(input_cut)
 
         if 0:
-            plt.plot(source_cut)
-            plt.plot(target_shifted_backwards)
+            plt.plot(input_cut)
+            plt.plot(output_shifted_backwards)
             self._string_on_plot(plt.gca(), variable_name='error', variable_value=error, variable_unit='unitless')
             plt.show()
         return error
@@ -494,7 +535,7 @@ class SystemAnalysis(SystemUtilities):
 
         return f, Cxy, Pwelch_spec_x, Pwelch_spec_y, Pxy, lags, corr, coherence_sum, x_scaled, y_scaled
 
-    def _analyze_grcaus(self, data, source_signal, dt, target_group, 
+    def _analyze_grcaus(self, data, source_signal, dt, target_group, verbose=True, return_only_infomatrix=False, 
                         t_idx_start=0, t_idx_end=None, **kwargs):
         '''
         Granger causality analysis between source and target of correctly classified units
@@ -552,10 +593,13 @@ class SystemAnalysis(SystemUtilities):
         gc_matrix_np_stationary = np.full_like(np.empty((source_signal_pp.shape[1], target_signal_pp.shape[1])),np.nan) 
         gc_fitQA = 0
 
+        # Here transfer entropy is calculated from all source and target signals simultaneously. 
+        # The pairwise transfer entropy and getting it's mean are now commented to inactive
+        transfer_entropy_value = self.pin_time_series_analysis(target_signal_pp.T, source_signal_pp.T, 6)
+
         # for each source signal, calculate all target signals.
         for pre_idx in pre_idx_array:
             for post_idx in post_idx_array:
-                # print(f'pre {pre_idx} post {post_idx}\r', end="")
 
                 # The model order is the maximum number of lagged observations included in the model
                 _source, _target = source_signal_pp[:,pre_idx], target_signal_pp[:,post_idx]
@@ -564,12 +608,14 @@ class SystemAnalysis(SystemUtilities):
                 # Get best order with Bayesian information criterion
                 try:
                     best_time_lag_samples = self._return_best_order(signals, max_time_lag_seconds, 'bic', dt, downsampling_factor)
+                    # best_time_lag_samples = self._return_best_order(target_signal_pp, source_signal_pp, max_time_lag_seconds, 'bic', dt, downsampling_factor)
                 except:
                     continue
 
-                pairwise_gc_dict = gc_test(signals, [best_time_lag_samples], verbose=True)
+                pairwise_gc_dict = gc_test(signals, [best_time_lag_samples], verbose=verbose)
 
-                transfer_entropy_value = self.transfer_entropy(signals, best_time_lag_samples)
+                # transfer_entropy_value = self.pin_time_series_analysis(_target, _source, best_time_lag_samples)
+
                 # GC quality control, several measures on error distribution
                 gc_stat_dg_data = pairwise_gc_dict[best_time_lag_samples][1]
                 het_passing, cook_passing, normality_passing, acorr_passing, vif_passing = \
@@ -577,12 +623,18 @@ class SystemAnalysis(SystemUtilities):
                     show_figure=show_figure, save_gc_fit_diagnostics=save_gc_fit_diagnostics)
                 gc_fitQA += str([het_passing, cook_passing, normality_passing, acorr_passing, vif_passing]).count('PASS')
 
+                # Calculate F_Y_X
+                # FYX is proportional (equal in gaussian case) to det(cov(residual_restricted)) / det(cov(residual_full))
+                # FYX = self._gc_FYX_magnitude(gc_stat_dg_data, pre_idx, post_idx)
+                # pdb.set_trace()
+                # FYX = 
+                
                 # dict_keys(['ssr_ftest', 'ssr_chi2test', 'lrtest', 'params_ftest'])
                 # test statistic, pvalues, degrees of freedom
                 gc_test_type = 'ssr_ftest'
                 gc_matrix_np_F[pre_idx, post_idx] = pairwise_gc_dict[best_time_lag_samples][0][gc_test_type][0]
                 gc_matrix_np_p[pre_idx, post_idx] = pairwise_gc_dict[best_time_lag_samples][0][gc_test_type][1]
-                gc_matrix_np_te[pre_idx, post_idx] = transfer_entropy_value
+                # gc_matrix_np_te[pre_idx, post_idx] = transfer_entropy_value
                 gc_matrix_np_latency[pre_idx, post_idx] = best_time_lag_samples * dt * downsampling_factor
         
         if do_bonferroni_correction is True:
@@ -597,33 +649,39 @@ class SystemAnalysis(SystemUtilities):
         # Multiplied with sample frequency, gives information transfer rate. Lionell Barnett, personal communication
         final_sampling_frequency = 1 / (dt * downsampling_factor)
         gc_matrix_np_InfoRate = np.log2(gc_matrix_np_F) * final_sampling_frequency 
+
+        if return_only_infomatrix is True:
+            return gc_matrix_np_InfoRate
+
         gc_InfoRate = np.nan_to_num(gc_matrix_np_InfoRate[eye_idx], nan=0.0)
         gc_p = gc_matrix_np_p[eye_idx] 
+        # transfer_entropy = gc_matrix_np_te[eye_idx]
         gc_latency = gc_matrix_np_latency[eye_idx] 
 
         # Get representative values
         MeanGrCaus_InfoRate = np.floor(np.nanmean(gc_InfoRate))
         MedianGrCaus_p = np.nanmedian(gc_p)
         PassGrCaus_p = np.nanmedian(gc_p) <=  corrected_gc_significance_level
+        # MeanTransferEntropy = np.nanmean(transfer_entropy)
+        MeanTransferEntropy = transfer_entropy_value
         MeanGrCaus_latency = np.nanmean(gc_latency)
         MeanGrCaus_fitQA = gc_fitQA / (pre_idx_array.size * post_idx_array.size)
 
-        if 0:
+        if 0: # Own diagnostics
+            print(f'gc_matrix_np_InfoRate: {gc_matrix_np_InfoRate}')
             print(f'BG log2(F): {MeanGrCaus_InfoRate}')
-            print(f'BG latency: {MeanGrCaus_latency}')
-            print(f'gc_matrix_np_p: \n{gc_matrix_np_p}')  
-            # print(f'gc_matrix_np_te: \n{gc_matrix_np_te}')  
-            print(f'target_signal_entropy: \n{target_signal_entropy}')
-            print(f'significance test:')
+            # print(f'BG latency: {MeanGrCaus_latency}')
+            # print(f'gc_matrix_np_p: \n{gc_matrix_np_p}')  
+            print(f'gc_matrix_np_te: \n{gc_matrix_np_te}')  
+            # print(f'target_signal_entropy: \n{target_signal_entropy}')
+            # print(f'significance test:')
             if PassGrCaus_p: print('\033[32mPASS\033[97m')
             else: print('\033[31mFAIL\033[97m')
-            print(f'fit quality: {MeanGrCaus_fitQA}')
+            # print(f'fit quality: {MeanGrCaus_fitQA}')
             print('***End of analysis***\n\n')
 
-        # TODO Calculate CV of gc "grandmother index"
-
         # Return one value per analysis (mean of best matching units), indicating GrCaus relation
-        return MeanGrCaus_InfoRate, MedianGrCaus_p, MeanGrCaus_latency, target_signal_entropy, MeanGrCaus_fitQA
+        return MeanGrCaus_InfoRate, MedianGrCaus_p, MeanGrCaus_latency, target_signal_entropy, MeanGrCaus_fitQA, MeanTransferEntropy
 
     def _analyze_coherence(self, data_dict, source_signal, dt, target_group, t_idx_start=0, t_idx_end=-1):
         '''
@@ -768,6 +826,14 @@ class SystemAnalysis(SystemUtilities):
 
         return Decs
 
+    def get_normalized_error_variance(self, target_output, output):
+
+        # Get MSE error according to Brendel_2020_PLoSComputBiol
+        # we compute the variance of the error normalized by the variance of the target population
+        Error = np.sum(np.var(target_output - output, axis=0)) / np.sum(np.var(target_output,axis=0))
+
+        return Error
+
     def get_MSE(self, results_filename=None, data_dict=None, simulation_engine='CxSystem', readout_group='NG1', 
                 decoding_method='least_squares', output_type = 'estimated'):
         '''
@@ -841,9 +907,7 @@ class SystemAnalysis(SystemUtilities):
             output = simulated_output
             target_output = self.scaler(target_output, scale_type='minmax')
 
-        # Get MSE error 
-        # we compute the variance of the error normalized by the variance of the target population
-        Error = np.sum(np.var(target_output - output, axis=0)) / np.sum(np.var(target_output,axis=0))
+        Error = self.get_normalized_error_variance(target_output, output)
 
         assert n_input_time_points == n_time_points, 'input and simulation data time vector lengths do not match, aborting...'
 
@@ -861,6 +925,12 @@ class SystemAnalysis(SystemUtilities):
         MeanSimErr_O, target_output, output = self.get_MSE(data_dict=data_dict, output_type='simulated')
 
         return MeanEstimErr_E, MeanEstimErr_I, MeanSimErr_O
+
+    def _analyze_classification_performance(self, gc_matrix_np_InfoRate):
+
+
+
+        return Accuracy, AOC_ROC 
 
     def get_analyzed_array_as_df(self, data_df, analysisHR=None, t_idx_start=0, t_idx_end=None, **kwargs):
         '''
@@ -884,7 +954,8 @@ class SystemAnalysis(SystemUtilities):
             data_df[f'{analysisHR}_' + target_group + '_errorShifted'] = np.nan            
         elif analysisHR.lower() in ['grcaus']:
             data_df[f'{analysisHR}_' + target_group + '_InfoRate'] = np.nan
-            data_df[f'{analysisHR}_' + target_group + '_p'] = np.nan
+            data_df[f'{analysisHR}_' + target_group + '_p'] = np.nan 
+            data_df[f'{analysisHR}_' + target_group + '_TransfEntropy'] = np.nan 
             data_df[f'{analysisHR}_' + target_group + '_latency'] = np.nan
             data_df[f'{analysisHR}_' + target_group + '_target_entropy'] = np.nan
             data_df[f'{analysisHR}_' + target_group + '_fit_quality'] = np.nan
@@ -892,6 +963,9 @@ class SystemAnalysis(SystemUtilities):
             data_df[f'{analysisHR}_' + 'E' + '_EstimErr'] = np.nan
             data_df[f'{analysisHR}_' + 'I' + '_EstimErr'] = np.nan
             data_df[f'{analysisHR}_' + '_SimErr'] = np.nan
+        elif analysisHR.lower() in ['classification']:
+            data_df[f'{analysisHR}_' + 'Accuracy'] = np.nan
+            data_df[f'{analysisHR}_' + 'AOC_ROC'] = np.nan
 
         target_signal_dt = self._get_dt(data)
 
@@ -927,22 +1001,26 @@ class SystemAnalysis(SystemUtilities):
                 data_df.loc[this_index,f'{analysisHR}_' + target_group + '_error'] = MedianError
                 data_df.loc[this_index,f'{analysisHR}_' + target_group + '_errorShifted'] = MedianErrorShifted
             elif analysisHR.lower() in ['grcaus']:
-                # check how multivariate gc is analyzed; are min, max, mean, median useful?
-                # Apply this to _analyze_grangercausality
-                MeanGrCaus_InfoRate, MedianGrCaus_p, MeanGrCaus_latency, target_entropy, MeanGrCaus_fitQA = \
+                MeanGrCaus_InfoRate, MedianGrCaus_p, MeanGrCaus_latency, target_entropy, MeanGrCaus_fitQA, MeanTransferEntropy = \
                     self._analyze_grcaus(data, source_signal, target_signal_dt, target_group, t_idx_start=t_idx_start, 
                     t_idx_end=t_idx_end, **kwargs)
-
                 data_df.loc[this_index,f'{analysisHR}_' + target_group + '_InfoRate'] = MeanGrCaus_InfoRate
                 data_df.loc[this_index,f'{analysisHR}_' + target_group + '_p'] = MedianGrCaus_p
+                data_df.loc[this_index,f'{analysisHR}_' + target_group + '_TransfEntropy'] = MeanTransferEntropy
                 data_df.loc[this_index,f'{analysisHR}_' + target_group + '_latency'] = MeanGrCaus_latency
                 data_df.loc[this_index,f'{analysisHR}_' + target_group + '_target_entropy'] = target_entropy
                 data_df.loc[this_index,f'{analysisHR}_' + target_group + '_fit_quality'] = MeanGrCaus_fitQA
-            elif analysisHR.lower() in ['meanerror']:
+            elif analysisHR.lower() in ['meanerror']: # Reconstruction error
                 MeanEstimErr_E, MeanEstimErr_I, MeanSimErr_O = self._analyze_meanerror(data, **kwargs)
                 data_df.loc[this_index,f'{analysisHR}_' + 'E' + '_EstimErr'] = MeanEstimErr_E
                 data_df.loc[this_index,f'{analysisHR}_' + 'I' + '_EstimErr'] = MeanEstimErr_I 
                 data_df.loc[this_index,f'{analysisHR}_' + '_SimErr'] = MeanSimErr_O 
+            elif analysisHR.lower() in ['classification']: # According to sensory information
+                gc_matrix_np_InfoRate = self._analyze_grcaus(data, source_signal, target_signal_dt, target_group, verbose=False,  
+                    return_only_infomatrix=True, t_idx_start=t_idx_start, t_idx_end=t_idx_end, **kwargs)
+                Accuracy, AOC_ROC = self._analyze_classification_performance(gc_matrix_np_InfoRate)
+                data_df.loc[this_index,f'{analysisHR}_' + 'Accuracy'] = Accuracy
+                data_df.loc[this_index,f'{analysisHR}_' + 'AOC_ROC'] = AOC_ROC 
         return data_df
 
     def analyze_arrayrun(self, metadata_filename=None, analysis=None, t_idx_start=0, t_idx_end=None, **kwargs):

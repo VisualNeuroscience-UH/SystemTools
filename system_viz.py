@@ -382,18 +382,7 @@ class SystemViz(SystemAnalysis):
 
     def _make_2D_surface(self, fig, ax, data, x_values=None, y_values=None, x_label=None, y_label=None, variable_name=None, variable_unit=None):
 
-        im = ax.imshow( data, cmap=self.cmap, interpolation='none', 
-                        extent=[np.min(x_values),np.max(x_values),np.max(y_values),np.min(y_values)])
-        pos1 = ax.get_position() # get the original position    
-
-        left =  pos1.xmax
-        bottom = pos1.ymin
-        width = (pos1.xmax - pos1.xmin)/10
-        height = pos1.ymax - pos1.ymin
-        cax = fig.add_axes([left, bottom, width, height])
-        fig.colorbar(im, cax=cax, orientation='vertical')
-        plot_str = f'{variable_name} {variable_unit}'
-        cax.set_ylabel(plot_str)
+        sns.heatmap(data, cmap=self.cmap, ax=ax, cbar=True, annot=True, xticklabels=x_values, yticklabels=y_values)
 
         # Set common labels
         if x_label is not None:
@@ -409,8 +398,8 @@ class SystemViz(SystemAnalysis):
         grid_x, grid_y = np.mgrid[np.min(x_values):np.max(x_values):dense_grid_steps*1j, np.min(y_values):np.max(y_values):dense_grid_steps*1j]
         values = z_values.flatten()
         points = np.array([X.flatten(), Y.flatten()]).T
-        grid_z2 = griddata(points, values, (grid_x, grid_y), method='cubic')
-        ax.plot_surface(grid_x, grid_y, grid_z2, cstride=1, rstride=1, cmap = self.cmap)
+        grid_z2 = griddata(points, values, (grid_x, grid_y), method='nearest') #, linear, nearest, cubic
+        ax.plot_surface(grid_x, grid_y, grid_z2, ccount=50, rcount=50, cmap = self.cmap)
 
         if x_label is not None:
             ax.set_xlabel(x_label)
@@ -524,9 +513,10 @@ class SystemViz(SystemAnalysis):
         else:
             two_dim = False
 
-        if analysisHR.lower() in ['grcaus']:
+        if analysisHR.lower() in ['grcaus']: 
             variable_unit_dict = {'_p' : 'p value', '_InfoRate' : 'rate (bit/s)', '_latency' : 'latency (s)', 
-            '_isStationary' : 'boolean', '_target_entropy' : 'target signal entropy (bits)', '_fit_quality' : 'mean fit quality'}
+            '_TransfEntropy' : 'Transfer Entropy (bits)', '_isStationary' : 'boolean', 
+            '_target_entropy' : 'target signal entropy (bits)', '_fit_quality' : 'mean fit quality'}
 
         for this_NG_id, this_NG_name, this_data_column in zip(NG_id_list, NG_name_list, requested_data_column_list):
 
