@@ -482,7 +482,7 @@ class SystemViz(SystemAnalysis):
 
         if analysisHR.lower() in ['meanfr', 'meanvm', 'eicurrentdiff']:
             print(f'Creating one figure for each neuron group')
-        elif analysisHR.lower() in ['grcaus']:
+        elif analysisHR.lower() in ['grcaus', 'classify']:
             print(f'Creating one figure for each analysis')
 
         analyses_for_zipping = [analysisHR] * len(data_df.columns)
@@ -514,8 +514,8 @@ class SystemViz(SystemAnalysis):
             two_dim = False
 
         if analysisHR.lower() in ['grcaus']: 
-            variable_unit_dict = {'_p' : 'p value', '_InfoRate' : 'rate (bit/s)', '_latency' : 'latency (s)', 
-            '_TransfEntropy' : 'Transfer Entropy (bits)', '_isStationary' : 'boolean', 
+            variable_unit_dict = {'_p' : 'p value', '_Information' : '(bits)', '_latency' : 'latency (s)', 
+            '_TransfEntropy' : 'Transfer Entropy (bits/sample)', '_isStationary' : 'boolean', 
             '_target_entropy' : 'target signal entropy (bits)', '_fit_quality' : 'mean fit quality'}
 
         for this_NG_id, this_NG_name, this_data_column in zip(NG_id_list, NG_name_list, requested_data_column_list):

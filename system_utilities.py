@@ -30,7 +30,7 @@ class SystemUtilities():
     
     # Types of data in simulation outputfolder
     data_types_out = [  'results', 'connections', 'metadata', 'meanfr', 'eicurrentdiff', 'grcaus', 
-                        'meanvm', 'coherence', 'meanerror', 'classification']
+                        'meanvm', 'coherence', 'meanerror', 'classify']
 
     def __init__(self, path='./'):
 

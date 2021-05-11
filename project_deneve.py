@@ -351,11 +351,9 @@ if __name__=='__main__':
     # P.analyze_arrayrun(metadata_filename=None, analysis='GrCaus', t_idx_start=0, t_idx_end=-1, **extra_GrCaus_attributes)
     # P.show_analyzed_arrayrun(csv_filename=None, analysis='GrCaus', NG_id_list=['NG3']) 
 
-    #  TÄHÄN JÄIT: MITEN KLASSIFOIDA? gc INFON PERUSTEELLA? VAI MSE:N? VAI TRANSFER ENTROPYN? VAI NN:N? Vai spike frequencyn?
-    # Lue Rodrigo Quian Quiroga* and Stefano Panzeri review -09 ja katso ketkä viittaavat
-    # P.analyze_arrayrun(metadata_filename=None, analysis='Classification', t_idx_start=0, t_idx_end=-1)
-    # P.show_analyzed_arrayrun(csv_filename=None, analysis='Classification', NG_id_list=['NG3']) 
-    
-
+    # Classification is currently based on Granger causality F-statistics, thus gc is done first, and we need the extra attributes
+    # Currently this gives only accuracy, i.e. N correct classifications / N all classifications
+    # P.analyze_arrayrun(metadata_filename=None, analysis='Classify', t_idx_start=0, t_idx_end=-1, **extra_GrCaus_attributes)
+    # P.show_analyzed_arrayrun(csv_filename=None, analysis='Classify') 
     
     plt.show()
