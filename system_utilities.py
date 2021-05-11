@@ -40,7 +40,7 @@ class SystemUtilities():
         self.input_folder = None
         self.output_folder = None
 
-    def round_to_n_significant(self, value_in, significant_digits=2):
+    def round_to_n_significant(self, value_in, significant_digits=3):
 
         if value_in != 0 and not np.isnan(value_in):
             int_to_subtract = significant_digits - 1

@@ -382,7 +382,7 @@ class SystemViz(SystemAnalysis):
 
     def _make_2D_surface(self, fig, ax, data, x_values=None, y_values=None, x_label=None, y_label=None, variable_name=None, variable_unit=None):
 
-        sns.heatmap(data, cmap=self.cmap, ax=ax, cbar=True, annot=True, xticklabels=x_values, yticklabels=y_values)
+        sns.heatmap(data, cmap=self.cmap, ax=ax, cbar=True, annot=True, fmt='.3g', xticklabels=x_values, yticklabels=y_values)
 
         # Set common labels
         if x_label is not None:
@@ -560,10 +560,10 @@ class SystemViz(SystemAnalysis):
                 x_values = data_df["Dimension-1 Value"].values
 
             min_value = np.amin(data_nd_array)
-            min_value_rounded = self.round_to_n_significant(min_value, significant_digits=2)
+            min_value_rounded = self.round_to_n_significant(min_value, significant_digits=3)
             min_idx = np.unravel_index(np.argmin(data_nd_array), data_nd_array.shape)
             max_value = np.amax(data_nd_array)
-            max_value_rounded = self.round_to_n_significant(max_value, significant_digits=2)
+            max_value_rounded = self.round_to_n_significant(max_value, significant_digits=3)
             max_idx = np.unravel_index(np.argmax(data_nd_array), data_nd_array.shape)
             text_values_list.append(f'{min_value_rounded} {variable_unit}- {min_idx}')
             text_values_list.append(f'{max_value_rounded} {variable_unit} - {max_idx}')
