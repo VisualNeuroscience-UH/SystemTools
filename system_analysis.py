@@ -918,11 +918,11 @@ class SystemAnalysis(SystemUtilities):
             data_df[f'{analysisHR}_' + target_group + '_p'] = np.nan 
             data_df[f'{analysisHR}_' + target_group + '_TransfEntropy'] = np.nan 
             data_df[f'{analysisHR}_' + target_group + '_latency'] = np.nan
-            data_df[f'{analysisHR}_' + target_group + '_target_entropy'] = np.nan
-            data_df[f'{analysisHR}_' + target_group + '_fit_quality'] = np.nan
+            data_df[f'{analysisHR}_' + target_group + '_targetEntropy'] = np.nan
+            data_df[f'{analysisHR}_' + target_group + '_fitQuality'] = np.nan
         elif analysisHR.lower() in ['meanerror']:
-            data_df[f'{analysisHR}_' + 'E' + '_EstimErr'] = np.nan
-            data_df[f'{analysisHR}_' + 'I' + '_EstimErr'] = np.nan
+            data_df[f'{analysisHR}_' + '_ExcErr'] = np.nan
+            data_df[f'{analysisHR}_' + '_InhErr'] = np.nan
             data_df[f'{analysisHR}_' + '_SimErr'] = np.nan
         elif analysisHR.lower() in ['classify']:
             data_df[f'{analysisHR}_' + 'Accuracy'] = np.nan
@@ -968,12 +968,12 @@ class SystemAnalysis(SystemUtilities):
                 data_df.loc[this_index,f'{analysisHR}_' + target_group + '_p'] = GrCaus_p
                 data_df.loc[this_index,f'{analysisHR}_' + target_group + '_TransfEntropy'] = transfer_entropy
                 data_df.loc[this_index,f'{analysisHR}_' + target_group + '_latency'] = GrCaus_latency
-                data_df.loc[this_index,f'{analysisHR}_' + target_group + '_target_entropy'] = target_entropy
-                data_df.loc[this_index,f'{analysisHR}_' + target_group + '_fit_quality'] = MeanGrCaus_fitQA
+                data_df.loc[this_index,f'{analysisHR}_' + target_group + '_targetEntropy'] = target_entropy
+                data_df.loc[this_index,f'{analysisHR}_' + target_group + '_fitQuality'] = MeanGrCaus_fitQA
             elif analysisHR.lower() in ['meanerror']: # Reconstruction error
                 MeanEstimErr_E, MeanEstimErr_I, MeanSimErr_O = self._analyze_meanerror(data, **kwargs)
-                data_df.loc[this_index,f'{analysisHR}_' + 'E' + '_EstimErr'] = MeanEstimErr_E
-                data_df.loc[this_index,f'{analysisHR}_' + 'I' + '_EstimErr'] = MeanEstimErr_I 
+                data_df.loc[this_index,f'{analysisHR}_' + '_ExcErr'] = MeanEstimErr_E
+                data_df.loc[this_index,f'{analysisHR}_' + '_InhErr'] = MeanEstimErr_I 
                 data_df.loc[this_index,f'{analysisHR}_' + '_SimErr'] = MeanSimErr_O 
             elif analysisHR.lower() in ['classify']: # According to sensory information
                 gc_matrix_np_Info = self._analyze_grcaus(data, source_signal, target_signal_dt, target_group, verbose=False,  

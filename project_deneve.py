@@ -339,11 +339,16 @@ if __name__=='__main__':
         'show_gc_fit_diagnostics_figure': False}  
     extra_MeanError_attributes = {
         'decoding_method':'least_squares'} 
+    
+    # If this is active, the displayed array analysis figures are saved as arrayIdentifier_analysis_identifier.svg
+    # at your path
+    P.save_figure_with_arrayidentifier = 'kukkuu'
+
     # P.analyze_arrayrun(metadata_filename=None, analysis='MeanError', **extra_MeanError_attributes)
     # P.show_analyzed_arrayrun(csv_filename=None, analysis='MeanError', variable_unit='a.u.') # Empty NG_id_list for all groups
 
-    # P.analyze_arrayrun(metadata_filename=None, analysis='MeanFR', t_idx_start=0, t_idx_end=-1)
-    # P.show_analyzed_arrayrun(csv_filename=None, analysis='MeanFR', variable_unit='Hz', NG_id_list=['NG1', 'NG2']) # Empty NG_id_list for all groups
+    P.analyze_arrayrun(metadata_filename=None, analysis='MeanFR', t_idx_start=0, t_idx_end=-1)
+    P.show_analyzed_arrayrun(csv_filename=None, analysis='MeanFR', variable_unit='Hz', NG_id_list=['NG1', 'NG2']) # Empty NG_id_list for all groups
    
     # P.analyze_arrayrun(metadata_filename=None, analysis='Coherence', t_idx_start=0, t_idx_end=-1)
     # P.show_analyzed_arrayrun(csv_filename=None, analysis='Coherence', NG_id_list=['NG3']) 
@@ -356,4 +361,5 @@ if __name__=='__main__':
     # P.analyze_arrayrun(metadata_filename=None, analysis='Classify', t_idx_start=0, t_idx_end=-1, **extra_GrCaus_attributes)
     # P.show_analyzed_arrayrun(csv_filename=None, analysis='Classify') 
     
+
     plt.show()

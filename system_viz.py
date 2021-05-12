@@ -516,12 +516,11 @@ class SystemViz(SystemAnalysis):
         if analysisHR.lower() in ['grcaus']: 
             variable_unit_dict = {'_p' : 'p value', '_Information' : '(bits)', '_latency' : 'latency (s)', 
             '_TransfEntropy' : 'Transfer Entropy (bits/sample)', '_isStationary' : 'boolean', 
-            '_target_entropy' : 'target signal entropy (bits)', '_fit_quality' : 'mean fit quality'}
+            '_targetEntropy' : 'target signal entropy (bits)', '_fitQuality' : 'mean fit quality'}
 
         for this_NG_id, this_NG_name, this_data_column in zip(NG_id_list, NG_name_list, requested_data_column_list):
 
             assert this_NG_id in this_data_column, 'Neuron group does not match data column, aborting ...'
-
 
             if 'variable_unit_dict' in locals():
                 for this_key in variable_unit_dict.keys():
@@ -587,6 +586,17 @@ class SystemViz(SystemAnalysis):
                 axs[1].plot(x_values, data_nd_array)
                 axs[1].set_xlabel(f'{x_label}' )
                 axs[1].set_ylabel(f'{variable_name} ({variable_unit})' )
+
+            if  hasattr(self,'save_figure_with_arrayidentifier'):
+                if analysisHR.lower() in ['meanfr', 'meanvm', 'eicurrentdiff']:
+                    identifier = this_NG_id
+                else:
+                    # Assuming the last word in this_NG_name contains the necessary identifier
+                    suffix_start_idx = this_NG_name.rfind('_')
+                    identifier = this_NG_name[suffix_start_idx + 1:]
+                
+                self._figsave(figurename=f'{self.save_figure_with_arrayidentifier}_{analysisHR}_{identifier}', myformat='svg')
+
 
     def show_input_to_readout_coherence(self, results_filename=None, savefigname='', signal_pair=[0,0]):
 

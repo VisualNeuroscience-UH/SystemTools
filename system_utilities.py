@@ -136,6 +136,8 @@ class SystemUtilities():
     def _figsave(self, figurename='', myformat='png', suffix=''):
         
         # Saves current figure to working dir
+        plt.rcParams['svg.fonttype'] = 'none' # Fonts as fonts and not as paths
+        plt.rcParams['ps.fonttype'] = 'type3' # Fonts as fonts and not as paths
 
         if myformat[0] == '.':
             myformat = myformat[1:]
