@@ -42,7 +42,9 @@ class SystemUtilities():
 
     def round_to_n_significant(self, value_in, significant_digits=3):
 
-        if value_in != 0 and not np.isnan(value_in):
+        boolean_test = value_in != 0
+
+        if boolean_test and not np.isnan(value_in):
             int_to_subtract = significant_digits - 1
             value_out = round(value_in, -int(np.floor(np.log10(np.abs(value_in))) - int_to_subtract))
         else:

@@ -22,6 +22,7 @@ import pyinform as pin
 # Machine learning
 from sklearn.preprocessing import scale, MinMaxScaler
 from sklearn.metrics import roc_auc_score, accuracy_score
+from sklearn.decomposition import PCA
 
 # Computational neuroscience
 import brian2.units as b2u
@@ -866,6 +867,79 @@ class SystemAnalysis(SystemUtilities):
 
         return Error, target_output, output
 
+    def get_PCA(self, data, n_components=2, col_names=None, extra_points=None, extra_points_at_edge_of_gamut=False):
+
+        values_np_scaled = self.scaler(data, scale_type='standard') # scales to zero mean, sd of one
+
+        pca = PCA(n_components=n_components)
+        pca_data = pca.fit_transform(values_np_scaled)
+
+        if col_names is not None:
+            index = col_names
+        else:
+            index = list(range(n_components))
+            
+        principal_axes_in_PC_space = pd.DataFrame(pca.components_.T, columns=[f'PC{pc}' for pc in range(n_components)], index=index)
+        explained_variance_ratio = pca.explained_variance_ratio_
+
+        if extra_points is not None:
+            pca_extra_points = pca.transform(extra_points)
+        else:
+            pca_extra_points = None
+
+        if extra_points_at_edge_of_gamut is True:
+            xmin, xmax, ymin, ymax = np.min(pca_data[:,0]), np.max(pca_data[:,0]), np.min(pca_data[:,1]), np.max(pca_data[:,1])
+            extra_points_np = np.zeros(pca_extra_points.shape)
+            for rowidx, row in  enumerate(pca_extra_points):
+                x0,y0=zip(row)
+                x0,y0=x0[0],y0[0] # zip provides tuples, must get the floats
+
+                xyratio = np.abs(x0/y0)
+                if x0 < 0 and y0 >= 0:
+                    xymaxratio = np.abs(xmin/ymax)
+                    if xyratio >= xymaxratio:
+                        xe = xmin
+                        c = np.abs(xmin/x0)
+                        ye = c * y0
+                    else:
+                        ye = ymax
+                        c = np.abs(ymax/y0)
+                        xe = c * x0
+                if x0 >= 0 and y0 >= 0:
+                    xymaxratio = np.abs(xmax/ymax)
+                    if xyratio >= xymaxratio:
+                        xe = xmax
+                        c = np.abs(xmax/x0)
+                        ye = c * y0
+                    else:
+                        ye = ymax
+                        c = np.abs(ymax/y0)
+                        xe = c * x0
+                if x0 < 0 and y0 < 0:
+                    xymaxratio = np.abs(xmin/ymin)
+                    if xyratio >= xymaxratio:
+                        xe = xmin
+                        c = np.abs(xmin/x0)
+                        ye = c * y0
+                    else:
+                        ye = ymin
+                        c = np.abs(ymin/y0)
+                        xe = c * x0
+                if x0 >= 0 and y0 < 0:
+                    xymaxratio = np.abs(xmax/ymin)
+                    if xyratio >= xymaxratio:
+                        xe = xmax
+                        c = np.abs(xmax/x0)
+                        ye = c * y0
+                    else:
+                        ye = ymin
+                        c = np.abs(ymin/y0)
+                        xe = c * x0
+                extra_points_np[rowidx,:] = np.array([xe, ye])
+            pca_extra_points = extra_points_np
+
+        return pca_data, principal_axes_in_PC_space, explained_variance_ratio, pca_extra_points
+
     def _analyze_meanerror(self, data_dict, **kwargs):
         
         decoding_method = kwargs['decoding_method'] 
@@ -1017,7 +1091,7 @@ class SystemAnalysis(SystemUtilities):
         # # Display values
         self.pp_df_full(analyzed_data_df)
 
-        analyzed_data_df.to_csv(csv_name_out, index=True)
+        analyzed_data_df.to_csv(csv_name_out, index=False)
 
     def analyze_plasticity(self, n_iter=1): # UNDER CONSTRUCTION
         '''

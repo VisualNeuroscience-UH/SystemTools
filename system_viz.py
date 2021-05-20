@@ -1,7 +1,8 @@
 # Visualization
 import seaborn as sns
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D  
+from mpl_toolkits.mplot3d import Axes3D 
+import colour 
 
 
 # Analysis
@@ -597,7 +598,6 @@ class SystemViz(SystemAnalysis):
                 
                 self._figsave(figurename=f'{self.save_figure_with_arrayidentifier}_{analysisHR}_{identifier}', myformat='svg')
 
-
     def show_input_to_readout_coherence(self, results_filename=None, savefigname='', signal_pair=[0,0]):
 
         data_dict = self.getData(filename=results_filename, data_type='results')
@@ -644,6 +644,300 @@ class SystemViz(SystemAnalysis):
         
         if len(unit_idx_list) == 1:
             plt.legend(['Target', 'Estimate'])
+
+    def get_system_profile_metrics(self, data_df_compiled, independent_variable_columns_list):
+
+        # Turn array analysis columns into system profile metrics
+
+        def _column_comprehension(analysis, key_list=[]):
+
+            relevant_columns = [col for col in data_df_compiled.columns if f'{analysis}' in col]
+            pruned_names = []
+            if key_list is not []:
+                key_columns = []
+                for this_key in key_list:
+                    this_key_column = [col for col in relevant_columns if f'{this_key}' in col]
+                    key_columns.extend(this_key_column)
+                    pruned_names.append(f'{analysis}_{this_key}')
+                relevant_columns = key_columns
+            if pruned_names is []:
+                    pruned_names = [f'{analysis}']
+            return relevant_columns, pruned_names
+        
+        profile_metrics_columns_list = []
+
+        # Init df_for_barplot with independent columns
+        df_for_barplot = data_df_compiled[independent_variable_columns_list]
+
+        ## Get energy metrics ## 
+        # From Attwell_2001_JCerBlFlMetab.pdf "As a simplification, all cells are treated as glutamatergic, 
+        # because excitatory neurons outnumber inhibitory cells by a factor of 9 to 1, and 90% of synapses 
+        # release glutamate (Abeles, 1991; Braitenberg and Schüz, 1998)."
+
+        meanfr_column_list, pruned_names = _column_comprehension('MeanFR', key_list=['NG1'])
+        selected_columns = data_df_compiled[meanfr_column_list]
+        df_for_barplot[pruned_names] = selected_columns
+        profile_metrics_columns_list.extend(pruned_names)
+
+        ## Get latency metrics ##
+        latency_column_list, pruned_names = _column_comprehension('Coherence', key_list=['Latency'])
+        selected_columns = data_df_compiled[latency_column_list]
+        df_for_barplot[pruned_names] = selected_columns
+        profile_metrics_columns_list.extend(pruned_names)
+
+        # latency_column_list, pruned_names = _column_comprehension('GrCaus', key_list=['latency'])
+        # selected_columns = data_df_compiled[latency_column_list]
+        # df_for_barplot[pruned_names] = selected_columns
+        # profile_metrics_columns_list.extend(pruned_names)
+
+        ## Get reconstruction metrics ##
+        reco_column_list, pruned_names = _column_comprehension('MeanError', key_list=['SimErr'])
+        selected_columns = data_df_compiled[reco_column_list]
+        df_for_barplot[pruned_names] = selected_columns
+        profile_metrics_columns_list.extend(pruned_names)
+
+        # ## Get classification accuracy ## 
+        # classify_column_list, pruned_names = _column_comprehension('Classify', key_list=['Accuracy'])
+        # selected_columns = data_df_compiled[classify_column_list]
+        # df_for_barplot[pruned_names] = selected_columns
+        # profile_metrics_columns_list.extend(pruned_names)
+
+        ## Get information metrics ##
+        info_column_list, pruned_names = _column_comprehension('GrCaus', key_list=['Information'])
+        selected_columns = data_df_compiled[info_column_list]
+        df_for_barplot[pruned_names] = selected_columns
+        profile_metrics_columns_list.extend(pruned_names)
+
+        info_column_list, pruned_names = _column_comprehension('GrCaus', key_list=['TransfEntropy'])
+        selected_columns = data_df_compiled[info_column_list]
+        df_for_barplot[pruned_names] = selected_columns
+        profile_metrics_columns_list.extend(pruned_names)
+
+        ## Get target entropy ##
+        target_entropy_column_list, pruned_names = _column_comprehension('GrCaus', key_list=['targetEntropy'])
+        selected_columns = data_df_compiled[target_entropy_column_list]
+        df_for_barplot[pruned_names] = selected_columns
+        profile_metrics_columns_list.extend(pruned_names)
+
+        ## Get input-output coherence ##
+        coherence_column_list, pruned_names = _column_comprehension('Coherence', key_list=['Sum'])
+        selected_columns = data_df_compiled[coherence_column_list]
+        df_for_barplot[pruned_names] = selected_columns
+        profile_metrics_columns_list.extend(pruned_names)
+
+        # TÄHÄN JÄIT: MUUTA LATENCY=>SPEED ETC, ELI SUUREMPI PAREMPI (?) JA JATKA PLOTTIIN
+        # JAA COHERENSSI ALLE JA YLI 25 Hz. pALAUTA gRCAUS, TEE VAR BIC KRITEERISTÄ NÄKYVÄ
+
+        min_values = df_for_barplot[profile_metrics_columns_list].min()
+        max_values = df_for_barplot[profile_metrics_columns_list].max()
+        
+        return df_for_barplot, profile_metrics_columns_list, min_values, max_values
+
+    def PC2RGB(self, cardinal_points, additional_points):
+        # Get transformation matrix between 2D cardinal points as corners of a rectangular space 
+        # [left lower, right upper, left upper, right lower]. Map this space to RGB gamut in CIExy color space.
+        # Transform additional points between the spaces
+        # returns the additional points 
+
+        # Major color axis contained in RGB gamut in CIE xy coordinates
+        CIE_cardinal_points_list = [[0.6, 0.35], [0.3, 0.5], [0.2, 0.15], [0.45, 0.45]]
+        CIE_cardinal_points_df = pd.DataFrame(CIE_cardinal_points_list, index=['red', 'green', 'blue', 'yellow'], columns=['CIE_x', 'CIE_y'])
+        CIE_matrix = CIE_cardinal_points_df.values
+
+        # Get transformation matrix X between PC dimensions and CIExy coordinates 
+        PC_matrix_ones = np.c_[cardinal_points,np.ones([4,1])]
+
+        CIE_matrix_ones = np.c_[CIE_matrix,np.ones([4,1])]
+        transf_matrix = np.linalg.lstsq(PC_matrix_ones, CIE_matrix_ones)[0]
+
+        CIE_space = np.c_[additional_points, np.ones(additional_points.shape[0])] @ transf_matrix
+        CIEonXYZ = colour.xy_to_XYZ(CIE_space[:,:2])
+        CIEonRGB = colour.XYZ_to_sRGB(CIEonXYZ / 100)
+
+        # Get standard scaler
+        CIE_standard_space = PC_matrix_ones @ transf_matrix
+        CIEonXYZ_standard_space = colour.xy_to_XYZ(CIE_standard_space[:,:2])
+        CIEonRGB_standard_space = colour.XYZ_to_sRGB(CIEonXYZ_standard_space / 100)
+        standard_min = np.min(CIEonRGB_standard_space)
+        standard_ptp = np.ptp(CIEonRGB_standard_space)
+
+        # Scale brighter
+        # RGB_points = (CIEonRGB - np.min(CIEonRGB)) / np.ptp(CIEonRGB)
+        RGB_points_scaled = (CIEonRGB - standard_min) / standard_ptp
+        # clip to [0, 1]
+        RGB_points = np.clip(RGB_points_scaled, 0, 1)
+
+        return RGB_points
+
+    def system_polar_bar(self, row_selection = None, folder_name=None):
+
+        if isinstance(row_selection, list) and len(row_selection)>1:
+            # For list of rows, make one figure for each row
+            for this_row in row_selection:
+                self.system_polar_bar(row_selection = this_row, folder_name=folder_name)
+            return
+        elif isinstance(row_selection, list) and len(row_selection)==1:
+            row_selection = row_selection[0]
+        
+        ## Get csv files recursively from folder and its subfolders ##
+        if folder_name is None:
+            out_root_path = os.path.join(self.path, self.output_folder)
+        else:
+            out_root_path = os.path.join(self.path, folder_name)
+
+        root_subs_files_list = [tp for tp in os.walk(out_root_path)]
+        csv_file_list = []
+        for this_tuple in root_subs_files_list:
+            this_root_path = this_tuple[0]
+            this_csv_file_list = [p for p in this_tuple[2] if p.endswith('.csv')]
+            for this_file in this_csv_file_list:
+                first_underscore_idx = this_file.find('_')
+                if this_file[:first_underscore_idx] not in self.map_analysis_names.values():
+                    raise ValueError(f'{this_file} is unknown csv file, allowed types should start with {self.map_analysis_names.values()}')
+                this_csv_file_path = os.path.join(this_root_path, this_file)
+                csv_file_list.append(this_csv_file_path)
+
+        ## Get data from csv files ##
+        data0_df = self.getData(filename=csv_file_list[0], data_type=None)
+        if "Dimension-2 Parameter" in data0_df.columns:
+            independent_variable_columns_list = ["Dimension-1 Parameter","Dimension-1 Value", "Dimension-2 Parameter", "Dimension-2 Value"]
+        else: 
+            independent_variable_columns_list = ["Dimension-1 Parameter","Dimension-1 Value"]
+        selected_columns = data0_df[independent_variable_columns_list]
+        data_df_compiled = selected_columns.copy()
+        dependent_variable_columns_list = []
+
+        for csv_filename in csv_file_list:
+            data_df = self.getData(filename=csv_filename, data_type=None)
+            # Drop 'Unnamed: 0'
+            if 'Unnamed: 0' in data_df.columns:
+                data_df = data_df.drop(['Unnamed: 0'], axis=1)
+            # If independent dimensions match, add column values
+            if data_df[independent_variable_columns_list].equals(data_df_compiled[independent_variable_columns_list]):
+                # Get list of dependent variable columns
+                this_dependent_variable_columns_list = [col for col in data_df.columns if col not in independent_variable_columns_list]
+                data_df_compiled[this_dependent_variable_columns_list] = data_df[this_dependent_variable_columns_list]
+                dependent_variable_columns_list.extend(this_dependent_variable_columns_list)
+
+        # Combine dfs
+        df_for_barplot, profile_metrics_columns_list, min_values, max_values = \
+            self.get_system_profile_metrics(data_df_compiled, independent_variable_columns_list)
+
+        # Normalize magnitudes
+        values_np = df_for_barplot[profile_metrics_columns_list].values #returns a numpy array
+        values_np_scaled = self.scaler(values_np, scale_type='minmax', feature_range=[0, 1])
+        df_for_barplot[profile_metrics_columns_list] = values_np_scaled
+
+        # Get PCA of data. Note option for extra_points=extra_points_df
+        values_pca, principal_axes_in_PC_space, explained_variance_ratio, extra_points_pca = self.get_PCA(values_np, 
+            n_components=2, col_names=profile_metrics_columns_list, extra_points=np.eye(len(profile_metrics_columns_list)),
+            extra_points_at_edge_of_gamut=True)
+
+        # Define PCA space         
+        xmin, xmax = np.min(values_pca[:,0]), np.max(values_pca[:,0])
+        ymin, ymax = np.min(values_pca[:,1]), np.max(values_pca[:,1])
+        PC0_limits = np.array([xmin - xmin/10, xmax + xmax/10])
+        PC1_limits = np.array([ymin - ymin/10, ymax + ymax/10])
+
+        PC_cardinal_points = np.array([  [PC0_limits[0],PC1_limits[0]],
+                                [PC0_limits[1],PC1_limits[1]],
+                                [PC0_limits[0],PC1_limits[1]],
+                                [PC0_limits[1],PC1_limits[0]]]) 
+
+        # Number of parameters for the polar bar chart
+        N = len(profile_metrics_columns_list)
+
+        # Polar angle (in radians) of each parameter
+        theta = np.linspace(2 * np.pi / N, 2 * np.pi, N, endpoint=True)
+
+        # Magnitude as radius of bar in the polar plot
+        if row_selection is None:
+            row_selection = 0
+        radii = df_for_barplot.iloc[row_selection,:][profile_metrics_columns_list].values
+
+        # print(np.array2string(radii, precision=2, separator=',',suppress_small=False))
+        # print(profile_metrics_columns_list)
+
+        # Second dimension as width
+        width = 2 * np.pi / N
+
+        # Third dimension as colors
+        original_dimensions = extra_points_pca
+        # profile_in_PC_coordinates = principal_axes_in_PC_space.values
+        profile_in_PC_coordinates = original_dimensions
+        profile_in_RGB_coordinates = self.PC2RGB(PC_cardinal_points, additional_points = profile_in_PC_coordinates)
+        # colors = plt.cm.viridis(radii.astype(float))
+        colors = profile_in_RGB_coordinates
+
+        ## Plotting##
+        fig = plt.figure(figsize=(10,5))
+        ax1 = plt.subplot(221, projection='polar')
+        ax2 = plt.subplot(222, projection=None)
+        ax3 = plt.subplot(223, projection=None)
+        ax4 = plt.subplot(224, projection=None)
+
+        ax1.bar(theta, radii, width=width, bottom=0.0, color=colors)
+        
+        # Polar tick positions in radial coordinates and corresponding label strings
+        ax1.set_xticks(np.linspace(2*np.pi/(N),2*np.pi,N))
+        ax1.set_xticklabels(profile_metrics_columns_list)
+
+        # Set radial max value
+        ax1.set_rmax(1.0)
+        # Radial ticks
+        ax1.set_rticks([0.25, 0.5, 0.75, 1.0])  # Set radial ticks
+        ax1.set_rlabel_position(-11.25)  # Move radial labels away from plotted line
+
+        # Legend in another subplot (too big for the same)
+        min_values = min_values.apply(self.round_to_n_significant, args=(3,)).values
+        max_values = max_values.apply(self.round_to_n_significant, args=(3,)).values
+        bar_dict = {f'{name}: min {minn}, max {maxx}': color for name, minn, maxx, color in zip(profile_metrics_columns_list, min_values, max_values, colors)}         
+        labels = list(bar_dict.keys())
+        handles = [plt.Rectangle((0,0),1,1, color=bar_dict[label]) for label in labels]
+        ax2.set_axis_off() 
+        ax2.legend(handles, labels, loc='center')
+
+        # Plot data on PC space with colors from CIExy map
+        RGB_values = self.PC2RGB(PC_cardinal_points, additional_points = values_pca)
+
+        ax3.scatter(values_pca[:,0], values_pca[:,1], c=RGB_values)
+        # Selected point
+        ax3.scatter(values_pca[row_selection,0], values_pca[row_selection,1], c=RGB_values[row_selection], edgecolors='k', s=100)
+        extra_point_markers = "s"
+        ax3.scatter(extra_points_pca[:,0], extra_points_pca[:,1], marker = extra_point_markers, c='k')
+        pc0_label = f'PC0 ({100*explained_variance_ratio[0]:.0f}%)'
+        pc1_label = f'PC1 ({100*explained_variance_ratio[1]:.0f}%)'
+        ax3.set_xlabel(pc0_label)
+        ax3.set_ylabel(pc1_label)
+        parameter1name = f'{data_df_compiled.loc[row_selection, independent_variable_columns_list[0]]}'
+        parameter1value = f'{data_df_compiled.loc[row_selection, independent_variable_columns_list[1]]:.2f}'
+        if "Dimension-2 Parameter" in data0_df.columns:
+            parameter2name = f'{data_df_compiled.loc[row_selection, independent_variable_columns_list[2]]}'
+            parameter2value = f'{data_df_compiled.loc[row_selection, independent_variable_columns_list[3]]:.2f}'
+            ax3.title.set_text(f'{parameter1name}: {parameter1value}\n{parameter2name}: {parameter2value}')
+            figout_names = parameter1name.replace(' ','_') + parameter1value.replace('.','p') + '_' \
+                + parameter2name.replace(' ','_') + parameter2value.replace('.','p')
+        else:
+            ax3.title.set_text(f'{parameter1name}: {parameter1value}')
+            figout_names = parameter1name.replace(' ','_') + parameter1value.replace('.','p')
+
+        ax3.grid()
+
+        ## Display colorscale
+        x = np.linspace(PC0_limits[0], PC0_limits[1], num=100)
+        y = np.linspace(PC1_limits[0], PC1_limits[1], num=100)
+        X,Y = np.meshgrid(x,y)
+        PC_space = np.vstack([X.flatten(),Y.flatten()]).T       
+        CIEonRGB_scaled = self.PC2RGB(PC_cardinal_points, additional_points = PC_space)
+
+        # Reshape to 2D
+        imsize = (len(X),len(Y),3)
+        CIEonRGB_image = np.reshape(CIEonRGB_scaled, imsize, order='C')
+        ax4.imshow(CIEonRGB_image, origin='lower', extent=[PC0_limits[0], PC0_limits[1], PC1_limits[0], PC1_limits[1]])
+        ax4.grid()
+
+        if  hasattr(self,'save_figure_with_arrayidentifier'):                
+            self._figsave(figurename=f'{self.save_figure_with_arrayidentifier}_summary_{figout_names}', myformat='svg')
 
 if __name__=='__main__':
 

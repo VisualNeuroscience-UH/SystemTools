@@ -342,13 +342,13 @@ if __name__=='__main__':
     
     # If this is active, the displayed array analysis figures are saved as arrayIdentifier_analysis_identifier.svg
     # at your path
-    P.save_figure_with_arrayidentifier = 'kukkuu'
+    P.save_figure_with_arrayidentifier = 'puppeli'
 
     # P.analyze_arrayrun(metadata_filename=None, analysis='MeanError', **extra_MeanError_attributes)
     # P.show_analyzed_arrayrun(csv_filename=None, analysis='MeanError', variable_unit='a.u.') # Empty NG_id_list for all groups
 
-    P.analyze_arrayrun(metadata_filename=None, analysis='MeanFR', t_idx_start=0, t_idx_end=-1)
-    P.show_analyzed_arrayrun(csv_filename=None, analysis='MeanFR', variable_unit='Hz', NG_id_list=['NG1', 'NG2']) # Empty NG_id_list for all groups
+    # P.analyze_arrayrun(metadata_filename=None, analysis='MeanFR', t_idx_start=0, t_idx_end=-1)
+    # P.show_analyzed_arrayrun(csv_filename=None, analysis='MeanFR', variable_unit='Hz', NG_id_list=['NG1', 'NG2']) # Empty NG_id_list for all groups
    
     # P.analyze_arrayrun(metadata_filename=None, analysis='Coherence', t_idx_start=0, t_idx_end=-1)
     # P.show_analyzed_arrayrun(csv_filename=None, analysis='Coherence', NG_id_list=['NG3']) 
@@ -361,5 +361,11 @@ if __name__=='__main__':
     # P.analyze_arrayrun(metadata_filename=None, analysis='Classify', t_idx_start=0, t_idx_end=-1, **extra_GrCaus_attributes)
     # P.show_analyzed_arrayrun(csv_filename=None, analysis='Classify') 
     
+    ## System Profile ##
+    '''
+    The system_polar_bar method operates on output folder and its subfolders. It searches for csv files; only valid array 
+    analysis csv files are allowed, others are cought to ValueError. 
+    '''
+    P.system_polar_bar(row_selection = [0, 5, 8], folder_name=None)
 
     plt.show()
