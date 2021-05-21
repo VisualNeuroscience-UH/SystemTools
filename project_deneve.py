@@ -265,7 +265,7 @@ if __name__=='__main__':
 
     # Experiment-specific file, folder and neuron group names. Do not use reserved words, such as "results"
     input_folder = 'Replica_in'
-    output_folder = 'out'
+    output_folder = 'out2'
     mat_filename = 'Fig4_workspace.mat'
     connection_skeleton_filename_in = 'Replica_skeleton_connections_20210211_1453238.gz'
     connection_filename_out = 'connections_deneve_ci_constant.gz'
@@ -342,7 +342,7 @@ if __name__=='__main__':
     
     # If this is active, the displayed array analysis figures are saved as arrayIdentifier_analysis_identifier.svg
     # at your path
-    P.save_figure_with_arrayidentifier = 'puppeli'
+    # P.save_figure_with_arrayidentifier = 'puppeli'
 
     # P.analyze_arrayrun(metadata_filename=None, analysis='MeanError', **extra_MeanError_attributes)
     # P.show_analyzed_arrayrun(csv_filename=None, analysis='MeanError', variable_unit='a.u.') # Empty NG_id_list for all groups
@@ -366,6 +366,6 @@ if __name__=='__main__':
     The system_polar_bar method operates on output folder and its subfolders. It searches for csv files; only valid array 
     analysis csv files are allowed, others are cought to ValueError. 
     '''
-    P.system_polar_bar(row_selection = [0, 5, 8], folder_name=None)
+    P.system_polar_bar(row_selection = [3, 15, 35], folder_name=None)
 
     plt.show()

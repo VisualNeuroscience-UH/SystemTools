@@ -828,9 +828,12 @@ class SystemViz(SystemAnalysis):
         values_np_scaled = self.scaler(values_np, scale_type='minmax', feature_range=[0, 1])
         df_for_barplot[profile_metrics_columns_list] = values_np_scaled
 
+        # extra points are the original dimensions, to be visualized
+        extra_points = np.vstack([np.eye(len(profile_metrics_columns_list)), -1 * np.eye(len(profile_metrics_columns_list))])
+
         # Get PCA of data. Note option for extra_points=extra_points_df
         values_pca, principal_axes_in_PC_space, explained_variance_ratio, extra_points_pca = self.get_PCA(values_np, 
-            n_components=2, col_names=profile_metrics_columns_list, extra_points=np.eye(len(profile_metrics_columns_list)),
+            n_components=2, col_names=profile_metrics_columns_list, extra_points=extra_points,
             extra_points_at_edge_of_gamut=True)
 
         # Define PCA space         
@@ -855,17 +858,13 @@ class SystemViz(SystemAnalysis):
             row_selection = 0
         radii = df_for_barplot.iloc[row_selection,:][profile_metrics_columns_list].values
 
-        # print(np.array2string(radii, precision=2, separator=',',suppress_small=False))
-        # print(profile_metrics_columns_list)
-
         # Second dimension as width
         width = 2 * np.pi / N
 
         # Third dimension as colors
-        original_dimensions = extra_points_pca
-        # profile_in_PC_coordinates = principal_axes_in_PC_space.values
-        profile_in_PC_coordinates = original_dimensions
+        profile_in_PC_coordinates = extra_points_pca
         profile_in_RGB_coordinates = self.PC2RGB(PC_cardinal_points, additional_points = profile_in_PC_coordinates)
+
         # colors = plt.cm.viridis(radii.astype(float))
         colors = profile_in_RGB_coordinates
 
@@ -899,16 +898,23 @@ class SystemViz(SystemAnalysis):
 
         # Plot data on PC space with colors from CIExy map
         RGB_values = self.PC2RGB(PC_cardinal_points, additional_points = values_pca)
-
         ax3.scatter(values_pca[:,0], values_pca[:,1], c=RGB_values)
+
         # Selected point
         ax3.scatter(values_pca[row_selection,0], values_pca[row_selection,1], c=RGB_values[row_selection], edgecolors='k', s=100)
+
+        # Original N dim space, projected on 2 dim PC space
         extra_point_markers = "s"
-        ax3.scatter(extra_points_pca[:,0], extra_points_pca[:,1], marker = extra_point_markers, c='k')
+        n_metrics = len(profile_metrics_columns_list)
+
+        # End points
+        ax3.scatter(extra_points_pca[:n_metrics,0], extra_points_pca[:n_metrics,1], marker = extra_point_markers, c='k')
         pc0_label = f'PC0 ({100*explained_variance_ratio[0]:.0f}%)'
         pc1_label = f'PC1 ({100*explained_variance_ratio[1]:.0f}%)'
         ax3.set_xlabel(pc0_label)
         ax3.set_ylabel(pc1_label)
+
+        # Subplot title
         parameter1name = f'{data_df_compiled.loc[row_selection, independent_variable_columns_list[0]]}'
         parameter1value = f'{data_df_compiled.loc[row_selection, independent_variable_columns_list[1]]:.2f}'
         if "Dimension-2 Parameter" in data0_df.columns:
@@ -933,8 +939,23 @@ class SystemViz(SystemAnalysis):
         # Reshape to 2D
         imsize = (len(X),len(Y),3)
         CIEonRGB_image = np.reshape(CIEonRGB_scaled, imsize, order='C')
-        ax4.imshow(CIEonRGB_image, origin='lower', extent=[PC0_limits[0], PC0_limits[1], PC1_limits[0], PC1_limits[1]])
+        # Get extent of existing 2 dim PC plot
+        PC_ax_extent = [ax3.get_xlim(), ax3.get_ylim()]
+        # Plot colorscape
+        ax4.imshow(CIEonRGB_image, origin='lower', extent=[PC_ax_extent[0][0], PC_ax_extent[0][1], PC_ax_extent[1][0], PC_ax_extent[1][1]])
         ax4.grid()
+
+        # Create plot pairs
+        for this_point in np.arange(n_metrics):
+            start_end_x = [extra_points_pca[this_point,0], extra_points_pca[n_metrics + this_point,0]]
+            start_end_y = [extra_points_pca[this_point,1], extra_points_pca[n_metrics + this_point,1]]
+            ax4.plot(start_end_x, start_end_y, 'k--', lw=.5)
+        # # Start points
+        # ax4.scatter(extra_points_pca[n_metrics:,0], extra_points_pca[n_metrics:,1], marker = extra_point_markers, c='w', edgecolors='k', s=20)        
+        # End points
+        ax4.scatter(extra_points_pca[:n_metrics,0], extra_points_pca[:n_metrics,1], marker=extra_point_markers, facecolors='none', edgecolors='k')
+        ax4.title.set_text(f'Projections of the {str(len(profile_metrics_columns_list))} dimensions')
+
 
         if  hasattr(self,'save_figure_with_arrayidentifier'):                
             self._figsave(figurename=f'{self.save_figure_with_arrayidentifier}_summary_{figout_names}', myformat='svg')
