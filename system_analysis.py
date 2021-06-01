@@ -960,7 +960,10 @@ class SystemAnalysis(SystemUtilities):
 
     def _analyze_classification_performance(self, y_data):
         # eye_idx = np.eye(source_signal.shape[1], target_signal.shape[1], dtype=bool)
-        eye_idx = np.eye(y_data.shape[0], y_data.shape[1], dtype=bool)
+        try:
+            eye_idx = np.eye(y_data.shape[0], y_data.shape[1], dtype=bool)
+        except AttributeError:
+            return 0
         y_true = eye_idx
 
         y_pred = np.zeros(y_data.shape)
