@@ -220,7 +220,10 @@ class SystemAnalysis(SystemUtilities):
         # make df for explicit naming
         df = pd.DataFrame(data=np.column_stack([target_signal_pp, source_signal_pp]),columns=target_name_list + source_name_list)
         model = VAR(df)
-        results = model.fit(maxlags=max_lag_samples, ic=ic, trend='c')
+        try: 
+            results = model.fit(maxlags=max_lag_samples, ic=ic, trend='c')
+        except np.linalg.LinAlgError: 
+            return 0, 0, 0
         best_time_lag_samples = results.k_ar
 
         gc_results=results.test_causality(target_name_list, causing=source_name_list, kind='f', signif=signif)
@@ -588,6 +591,8 @@ class SystemAnalysis(SystemUtilities):
 
         # Here granger causality and transfer entropy is calculated from all source and target signals simultaneously. 
         F_value, p_value, best_time_lag_samples = self.granger_causality(target_signal_pp, source_signal_pp, max_time_lag_seconds, 'bic', dt, downsampling_factor, verbose=verbose)
+        if F_value == 0:
+            return 0, 0, np.nan, 0, 0, 0     
         transfer_entropy_value = self.pin_transfer_entropy(target_signal_pp.T, source_signal_pp.T, best_time_lag_samples)
         latency = best_time_lag_samples * dt * downsampling_factor # At timesteps of dt * downsampling factor
 
@@ -955,7 +960,10 @@ class SystemAnalysis(SystemUtilities):
 
     def _analyze_classification_performance(self, y_data):
         # eye_idx = np.eye(source_signal.shape[1], target_signal.shape[1], dtype=bool)
-        eye_idx = np.eye(y_data.shape[0], y_data.shape[1], dtype=bool)
+        try:
+            eye_idx = np.eye(y_data.shape[0], y_data.shape[1], dtype=bool)
+        except AttributeError:
+            return 0
         y_true = eye_idx
 
         y_pred = np.zeros(y_data.shape)
