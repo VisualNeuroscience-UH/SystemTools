@@ -259,17 +259,17 @@ if __name__=='__main__':
     if sys.platform == 'linux':
         path = r'/opt/tomas/projects/Results/Deneve_param'
     elif sys.platform == 'win32':
-        path = r'C:\Users\Simo\Laskenta\SimuOut\Deneve\Replica_test'
+        path = r'C:\Users\Simo\Laskenta\SimuOut\Deneve\One_vs_Many_spikes'
         # path = r'C:\Users\Simo\Laskenta\SimuOut\Deneve\Replica_test'
         os.chdir(path)
 
     # Experiment-specific file, folder and neuron group names. Do not use reserved words, such as "results"
-    input_folder = 'Replica_in'
-    output_folder = 'out2'
-    mat_filename = 'Fig4_workspace.mat'
+    input_folder = 'in'
+    output_folder = 'out'
+    mat_filename = 'workspace_deneve_MultiSpike.mat'
     connection_skeleton_filename_in = 'Replica_skeleton_connections_20210211_1453238.gz'
-    connection_filename_out = 'connections_deneve_ci_constant.gz'
-    input_filename = 'noise_210406.mat' # 'input_noise_210408.mat' # 'input_quadratic_three_units_2s.mat' # 'input_noise_210408.mat'
+    connection_filename_out = 'connections_deneve_MultiSpike_ci.gz'
+    input_filename = 'input_quadratic_three_units_2s_MultiSpike.mat' #'input_quadratic_three_units_2s_MultiSpike.mat'# 'noise_210406_MultiSpike.mat' # 
     NG_name_for_output = 'NG3_L4_CI_SS2_L4'
 
     P = Project(path=path, input_folder=input_folder, output_folder=output_folder, 
@@ -286,7 +286,7 @@ if __name__=='__main__':
     
     # # Transforms Deneve's simulation connections from .mat file to CxSystem .gz fromat.
     # # Creates connection_filename_out to input folder
-    # P.replace_connections(show_histograms=True, constant_scaling=True, constant_value=1e-9)
+    # P.replace_connections(show_histograms=False, constant_scaling=True, constant_value=1e-9)
 
 
     # ############################
@@ -298,18 +298,18 @@ if __name__=='__main__':
     # metadata_df = P.getData(filename=None, data_type='metadata') 
     # P.pp_df_full(metadata_df)
     
-    # ## Readout on input ##
-    # P.show_readout_on_input(results_filename=None, normalize=False, unit_idx_list=[0])
+    ## Readout on input ##
+    P.show_readout_on_input(results_filename='Bacon_results_20210609_0634402_input_quadratic_three_units_2s_MultiSpike.gz', normalize=False, unit_idx_list=[0])
     # # Available simulation_engines: 'cxsystem' and 'matlab'. Matlab needs filename. Available readout_groups 'E' and 'I'. 
     # # Target output is always input_leak
     # P.show_estimate_on_input(results_filename=None, simulation_engine='cxsystem', readout_group='E', unit_idx_list=[0]) 
-    # P.show_input_to_readout_coherence(results_filename='out_results_20210429_1825009_gL2nS_gL40nS.gz', savefigname='',signal_pair=[0,0])
+    # P.show_input_to_readout_coherence(results_filename='out_results_20210520_1549478_delay_CI_CI30ms.gz', savefigname='',signal_pair=[0,0])
 
 
-    # ## Show spikes and vm ##q
-    # P.show_spikes(results_filename=None, savefigname='')
+    ## Show spikes and vm ##q
+    P.show_spikes(results_filename='Bacon_results_20210609_0634402_input_quadratic_three_units_2s_MultiSpike.gz', savefigname='')
     # neuron_index = {'NG1_L4_CI_SS_L4' : 150, 'NG2_L4_CI_BC_L4' : 37, 'NG3_L4_CI_SS2_L4' : 1}
-    # P.show_analog_results(results_filename='out_results_20210429_1825009_gL2nS_gL40nS.gz', savefigname='',param_name='vm',startswith='NG', neuron_index=neuron_index) 
+    # P.show_analog_results(results_filename='out_results_20210608_1937379_input_quadratic_three_units_MultiSpike.gz', savefigname='',param_name='vm',startswith='NG', neuron_index=neuron_index) 
     # P.show_analog_results(results_filename=None, savefigname='',param_name='vclamp',startswith='NG') 
     # P.show_analog_results(results_filename=None, savefigname='',param_name='gclamp',startswith='NG') 
     # P.show_analog_results(results_filename=None, savefigname='',param_name='v_lowpass1',startswith='NG') 
@@ -324,8 +324,8 @@ if __name__=='__main__':
     # neuron_index = {'NG1_L4_CI_SS_L4' : 150, 'NG2_L4_CI_BC_L4' : 37, 'NG3_L4_CI_SS2_L4' : 1}
     # P.show_currents(results_filename=None, savefigname='', neuron_index=neuron_index) 
     
-    # ## Show connections ##
-    # P.show_connections(connections_filename=None, hist_from='L4_CI_BC_L4__to__L4_CI_SS_L4_soma', savefigname='')
+    ## Show connections ##
+    # P.show_connections(connections_filename='connections_deneve_MultiSpike_ci.gz', hist_from='L4_CI_BC_L4__to__L4_CI_SS_L4_soma', savefigname='new_conn.png')
 
     ## Analyse and show arrayrun data ##
     # Available analyses: 'MeanFR', 'MeanVm', 'EICurrentDiff', 'GrCaus', 'Coherence', 'MeanError'
@@ -342,7 +342,7 @@ if __name__=='__main__':
     
     # If this is active, the displayed array analysis figures are saved as arrayIdentifier_analysis_identifier.svg
     # at your path
-    # P.save_figure_with_arrayidentifier = 'puppeli'
+    # P.save_figure_with_arrayidentifier = 'demo'
 
     # P.analyze_arrayrun(metadata_filename=None, analysis='MeanError', **extra_MeanError_attributes)
     # P.show_analyzed_arrayrun(csv_filename=None, analysis='MeanError', variable_unit='a.u.') # Empty NG_id_list for all groups
@@ -361,11 +361,11 @@ if __name__=='__main__':
     # P.analyze_arrayrun(metadata_filename=None, analysis='Classify', t_idx_start=0, t_idx_end=-1, **extra_GrCaus_attributes)
     # P.show_analyzed_arrayrun(csv_filename=None, analysis='Classify') 
     
-    ## System Profile ##
-    '''
-    The system_polar_bar method operates on output folder and its subfolders. It searches for csv files; only valid array 
-    analysis csv files are allowed, others are cought to ValueError. 
-    '''
-    P.system_polar_bar(row_selection = [3, 15, 35], folder_name=None)
+    # ## System Profile ##
+    # '''
+    # The system_polar_bar method operates on output folder and its subfolders. It searches for csv files; only valid array 
+    # analysis csv files are allowed, others are cought to ValueError. 
+    # '''
+    # P.system_polar_bar(row_selection = [2, 20, 35], folder_name=None)
 
     plt.show()

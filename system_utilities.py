@@ -106,7 +106,7 @@ class SystemUtilities():
             if not data_fullpath_filename:
                 data_fullpath_filename = self._most_recent(path, data_type=data_type)
 
-        assert data_fullpath_filename is not None, 'Could not parse filepath, aborting...'
+        assert data_fullpath_filename is not None, 'I Could not find file, aborting...'
 
         print(f'Working on file {data_fullpath_filename}')
 

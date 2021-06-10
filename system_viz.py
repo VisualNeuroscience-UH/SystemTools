@@ -887,6 +887,20 @@ class SystemViz(SystemAnalysis):
         ax1.set_rticks([0.25, 0.5, 0.75, 1.0])  # Set radial ticks
         ax1.set_rlabel_position(-11.25)  # Move radial labels away from plotted line
 
+        # Subplot title; selected point
+        parameter1name = f'{data_df_compiled.loc[row_selection, independent_variable_columns_list[0]]}'
+        parameter1value = f'{data_df_compiled.loc[row_selection, independent_variable_columns_list[1]]:.2f}'
+        if "Dimension-2 Parameter" in data0_df.columns:
+            parameter2name = f'{data_df_compiled.loc[row_selection, independent_variable_columns_list[2]]}'
+            parameter2value = f'{data_df_compiled.loc[row_selection, independent_variable_columns_list[3]]:.2f}'
+            ax1.title.set_text(f'{parameter1name}: {parameter1value}\n{parameter2name}: {parameter2value}')
+            figout_names = parameter1name.replace(' ','_') + parameter1value.replace('.','p') + '_' \
+                + parameter2name.replace(' ','_') + parameter2value.replace('.','p')
+        else:
+            ax1.title.set_text(f'{parameter1name}: {parameter1value}')
+            figout_names = parameter1name.replace(' ','_') + parameter1value.replace('.','p')
+
+
         # Legend in another subplot (too big for the same)
         min_values = min_values.apply(self.round_to_n_significant, args=(3,)).values
         max_values = max_values.apply(self.round_to_n_significant, args=(3,)).values
@@ -913,20 +927,6 @@ class SystemViz(SystemAnalysis):
         pc1_label = f'PC1 ({100*explained_variance_ratio[1]:.0f}%)'
         ax3.set_xlabel(pc0_label)
         ax3.set_ylabel(pc1_label)
-
-        # Subplot title
-        parameter1name = f'{data_df_compiled.loc[row_selection, independent_variable_columns_list[0]]}'
-        parameter1value = f'{data_df_compiled.loc[row_selection, independent_variable_columns_list[1]]:.2f}'
-        if "Dimension-2 Parameter" in data0_df.columns:
-            parameter2name = f'{data_df_compiled.loc[row_selection, independent_variable_columns_list[2]]}'
-            parameter2value = f'{data_df_compiled.loc[row_selection, independent_variable_columns_list[3]]:.2f}'
-            ax3.title.set_text(f'{parameter1name}: {parameter1value}\n{parameter2name}: {parameter2value}')
-            figout_names = parameter1name.replace(' ','_') + parameter1value.replace('.','p') + '_' \
-                + parameter2name.replace(' ','_') + parameter2value.replace('.','p')
-        else:
-            ax3.title.set_text(f'{parameter1name}: {parameter1value}')
-            figout_names = parameter1name.replace(' ','_') + parameter1value.replace('.','p')
-
         ax3.grid()
 
         ## Display colorscale
