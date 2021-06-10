@@ -56,13 +56,13 @@ Developed by Simo Vanni 2021
 
 class Project(SystemViz):
 
-    def __init__(self, path='./', input_folder=None, output_folder=None, mat_filename=None, 
+    def __init__(self, path='./', input_folder=None, output_folder=None, workspace_deneve_filename=None, 
                 connection_skeleton_filename_in=None, connection_filename_out=None, input_filename=None, NG_name=None):
 
         self.path = path
         self.input_folder = input_folder
         self.output_folder = output_folder
-        self.mat_filename = mat_filename
+        self.workspace_deneve_filename = workspace_deneve_filename
         self.connection_skeleton_filename_in = connection_skeleton_filename_in
         self.connection_filename_out = os.path.join(input_folder, connection_filename_out)
         self.input_filename = input_filename
@@ -145,7 +145,7 @@ class Project(SystemViz):
         precomputed connection weights to this system. 
         '''
 
-        mat_data_dict = self.getData(self.mat_filename)
+        mat_data_dict = self.getData(self.workspace_deneve_filename)
         connection_skeleton_dict = self.getData(self.connection_skeleton_filename_in)
 
         mat_keys = ['FsE', 'CsEE', 'CsEI', 'CsIE', 'CsII', 'DecsE', 'DecsI']
@@ -217,7 +217,7 @@ class Project(SystemViz):
         input_filename = self.input_filename
 
         # Get FE -- from input forward to e group connection matrix
-        mat_data_dict = self.getData(self.mat_filename)
+        mat_data_dict = self.getData(self.workspace_deneve_filename)
         mat_key = 'FsE'
         FE_all_learning_steps = mat_data_dict[mat_key]
         FE= FE_all_learning_steps[-1,:,:] # Last learning step FE shape (3, 300)
@@ -265,15 +265,15 @@ if __name__=='__main__':
 
     # Experiment-specific file, folder and neuron group names. Do not use reserved words, such as "results"
     input_folder = 'in'
-    output_folder = 'out'
-    mat_filename = 'workspace_deneve_MultiSpike.mat'
+    output_folder = 'tmp' #'out'
+    workspace_deneve_filename = 'workspace_deneve_MultiSpike.mat'
     connection_skeleton_filename_in = 'Replica_skeleton_connections_20210211_1453238.gz'
     connection_filename_out = 'connections_deneve_MultiSpike_ci.gz'
     input_filename = 'input_quadratic_three_units_2s_MultiSpike.mat' #'input_quadratic_three_units_2s_MultiSpike.mat'# 'noise_210406_MultiSpike.mat' # 
     NG_name_for_output = 'NG3_L4_CI_SS2_L4'
 
     P = Project(path=path, input_folder=input_folder, output_folder=output_folder, 
-                mat_filename=mat_filename, connection_skeleton_filename_in=connection_skeleton_filename_in, 
+                workspace_deneve_filename=workspace_deneve_filename, connection_skeleton_filename_in=connection_skeleton_filename_in, 
                 connection_filename_out=connection_filename_out, input_filename=input_filename, 
                 NG_name=NG_name_for_output)
 
@@ -299,7 +299,7 @@ if __name__=='__main__':
     # P.pp_df_full(metadata_df)
     
     ## Readout on input ##
-    P.show_readout_on_input(results_filename='Bacon_results_20210609_0634402_input_quadratic_three_units_2s_MultiSpike.gz', normalize=False, unit_idx_list=[0])
+    # P.show_readout_on_input(results_filename='Bacon_results_20210609_0634402_input_quadratic_three_units_2s_MultiSpike.gz', normalize=False, unit_idx_list=[0])
     # # Available simulation_engines: 'cxsystem' and 'matlab'. Matlab needs filename. Available readout_groups 'E' and 'I'. 
     # # Target output is always input_leak
     # P.show_estimate_on_input(results_filename=None, simulation_engine='cxsystem', readout_group='E', unit_idx_list=[0]) 
@@ -307,7 +307,7 @@ if __name__=='__main__':
 
 
     ## Show spikes and vm ##q
-    P.show_spikes(results_filename='Bacon_results_20210609_0634402_input_quadratic_three_units_2s_MultiSpike.gz', savefigname='')
+    # P.show_spikes(results_filename='V_res_results_20210408_2112040_V_res-150mV_V_res-50mV.gz', savefigname='')
     # neuron_index = {'NG1_L4_CI_SS_L4' : 150, 'NG2_L4_CI_BC_L4' : 37, 'NG3_L4_CI_SS2_L4' : 1}
     # P.show_analog_results(results_filename='out_results_20210608_1937379_input_quadratic_three_units_MultiSpike.gz', savefigname='',param_name='vm',startswith='NG', neuron_index=neuron_index) 
     # P.show_analog_results(results_filename=None, savefigname='',param_name='vclamp',startswith='NG') 

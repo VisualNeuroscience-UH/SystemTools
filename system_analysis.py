@@ -36,8 +36,9 @@ import pickle
 import sys
 import math
 
-# Current repo
+# This computer git repos
 from system_utilities import SystemUtilities
+from cxsystem2.core.tools import write_to_file
 
 
 # Develop
@@ -1065,6 +1066,40 @@ class SystemAnalysis(SystemUtilities):
 
         return data_df
 
+    def _check_metadata(self, metadataroot, metadataextension):
+        '''
+        For folder path changes or transferring of data between systems, we need to update metadata paths
+        '''
+
+        # Get metadata file as df
+        data_df = self.getData(f'{metadataroot}{metadataextension}')
+        
+        # Check whether metadata full path data (.gz) files exist in their expected places
+        full_data_filepaths_list = data_df['Full path'].values.tolist()
+        data_file_exist_list_of_bool = [os.path.isfile(f) for f in  full_data_filepaths_list]
+        if all(data_file_exist_list_of_bool) is True:
+            print(f'All datafiles in metadatafile found')
+            return f'{metadataroot}{metadataextension}'            
+
+        # We assume that the data files are in the same folder as the metadata
+        # Change full path roots to metadataroot folder
+        metadataroot_folder_path, filename_no_extension = os.path.split(metadataroot)
+        updated_fílepaths_list = []
+        for this_file_name in full_data_filepaths_list:
+            dataroot_folder_path, data_filename = os.path.split(this_file_name)
+            updated_this_file_name = os.path.join(metadataroot_folder_path,data_filename)
+            # Check the updated path 
+            if os.path.isfile(updated_this_file_name):
+                data_df.replace(to_replace=this_file_name, value=updated_this_file_name, inplace=True)
+            else:
+                raise FileNotFoundError(f'Data file {data_filename} not found in the metadata folder, aborting...')
+
+        # Write updated metadata file
+        new_metadata_filename = f'{metadataroot}_updated{metadataextension}'
+        write_to_file(new_metadata_filename, data_df)
+
+        return new_metadata_filename
+
     def analyze_arrayrun(self, metadata_filename=None, analysis=None, t_idx_start=0, t_idx_end=None, **kwargs):
         '''
         Create mean firing rate csv table for array run. Needs a metadata file.
@@ -1078,6 +1113,7 @@ class SystemAnalysis(SystemUtilities):
         metadataroot, metadataextension = os.path.splitext(metadata_fullpath_filename)
         filename_out = metadataroot.replace('metadata', analysisHR)
         csv_name_out = filename_out + '.csv'
+        metadata_filename = self._check_metadata(metadataroot, metadataextension)
 
         # Init txt file for Granger causality fit quality diagnostics
         if analysisHR.lower() in ['grcaus']:
