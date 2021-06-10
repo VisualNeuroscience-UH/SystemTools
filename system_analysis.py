@@ -593,7 +593,7 @@ class SystemAnalysis(SystemUtilities):
         # Here granger causality and transfer entropy is calculated from all source and target signals simultaneously. 
         F_value, p_value, best_time_lag_samples = self.granger_causality(target_signal_pp, source_signal_pp, max_time_lag_seconds, 'bic', dt, downsampling_factor, verbose=verbose)
         if F_value == 0:
-            return 0, 0, np.nan, 0, 0, 0     
+            return 0, 1, np.nan, 0, 0, 0     
         transfer_entropy_value = self.pin_transfer_entropy(target_signal_pp.T, source_signal_pp.T, best_time_lag_samples)
         latency = best_time_lag_samples * dt * downsampling_factor # At timesteps of dt * downsampling factor
 
