@@ -253,13 +253,18 @@ class SystemAnalysis(SystemUtilities):
             # Base to bin edges
             bins = np.linspace(np.min(data), np.max(data),num=base + 1, endpoint=True)
             # Get digitized values
-            inds = np.digitize(data, bins)
+            inds = np.digitize(data, bins).astype('int64') # Note reducing to 16 bit integers to save memory
             return inds
 
         binned_source = _data2bins(source, base)
         binned_target = _data2bins(target, base)
+
+        try:
+            pin_te = pin.transferentropy.transfer_entropy(binned_source, binned_target, best_time_lag_samples, condition=None, local=False)
+        except pin.error.InformError: # Memory allocation error 
+            print(f'\033[31m\nFailed transfer entropy due to memory allocation failure (best_time_lag_samples = {best_time_lag_samples}), setting transfer entropy to zero\033[97m')
+            pin_te = 0
         
-        pin_te = pin.transferentropy.transfer_entropy(binned_source, binned_target, best_time_lag_samples, condition=None, local=False)
         return pin_te
 
     def vm_entropy(self, data, base=None, bins=None):
@@ -593,7 +598,8 @@ class SystemAnalysis(SystemUtilities):
         # Here granger causality and transfer entropy is calculated from all source and target signals simultaneously. 
         F_value, p_value, best_time_lag_samples = self.granger_causality(target_signal_pp, source_signal_pp, max_time_lag_seconds, 'bic', dt, downsampling_factor, verbose=verbose)
         if F_value == 0:
-            return 0, 1, np.nan, 0, 0, 0     
+            print(f'\033[31m\nFailed Granger Causality (fit failed), setting all GC analysis values to zero or nan\033[97m')
+            return 0, 1, np.nan, 0, 0, 0   
         transfer_entropy_value = self.pin_transfer_entropy(target_signal_pp.T, source_signal_pp.T, best_time_lag_samples)
         latency = best_time_lag_samples * dt * downsampling_factor # At timesteps of dt * downsampling factor
 
