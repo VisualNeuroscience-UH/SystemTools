@@ -259,17 +259,18 @@ if __name__=='__main__':
     if sys.platform == 'linux':
         path = r'/opt/tomas/projects/Results/Deneve_param'
     elif sys.platform == 'win32':
-        path = r'C:\Users\Simo\Laskenta\SimuOut\Deneve\One_vs_Many_spikes'
+        # path = r'C:\Users\Simo\Laskenta\SimuOut\Deneve\One_vs_Many_spikes'
         # path = r'C:\Users\Simo\Laskenta\SimuOut\Deneve\Replica_test'
+        path = r'C:\Users\Simo\Laskenta\SimuOut\Deneve\debug'
         os.chdir(path)
 
     # Experiment-specific file, folder and neuron group names. Do not use reserved words, such as "results"
     input_folder = 'in'
-    output_folder = 'tmp' #'out'
+    output_folder = 'out' #'out'
     workspace_deneve_filename = 'workspace_deneve_MultiSpike.mat'
     connection_skeleton_filename_in = 'Replica_skeleton_connections_20210211_1453238.gz'
     connection_filename_out = 'connections_deneve_MultiSpike_ci.gz'
-    input_filename = 'input_quadratic_three_units_2s_MultiSpike.mat' #'input_quadratic_three_units_2s_MultiSpike.mat'# 'noise_210406_MultiSpike.mat' # 
+    input_filename = 'noise_210406.mat' #'input_quadratic_three_units_2s_MultiSpike.mat'# 'noise_210406_MultiSpike.mat' # 
     NG_name_for_output = 'NG3_L4_CI_SS2_L4'
 
     P = Project(path=path, input_folder=input_folder, output_folder=output_folder, 
@@ -353,7 +354,7 @@ if __name__=='__main__':
     # P.analyze_arrayrun(metadata_filename=None, analysis='Coherence', t_idx_start=0, t_idx_end=-1)
     # P.show_analyzed_arrayrun(csv_filename=None, analysis='Coherence', NG_id_list=['NG3']) 
     
-    # P.analyze_arrayrun(metadata_filename=None, analysis='GrCaus', t_idx_start=0, t_idx_end=-1, **extra_GrCaus_attributes)
+    P.analyze_arrayrun(metadata_filename='metadata_short__20210622_1956126.gz', analysis='GrCaus', t_idx_start=0, t_idx_end=-1, **extra_GrCaus_attributes)
     # P.show_analyzed_arrayrun(csv_filename=None, analysis='GrCaus', NG_id_list=['NG3']) 
 
     # Classification is currently based on Granger causality F-statistics, thus gc is done first, and we need the extra attributes

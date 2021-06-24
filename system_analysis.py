@@ -261,7 +261,7 @@ class SystemAnalysis(SystemUtilities):
 
         try:
             pin_te = pin.transferentropy.transfer_entropy(binned_source, binned_target, best_time_lag_samples, condition=None, local=False)
-        except pin.error.InformError: # Memory allocation error 
+        except (pin.error.InformError, OSError): # Memory allocation error , access violation writing on memory
             print(f'\033[31m\nFailed transfer entropy due to memory allocation failure (best_time_lag_samples = {best_time_lag_samples}), setting transfer entropy to zero\033[97m')
             pin_te = 0
         
@@ -1090,6 +1090,8 @@ class SystemAnalysis(SystemUtilities):
         # We assume that the data files are in the same folder as the metadata
         # Change full path roots to metadataroot folder
         metadataroot_folder_path, filename_no_extension = os.path.split(metadataroot)
+        if metadataroot_folder_path == '.':
+            metadataroot_folder_path = os.path.join(self.path, self.output_folder)
         updated_fílepaths_list = []
         for this_file_name in full_data_filepaths_list:
             dataroot_folder_path, data_filename = os.path.split(this_file_name)
