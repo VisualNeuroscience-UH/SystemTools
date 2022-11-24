@@ -1,0 +1,5 @@
+Dimension-1 Parameter,Dimension-1 Value,Dimension-2 Parameter,Dimension-2 Value,TransferEntropy_NG3_L4_SS_L4_TransfEntropy,TransferEntropy_NG3_L4_SS_L4_Latency
+C,30.0,C_1,30.0,,0.2941
+C,40.0,C_1,30.0,0.0644452264485,0.4888
+C,30.0,C_1,40.0,,0.5417
+C,40.0,C_1,40.0,,0.250333333333
