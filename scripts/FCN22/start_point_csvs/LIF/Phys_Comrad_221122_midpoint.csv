@@ -1,0 +1,94 @@
+Variable,Key,Value,Comment
+### REDUCED PHYSIOLOGY FILE -- SOME PARAMETERS IN ANATOMY FILE CANNOT BE SET ###,,,
+### MODELING SETUP ###,,,
+model_variation,,1, # leave this to 1
+neuron_model,,'LIF',# Generic--used for the L4_SS cell type
+excitation_model,,'E_NDF', # Excitatory with no synaptic driving force--only conn weight
+inhibition_model,,'I_NDF',
+ci_neuron_model,,'LIF', # LIF or ADEX  
+ci_excitation_model,,'E_NDF',
+ci_inhibition_model,,'I_NDF',
+,,,
+### CURRENT INJECTION ###,,,
+base_ci_path,,r'/opt3/Laskenta/Models/Deneve/in', # *** CHANGE *** path to in-folder. The r'' is needed to correctly escape backward slashes
+ci_filename,,'noise_210406_SingleSpike_ci.mat', 
+ci_multiplier,,100, # 1
+,,,
+### DEFAULT CONN WEIGHTS  ###,,,
+,,,
+default_conn_weight,,0.5 * nS, # Connection weights will be later loaded from file
+cw,cw_in_CI,default_conn_weight, # Connection weights will be later loaded from file
+,cw_CI_SS,default_conn_weight,
+,cw_CI_CI,default_conn_weight,
+,cw_CI_BC,default_conn_weight,
+,,,
+### POSTSYNAPTIC GLOBAL SYNAPTIC CONSTANTS ###,,,
+Ee_GLOBAL,,0 * mV,# Excitatory (AMPA) equilibrium potential
+Ei_GLOBAL,,-75 * mV,# Inhibitory (GABA-A) equilibrium potential
+tau_e_GLOBAL,,5 * ms,#AMPA
+tau_i_GLOBAL,,5 * ms,#GABA-A
+,,,
+### SYNAPTIC DELAYS ###,,,
+delay,delay_in_CI,3.0 * ms, # This will be replaced by current injection with zero delay
+,,,
+,delay_CI_SS,3.0 * ms,
+,delay_CI_CI,3.0 * ms, 
+,,,
+### NEURON GROUP PARAMETERS ###,,,
+VPM,,,
+,,,
+L4_CI_BC,C,125 * pF,# Membrane capacitance 125
+,gL,4 * nS,# Membrane leak conductance 4
+,taum_soma,C/gL,# Membrane time constant
+,EL,-73 * mV,# Membrane equilibrium potential -73
+,V_init,-73 * mV,# V init
+,Vcut,20 * mV,# Max membrane voltage
+,VT,-55 * mV,# Action potential threshold -55
+,DeltaT,2 * mV,# Voltage sensitivity
+,V_res,-73 * mV,# V reset -73
+,Ee,Ee_GLOBAL,# Excitatory equilibrium potential
+,Ei,Ei_GLOBAL,# Inhibitory equilibrium potential
+,tau_e,tau_e_GLOBAL,# Excitatory time constant (AMPA) tau_e_GLOBAL
+,tau_i,tau_i_GLOBAL,# Inhibitory time constant (GABA-A) tau_i_GLOBAL
+,refractory_period,3 * ms,
+,a,4. * nsiemens,
+,b,35.8 * pamp,
+,tau_w,144 * msecond,
+,,,
+L4_CI_SS,C,125 * pF, 
+,gL,4 * nS,
+,taum_soma,C/gL,
+,EL,-73 * mV, #-73
+,V_init,-73 * mV,
+,Vcut,20 * mV,
+,VT,-55 * mV, #-55
+,DeltaT,2 * mV,
+,V_res,-73 * mV, #-73
+,Ee,Ee_GLOBAL,
+,Ei,Ei_GLOBAL,
+,tau_e,tau_e_GLOBAL,
+,tau_i,tau_i_GLOBAL,
+,cibasepath,base_ci_path,
+,cifilename,ci_filename,
+,cimultiplier,ci_multiplier,
+,refractory_period,3 * ms,
+,a,4. * nsiemens,
+,b,35.8 * pamp,
+,tau_w,144 * msecond,
+,,,
+L4_SS,C,125 * pF,
+,gL,4 * nS,
+,taum_soma,C/gL,
+,EL,-73 * mV,
+,V_init,-73 * mV,
+,Vcut,20 * mV,
+,VT,-55 * mV,
+,DeltaT,2 * mV,
+,V_res,-70 * mV,
+,Ee,Ee_GLOBAL,
+,Ei,Ei_GLOBAL,
+,tau_e,tau_e_GLOBAL,
+,tau_i,tau_i_GLOBAL,
+,refractory_period,3 * ms,
+,,,
+

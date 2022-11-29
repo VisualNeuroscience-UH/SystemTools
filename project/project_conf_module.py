@@ -55,7 +55,7 @@ path = Path.joinpath(Path(root_path), Path(project), experiment)
 """
 Input context
 """
-input_folder = "../in"
+input_folder = "../in_reduced"
 # matlab_workspace_file = "workspace_220104_fast.mat"
 matlab_workspace_file = "workspace_deneve_SingleSpike.mat"
 # conn_skeleton_file_in = "skeleton_connections_20220210_2242135.gz"
@@ -67,7 +67,7 @@ input_filename = "noise_210406_SingleSpike.mat"  # "noise_210406_SingleSpike.mat
 """
 Data context for single files and arrays. These midpoint and parameter strings are used only in this module.
 """
-midpoint = "HiFi"  # HiFi, Comrad, Bacon
+midpoint = "Comrad"  # HiFi, Comrad, Bacon
 parameter = "midpoint"
 
 output_folder = f"{midpoint}_{parameter}"
@@ -157,7 +157,7 @@ if __name__ == "__main__":
     Condition 'ALL' randomizes connections from input to E--for those connections set randomize=True
     For iterations use the loop
     """
-    # # PM.ct.deneve_create_current_injection(randomize=False)
+    PM.ct.deneve_create_current_injection(randomize=False)
     # for idx in range(1,101):
     #     PM.context.input_filename = Path(f'freq_{idx:02}.mat')
     #     PM.ct.deneve_create_current_injection(randomize=False)
