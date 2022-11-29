@@ -1,8 +1,9 @@
-# For running simulations you need CxSystem2 and for analysing and
-# visualizing the results and scripting long simulations you need SystemTools.
-# Creating FCN22 environment and downloading and installation of the 
-# necessary git repositories, run the following commands at the folder 
-# where you want to install the CxSystem2 and SystemTools git repos:
+# Commands to build virtual environment and download repositories for 
+# Tomas Garnier Artinano, Vafa Andalibi, Iiris Atula, Matteo Maestri & Simo Vanni. 
+# Biophysical parameters control signal transfer in spiking network 
+# Fronties in Computational Neuroscience (under review)
+
+# Creating FCN22 environment with conda package manager.
 
 conda create -y --name FCN22 python=3.10
 conda install -y --name FCN22 -c conda-forge brian2
@@ -16,10 +17,14 @@ conda activate FCN22
 
 pip install pyinform
 
-git clone https://github.com/VisualNeuroscience-UH/CxSystem2.git
-#cd CxSystem2
-pip install -U -e CxSystem2/
-# confirm installation command cxsystem2 should give usage
+# For running simulations you need CxSystem2 and for analysing and
+# visualizing the results and scripting long simulations you need SystemTools.
 
-#cd .. # back to git repos root
+git clone https://github.com/VisualNeuroscience-UH/CxSystem2.git
+pip install -U -e CxSystem2/
+# Confirm installation: command cxsystem2 at terminal should give usage.
+# Installation can be tested by command pytest in the CxSystem2 folder
+
 git clone https://github.com/VisualNeuroscience-UH/SystemTools.git
+# Installation can be tested by command pytest in the SystemTools folder
+
