@@ -47,7 +47,7 @@ class ConnectionTranslator:
         plt.hist(data, bins=bins)
         fig.suptitle(f"{figure_title}", fontsize=12)
 
-    def deneve_replace_conn(
+    def replace_conn(
         self,
         show_histograms=False,
         constant_scaling=False,
@@ -82,7 +82,11 @@ class ConnectionTranslator:
         mat_teach_idx = 28
         conn_final_dict = conn_skeleton_dict
 
-        # We need to turn Deneve's negative inhibitory connections to positive for CxSystem. These connections are fed to gi which has no driving force, because they are I_NDF type. There the conductance itself is negative, which is necessary if we want inhibition without driving force. The DecsI has both negative and positive connection strengths (optimized for decoding in Deneve's code).
+        # We need to turn negative inhibitory connections in matlab to positive for CxSystem.
+        # These connections are fed to gi which has no driving force, because they are I_NDF type.
+        # There the conductance itself is negative, which is necessary if we want inhibition without
+        # driving force. The DecsI has both negative and positive connection strengths
+        # (optimized for decoding in the orginal code).
         inh_keys = ["CsIE", "CsII", "DecsI"]
 
         for this_conn in match_conn_names.keys():
@@ -90,9 +94,7 @@ class ConnectionTranslator:
             # multiplied by n synapses/connection)
             data_cx = conn_skeleton_dict[this_conn]["data"]
             # Get mat_data connection strengths. Transpose because unintuitively (post,pre), except for FsE
-            data_mat = mat_data_dict[match_conn_names[this_conn]][
-                mat_teach_idx, :, :
-            ].T
+            data_mat = mat_data_dict[match_conn_names[this_conn]][mat_teach_idx, :, :].T
             # FsE is the only (pre,post) in matlab code (SIC!)
             if match_conn_names[this_conn] == "FsE":
                 data_mat = data_mat.T
@@ -112,7 +114,7 @@ class ConnectionTranslator:
                     data_mat, constant_value=constant_value
                 )
 
-            # Turn Deneve's negative inhibitory connections to positive for CxSystem
+            # Turn negative inhibitory connections in matlab to positive for CxSystem
             if match_conn_names[this_conn] in inh_keys:
                 data_out = data_out * -1
 
@@ -141,9 +143,7 @@ class ConnectionTranslator:
                 plt.show()
 
             # return scaled values
-            conn_final_dict[this_conn]["data"] = self.data_io.csr_matrix(
-                data_out
-            )
+            conn_final_dict[this_conn]["data"] = self.data_io.csr_matrix(data_out)
             conn_final_dict[this_conn]["n"] = 1
 
         savepath = Path.joinpath(self.context.input_folder, self.context.conn_file_out)
@@ -212,8 +212,8 @@ class ConnectionTranslator:
 
         return data_out
 
-    def deneve_create_current_injection(self, randomize=False):
-        # Multiply time x Nx matrix of Input with Nx x Nunits matrix of Deneve's FE mapping
+    def create_current_injection(self, randomize=False):
+        # Multiply time x Nx matrix of Input with Nx x Nunits matrix of original FE mapping
         # (input to excitatory neuron group mapping). Ref Brendel_2020_PLoSComputNeurosci
 
         # Get FE -- from input forward to e group connection matrix
@@ -259,7 +259,7 @@ class ConnectionTranslator:
         }
         self.data_io.savemat(current_injection_filename_full, mat_out_dict)
 
-    def deneve_create_control_conn(self, conn="ALL"):
+    def create_control_conn(self, conn="ALL"):
         # Randomize learned connectivity for control conditions.
         # 'EI' all mutual NG1 and NG2 connections
         # 'D' from EI to output
@@ -274,7 +274,7 @@ class ConnectionTranslator:
         else:
             raise TypeError("Unknown connections keyword, aborting...")
 
-        # Update self.context.conn_file_out. It will be used inside deneve_replace_conn.
+        # Update self.context.conn_file_out. It will be used inside replace_conn.
 
         filename = self.context.conn_file_out.stem
         file_extension = self.context.conn_file_out.suffix
@@ -283,7 +283,7 @@ class ConnectionTranslator:
             filename + "_permuted_" + conn + file_extension
         )
 
-        self.deneve_replace_conn(
+        self.replace_conn(
             show_histograms=False,
             constant_scaling=True,
             constant_value=1e-9,

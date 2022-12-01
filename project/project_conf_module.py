@@ -44,7 +44,6 @@ project = "Deneve"  # VenDor Deneve
 Current experiment
 """
 experiment = "Single_narrow_iteration_R1"  # 'Canonical_folder',sandbox, Single_narrow_iterations, classification_1D exp_iter10 Single_narrow_iterations310
-# experiment = "Canonical_folder"  # 'Canonical_folder',sandbox, Single_narrow_iterations, classification_1D exp_iter10 Single_narrow_iterations310
 
 """
 ### Housekeeping ###. Do not comment out.
@@ -57,7 +56,7 @@ Input context
 """
 input_folder = "../in_reduced"
 # matlab_workspace_file = "workspace_220104_fast.mat"
-matlab_workspace_file = "workspace_deneve_SingleSpike.mat"
+matlab_workspace_file = "matlab_workspace_SingleSpike.mat"
 # conn_skeleton_file_in = "skeleton_connections_20220210_2242135.gz"
 conn_skeleton_file_in = "Replica_skeleton_connections_20210211_1453238_L4_SS.gz"
 # conn_file_out = "connections_learned_6by6_ci.gz"
@@ -139,10 +138,10 @@ if __name__ == "__main__":
     #################################
 
     """
-    Transforms Deneve's simulation connections from .mat file to CxSystem .gz format.
+    Transforms original simulation connections from .mat file to CxSystem .gz format.
     Creates conn_file_out to input folder
     """
-    # PM.ct.deneve_replace_conn(show_histograms=False, constant_scaling=True, constant_value=1e-9)
+    # PM.ct.replace_conn(show_histograms=False, constant_scaling=True, constant_value=1e-9)
 
     """
     Randomize learned connectivity for control conditions. Optional conditions 
@@ -150,17 +149,17 @@ if __name__ == "__main__":
     'D' from EI to output
     'ALL' all of the above
     """
-    # PM.deneve_create_control_conn(conn='D')
+    # PM.create_control_conn(conn='D')
 
     """
     Creates file named input_filename but with _ci.mat suffix to experiment folder
     Condition 'ALL' randomizes connections from input to E--for those connections set randomize=True
     For iterations use the loop
     """
-    PM.ct.deneve_create_current_injection(randomize=False)
+    PM.ct.create_current_injection(randomize=False)
     # for idx in range(1,101):
     #     PM.context.input_filename = Path(f'freq_{idx:02}.mat')
-    #     PM.ct.deneve_create_current_injection(randomize=False)
+    #     PM.ct.create_current_injection(randomize=False)
 
     """
     Show connections
@@ -178,7 +177,7 @@ if __name__ == "__main__":
     """
     Compile cluster run metadata parts and transfer data to project folder
     """
-    # metapath=r'/opt3/Laskenta/Models/Deneve/HPC_narrow_test/cluster_run_20211007_1549467/cluster_metadata_20211007_1549467.pkl'
+    # metapath=[path to] cluster_metadata_[timestamp].pkl'
     # PM.cluster_metadata_compiler_and_data_transfer(metapath)
     # PM.multiple_cluster_metadata_compiler_and_data_transfer()
 
@@ -232,8 +231,8 @@ if __name__ == "__main__":
 
     """
     Show input and data. If  file_to_display = None, the function selects the most recent data file in output_folder.
+    file_to_display = "[full path to file ] [prefix]_results_[timestamp].gz"  
     """
-    # file_to_display = r"/opt3/Laskenta/Models/Deneve/adex_test/test0/test0_results_20221115_1813386.gz"  # None
     file_to_display = None
 
     # PM.viz.show_readout_on_input(results_filename=file_to_display, normalize=False, unit_idx_list=[0], savefigname='')

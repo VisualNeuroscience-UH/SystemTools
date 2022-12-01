@@ -204,17 +204,17 @@ class Viz(VizBase):
 
         return RGB_points
 
-    def figsave(self, figurename='', myformat='png', subfolderpath='', suffix=''):
-        
+    def figsave(self, figurename="", myformat="png", subfolderpath="", suffix=""):
+
         # Saves current figure to working dir
-        plt.rcParams['svg.fonttype'] = 'none' # Fonts as fonts and not as paths
-        plt.rcParams['ps.fonttype'] = 'type3' # Fonts as fonts and not as paths
+        plt.rcParams["svg.fonttype"] = "none"  # Fonts as fonts and not as paths
+        plt.rcParams["ps.fonttype"] = "type3"  # Fonts as fonts and not as paths
 
         # Confirm pathlib type
         figurename = Path(figurename)
         subfolderpath = Path(subfolderpath)
 
-        if myformat[0] == '.':
+        if myformat[0] == ".":
             myformat = myformat[1:]
 
         filename, file_extension = figurename.stem, figurename.suffix
@@ -222,10 +222,10 @@ class Viz(VizBase):
         filename = filename + suffix
 
         if not file_extension:
-            file_extension = '.' + myformat
+            file_extension = "." + myformat
 
         if not figurename:
-            figurename = 'MyFigure' + file_extension
+            figurename = "MyFigure" + file_extension
         else:
             figurename = filename + file_extension
 
@@ -234,11 +234,20 @@ class Viz(VizBase):
         full_subfolderpath = Path.joinpath(path, subfolderpath)
         if not Path.is_dir(full_subfolderpath):
             Path.mkdir(full_subfolderpath)
-        print(f'Saving figure to {figurename_fullpath}')
-        plt.savefig(figurename_fullpath, dpi=None, facecolor='w', edgecolor='w',
-            orientation='portrait', papertype=None, format=file_extension[1:],
-            transparent=False, bbox_inches='tight', pad_inches=0.1,
-            metadata=None)
+        print(f"Saving figure to {figurename_fullpath}")
+        plt.savefig(
+            figurename_fullpath,
+            dpi=None,
+            facecolor="w",
+            edgecolor="w",
+            orientation="portrait",
+            papertype=None,
+            format=file_extension[1:],
+            transparent=False,
+            bbox_inches="tight",
+            pad_inches=0.1,
+            metadata=None,
+        )
 
     # Array viz helper functions
     def _make_2D_surface(
@@ -805,31 +814,38 @@ class Viz(VizBase):
             self.figsave(figurename=savefigname)
 
     def _ascending_order_according_to_values(self, data_df, value_column_name, two_dim):
-        '''
+        """
         Internal function to sort dataframe according to values inside a string.
-        '''
+        """
 
         if not two_dim:
-            
+
             # Get columns whose names contain both "Dimension" and "Value"
-            value_column_df = data_df[[c for c in data_df.columns if "Value" in c and "Dimension" in c]]
+            value_column_df = data_df[
+                [c for c in data_df.columns if "Value" in c and "Dimension" in c]
+            ]
             value_column_name = value_column_df.columns[0]
-            
+
             # Check is the value columns contain string instance
             if value_column_df.dtypes[0] == object:
                 # If so, strip the string and convert to float
                 def strip_characters(input_string):
                     import re
+
                     numeric_string = re.sub("[^0-9]", "", input_string)
                     return numeric_string
 
                 value_column_df = value_column_df.applymap(strip_characters)
 
                 # Get the longest string
-                max_string_length = value_column_df.apply(lambda x: len(x.values[0])).max()
+                max_string_length = value_column_df.apply(
+                    lambda x: len(x.values[0])
+                ).max()
 
                 # Pad the strings with zeros to the same length
-                value_column_df = value_column_df.applymap(lambda x: x.zfill(max_string_length))
+                value_column_df = value_column_df.applymap(
+                    lambda x: x.zfill(max_string_length)
+                )
 
                 # Sort by numerical values inside strings
                 value_column_df = value_column_df.sort_values(by=value_column_name)
@@ -841,7 +857,7 @@ class Viz(VizBase):
                 data_df.reset_index(drop=True, inplace=True)
 
         return data_df
-    
+
     def show_analyzed_arrayrun(
         self,
         csv_filename=None,
@@ -1020,12 +1036,12 @@ class Viz(VizBase):
                             "\nINFO: 'accuracy' not found in value_column_name, cannot annotate_with_p, continuing..."
                         )
 
-            # Use this to manually order according to values inside strings. Use for arrays where string, such as file name, contain a running number   
+            # Use this to manually order according to values inside strings. Use for arrays where string, such as file name, contain a running number
             if 0:
                 data_df = self._ascending_order_according_to_values(
                     data_df, value_column_name, two_dim
                 )
-            
+
             if two_dim:
                 (
                     data_nd_array,
@@ -1522,7 +1538,7 @@ class Viz(VizBase):
         # if paths to data provided, take inner names from distinct list
         if param_plot_dict["inner_paths"] is True:
             inner_list = param_plot_dict["inner_path_names"]
-            
+
         mid_idx = list(param_plot_dict.values()).index("midpoints")
         par_idx = list(param_plot_dict.values()).index("parameters")
         ana_idx = list(param_plot_dict.values()).index("analyzes")
@@ -1674,7 +1690,13 @@ class Viz(VizBase):
                 optimal_description_name = param_plot_dict["optimal_description_name"]
 
                 # read optimal values to dataframe from path/optimal_values/optimal_unfit_description.csv
-                optimal_df = pd.read_csv(Path.joinpath(self.context.path, optimal_value_foldername, optimal_description_name))
+                optimal_df = pd.read_csv(
+                    Path.joinpath(
+                        self.context.path,
+                        optimal_value_foldername,
+                        optimal_description_name,
+                    )
+                )
                 # set the first column as index
                 optimal_df.set_index(optimal_df.columns[0], inplace=True)
 
@@ -1693,13 +1715,13 @@ class Viz(VizBase):
 
                 self.data_is_valid(inner_df_coll.values, accept_empty=False)
 
-                # Temporary fix for Deneveproject 220421 SV
+                # Temporary fix 220421 SV
                 if outer_name == "Coherence":
                     inner_df_coll = inner_df_coll / 34
                 if param_plot_dict["save_description"] is True:
-                    describe_df_list.append(inner_df_coll) # for saving
+                    describe_df_list.append(inner_df_coll)  # for saving
                     describe_df_columns_list.append(f"{outer_name}")
-                
+
                 # We use axes level plots instead of catplot which is figure level plot.
                 # This way we can control the plotting order and additional arguments
                 if param_plot_dict["inner_sub"] is False:
@@ -1884,28 +1906,31 @@ class Viz(VizBase):
 
                 if param_plot_dict["display_optimal_values"] is True:
                     # Get column name from coll_ana_df
-                    col_name = coll_ana_df.loc[outer_name, 'csv_col_name']
-                    matching_column =[c for c in optimal_df.columns if c.startswith(col_name) and c.endswith('_mean')]
-                    if len (matching_column) > 0:
-                        min_value = optimal_df.loc['min', matching_column[0]]
-                        max_value = optimal_df.loc['max', matching_column[0]]
+                    col_name = coll_ana_df.loc[outer_name, "csv_col_name"]
+                    matching_column = [
+                        c
+                        for c in optimal_df.columns
+                        if c.startswith(col_name) and c.endswith("_mean")
+                    ]
+                    if len(matching_column) > 0:
+                        min_value = optimal_df.loc["min", matching_column[0]]
+                        max_value = optimal_df.loc["max", matching_column[0]]
                         # draw a horizontal dashed line to axs[out_idx] at y=min_value and y=max_value
-                        axs[out_idx].axhline(y=min_value, color='black', linestyle='--')
-                        axs[out_idx].axhline(y=max_value, color='black', linestyle='--')
+                        axs[out_idx].axhline(y=min_value, color="black", linestyle="--")
+                        axs[out_idx].axhline(y=max_value, color="black", linestyle="--")
 
-                
-                # If statistics is tested, set statistics value and name to each axs subplot 
+                # If statistics is tested, set statistics value and name to each axs subplot
                 if param_plot_dict["inner_stat_test"] is True:
-                    ''' 
+                    """
                     Apply the statistical test to inner_df_coll
                     If len(inner_data_list) == 2, apply Wilcoxon signed-rank test.
                     Else if len(inner_data_list) > 2, apply Friedman test.
                     Set stat_name to the test name.
-                    '''
+                    """
                     if len(inner_data_list) == 2:
                         stat_test_name = "Wilcoxon signed-rank test"
                         statistics, stat_p_value = self.ana.stat_tests.wilcoxon_test(
-                            inner_df_coll.values[:,0], inner_df_coll.values[:,1]
+                            inner_df_coll.values[:, 0], inner_df_coll.values[:, 1]
                         )
                     elif len(inner_data_list) > 2:
                         stat_test_name = "Friedman test"
@@ -1913,35 +1938,50 @@ class Viz(VizBase):
                             inner_df_coll.values
                         )
                     else:
-                        raise ValueError("len(inner_data_list) must be 2 or more for stat_test, aborting...")
+                        raise ValueError(
+                            "len(inner_data_list) must be 2 or more for stat_test, aborting..."
+                        )
 
-                    stat_corrected_p_value = stat_p_value * len(data_list) # Bonferroni correction
+                    stat_corrected_p_value = stat_p_value * len(
+                        data_list
+                    )  # Bonferroni correction
 
-                    axs[out_idx].set_title(f"{outer_name}\n{stat_test_name} =\n{stat_corrected_p_value:.3f}\nN = {inner_df_coll.shape[0]}")
+                    axs[out_idx].set_title(
+                        f"{outer_name}\n{stat_test_name} =\n{stat_corrected_p_value:.3f}\nN = {inner_df_coll.shape[0]}"
+                    )
                 else:
                     axs[out_idx].set_title(outer_name)
-                
+
             if param_plot_dict["save_description"] is True:
-                describe_df_columns_list = [c.replace(' ','_') for c in describe_df_columns_list]
+                describe_df_columns_list = [
+                    c.replace(" ", "_") for c in describe_df_columns_list
+                ]
                 describe_df_all = pd.DataFrame()
                 for this_idx, this_column in enumerate(describe_df_columns_list):
                     # Append the describe_df_all data describe_df_list[this_idx]
                     this_describe_df = describe_df_list[this_idx]
                     # Prepend the column names with this_column
-                    this_describe_df.columns = [this_column + '_' + c for c in this_describe_df.columns]
+                    this_describe_df.columns = [
+                        this_column + "_" + c for c in this_describe_df.columns
+                    ]
 
-                    describe_df_all = pd.concat([describe_df_all,this_describe_df],axis=1)
+                    describe_df_all = pd.concat(
+                        [describe_df_all, this_describe_df], axis=1
+                    )
 
-                filename_full = Path.joinpath(describe_folder_full, param_plot_dict['save_name'] + '_' + this_title + '.csv')                
+                filename_full = Path.joinpath(
+                    describe_folder_full,
+                    param_plot_dict["save_name"] + "_" + this_title + ".csv",
+                )
 
                 # Save the describe_df_all dataframe .to_csv(filename_full, index=False)
                 describe_df_all_df = describe_df_all.describe()
-                describe_df_all_df.insert(0, "description", describe_df_all.describe().index)
+                describe_df_all_df.insert(
+                    0, "description", describe_df_all.describe().index
+                )
                 describe_df_all_df.to_csv(filename_full, index=False)
                 describe_df_list = []
                 describe_df_columns_list = []
-
-
 
             if self.save_figure_with_arrayidentifier is not None:
 
@@ -1957,7 +1997,7 @@ class Viz(VizBase):
                     myformat="png",
                     subfolderpath=self.save_figure_to_folder,
                 )
-            
+
     def _get_df_for_xy_plot(self, mid, para, ana, ave, comp, comp_type, coll_ana_df):
 
         # Build path
@@ -1979,10 +2019,15 @@ class Viz(VizBase):
                         col_stem = coll_ana_df.loc[this_ana]["csv_col_name"]
                     except KeyError:
                         raise KeyError(f"to_mpa_dict missing key {this_ana}")
-                    
-                    if col_stem[:col_stem.find('_')].lower() in ['meanfr', 'edist'] and col_suffix == '_accuracy':
-                        print(f"{col_suffix} does not exist for 'meanfr' or 'edist', replacing with '_mean' ")
-                        col_suffix = '_mean'
+
+                    if (
+                        col_stem[: col_stem.find("_")].lower() in ["meanfr", "edist"]
+                        and col_suffix == "_accuracy"
+                    ):
+                        print(
+                            f"{col_suffix} does not exist for 'meanfr' or 'edist', replacing with '_mean' "
+                        )
+                        col_suffix = "_mean"
                     col = f"{col_stem}{col_suffix}"
                     path_col_list.append([_path, col, col_suffix])
                     col_dict[this_ana] = col
@@ -2034,7 +2079,9 @@ class Viz(VizBase):
 
         return data_df_compiled[data_columns_list]
 
-    def _get_df_for_binned_lineplot(self, mid, para, ana, ave, comp, comp_type, coll_ana_df, x_data = None):
+    def _get_df_for_binned_lineplot(
+        self, mid, para, ana, ave, comp, comp_type, coll_ana_df, x_data=None
+    ):
 
         # Build path
         col_suffix = ""
@@ -2055,17 +2102,22 @@ class Viz(VizBase):
                         col_stem = coll_ana_df.loc[this_ana]["csv_col_name"]
                     except KeyError:
                         raise KeyError(f"to_mpa_dict missing key {this_ana}")
-                    
-                    if col_stem[:col_stem.find('_')].lower() in ['meanfr', 'edist'] and col_suffix == '_accuracy':
-                        print(f"{col_suffix} does not exist for 'meanfr' or 'edist', replacing with '_mean' ")
-                        col_suffix = '_mean'
+
+                    if (
+                        col_stem[: col_stem.find("_")].lower() in ["meanfr", "edist"]
+                        and col_suffix == "_accuracy"
+                    ):
+                        print(
+                            f"{col_suffix} does not exist for 'meanfr' or 'edist', replacing with '_mean' "
+                        )
+                        col_suffix = "_mean"
                     col = f"{col_stem}{col_suffix}"
                     path_col_list.append([_path, col, col_suffix, this_mid, this_para])
                     col_dict[this_ana] = col
 
         # Get df. This is the same w/ and wo/ ave
         # get columns
-        cols = ['Analysis', 'Values', 'Midpoint', 'Parameter']
+        cols = ["Analysis", "Values", "Midpoint", "Parameter"]
 
         df_coll = pd.DataFrame(columns=cols)
         for [this_path, this_col, col_suffix, this_mid, this_para] in path_col_list:
@@ -2080,27 +2132,32 @@ class Viz(VizBase):
             )
 
             data_df_tmp = pd.DataFrame(columns=cols)
-            data_df_tmp['Values'] = data_df_compiled[this_col]
-            data_df_tmp['Analysis'] = this_col
-            data_df_tmp['Midpoint'] = this_mid
-            data_df_tmp['Parameter'] = this_para
+            data_df_tmp["Values"] = data_df_compiled[this_col]
+            data_df_tmp["Analysis"] = this_col
+            data_df_tmp["Midpoint"] = this_mid
+            data_df_tmp["Parameter"] = this_para
             if x_data is not None:
-                data_df_tmp2 = x_data[(x_data['Midpoint'] == this_mid) & (x_data['Parameter'] == this_para)]
+                data_df_tmp2 = x_data[
+                    (x_data["Midpoint"] == this_mid)
+                    & (x_data["Parameter"] == this_para)
+                ]
                 data_df_tmp2.reset_index(inplace=True)
-                x_cols_names = list(set(data_df_tmp2['Analysis'].values))
-                if len(set(x_cols_names)) > 1: # If more the one type of x
-                    raise NotImplementedError('More than one x analysis not yet implemented for kind binned_lineplot, aborting...')
+                x_cols_names = list(set(data_df_tmp2["Analysis"].values))
+                if len(set(x_cols_names)) > 1:  # If more the one type of x
+                    raise NotImplementedError(
+                        "More than one x analysis not yet implemented for kind binned_lineplot, aborting..."
+                    )
                 else:
-                    data_df_tmp[x_cols_names[0]] = data_df_tmp2['Values_binned']
+                    data_df_tmp[x_cols_names[0]] = data_df_tmp2["Values_binned"]
             df_coll = pd.concat([df_coll, data_df_tmp], axis=0, ignore_index=True)
 
         return df_coll, col_dict
 
     def rename_duplicate_columns(self, x_df, y_df, data_df_compiled):
-        '''
+        """
         Check if x_df and y_df have any same column names
         If yes, rename them to avoid duplicate column names
-        '''
+        """
         cols_x = list(x_df.columns)
         cols_y = list(y_df.columns)
         cols_duplicate = list(set(cols_x).intersection(cols_y))
@@ -2108,7 +2165,7 @@ class Viz(VizBase):
             for col in cols_duplicate:
                 x_df.rename(columns={col: f"{col}_x"}, inplace=True)
                 y_df.rename(columns={col: f"{col}_y"}, inplace=True)
-        
+
         data_df_compiled = pd.concat([x_df, y_df], axis=1)
 
         return x_df, y_df, data_df_compiled
@@ -2131,13 +2188,15 @@ class Viz(VizBase):
         kind = xy_plot_dict["kind"]
 
         # Wide format df, only single mid and param, allows averaging of neuron groups:s (e.g. firing rates)
-        if kind == 'regplot':
+        if kind == "regplot":
             assert np.all(
-                [len(xy_plot_dict["x_mid"])==1,
-                len(xy_plot_dict["x_para"])==1,
-                len(xy_plot_dict["y_mid"])==1,
-                len(xy_plot_dict["y_para"])==1]
-            ), 'regplot accepts only single midpoints and parameters at a time, aborting...'
+                [
+                    len(xy_plot_dict["x_mid"]) == 1,
+                    len(xy_plot_dict["x_para"]) == 1,
+                    len(xy_plot_dict["y_mid"]) == 1,
+                    len(xy_plot_dict["y_para"]) == 1,
+                ]
+            ), "regplot accepts only single midpoints and parameters at a time, aborting..."
 
             x_df = self._get_df_for_xy_plot(
                 xy_plot_dict["x_mid"],
@@ -2160,10 +2219,12 @@ class Viz(VizBase):
             )
 
             data_df_compiled = pd.concat([x_df, y_df], axis=1)  #
-            x_df, y_df, data_df_compiled = self.rename_duplicate_columns(x_df, y_df, data_df_compiled)
+            x_df, y_df, data_df_compiled = self.rename_duplicate_columns(
+                x_df, y_df, data_df_compiled
+            )
 
         # Long format df, accepts multiple mids and params, no averaging
-        elif kind == 'binned_lineplot':
+        elif kind == "binned_lineplot":
             x_df, x_cols = self._get_df_for_binned_lineplot(
                 xy_plot_dict["x_mid"],
                 xy_plot_dict["x_para"],
@@ -2175,13 +2236,13 @@ class Viz(VizBase):
             )
 
             n_bins = xy_plot_dict["n_bins"]
-            x_max = x_df['Values'].max()
-            x_min = x_df['Values'].min()
+            x_max = x_df["Values"].max()
+            x_min = x_df["Values"].min()
             bins = np.floor(np.linspace(x_min, x_max, n_bins))
-            x_values_binned = np.digitize(x_df['Values'].values, bins)
-            x_df['Values_binned'] = x_values_binned
+            x_values_binned = np.digitize(x_df["Values"].values, bins)
+            x_df["Values_binned"] = x_values_binned
             x_bin_idx = np.arange(len(bins)) + 1
-            x_df['Values_binned'] = x_df['Values_binned'].replace(x_bin_idx, bins)
+            x_df["Values_binned"] = x_df["Values_binned"].replace(x_bin_idx, bins)
 
             y_df, y_cols = self._get_df_for_binned_lineplot(
                 xy_plot_dict["y_mid"],
@@ -2191,7 +2252,7 @@ class Viz(VizBase):
                 xy_plot_dict["compiled_results"],
                 xy_plot_dict["compiled_type"],
                 coll_ana_df,
-                x_data = x_df
+                x_data=x_df,
             )
 
             data_df_compiled = y_df  #
@@ -2202,8 +2263,7 @@ class Viz(VizBase):
         xlog = xy_plot_dict["xlog"]
         ylog = xy_plot_dict["ylog"]
 
-
-        if kind == 'regplot':
+        if kind == "regplot":
             fig, axs = plt.subplots(
                 len(x_df.columns),
                 len(y_df.columns),
@@ -2214,7 +2274,7 @@ class Viz(VizBase):
             scatter_kws = {"linewidth": 0, "s": 10, "color": "black"}  # s is size
 
             for row_idx, this_x_column in enumerate(x_df.columns):
-                for col_idx, this_y_column in enumerate(y_df.columns):                    
+                for col_idx, this_y_column in enumerate(y_df.columns):
                     sns.regplot(
                         x=this_x_column,
                         y=this_y_column,
@@ -2225,11 +2285,14 @@ class Viz(VizBase):
                         order=xy_plot_dict["order"],
                     )
 
-                    '''
+                    """
                     Calculate goodness-of-fit, correlation coefficient, and p-value for the correlation coefficient of the x and y data. 
-                    '''
+                    """
                     if xy_plot_dict["draw_regression"] is True:
-                        r, p = self.ana.stat_tests.pearson_correlation(data_df_compiled[this_x_column], data_df_compiled[this_y_column])
+                        r, p = self.ana.stat_tests.pearson_correlation(
+                            data_df_compiled[this_x_column],
+                            data_df_compiled[this_y_column],
+                        )
                         # Add r, p as text to regplot
                         axs[row_idx, col_idx].text(
                             0.05,
@@ -2237,8 +2300,8 @@ class Viz(VizBase):
                             f"r={r:.2f}, p={p:.3f}",
                             transform=axs[row_idx, col_idx].transAxes,
                             fontsize=10,
-                            verticalalignment='top',
-                            bbox=dict(facecolor='white', alpha=0.5),
+                            verticalalignment="top",
+                            bbox=dict(facecolor="white", alpha=0.5),
                         )
 
                     if xy_plot_dict["draw_diagonal"] == True:
@@ -2250,32 +2313,37 @@ class Viz(VizBase):
                             "k--",
                         )
 
-        elif kind == 'binned_lineplot':
+        elif kind == "binned_lineplot":
             fig, axs = plt.subplots(
                 len(xy_plot_dict["x_ana"]),
                 len(xy_plot_dict["y_ana"]),
                 squeeze=False,
                 sharey=xy_plot_dict["sharey"],
             )
-            
+
             for row_idx, this_x_name in enumerate(x_cols.values()):
                 for col_idx, this_y_name in enumerate(y_cols.values()):
 
-                    this_data = data_df_compiled[data_df_compiled['Analysis'] == this_y_name]
+                    this_data = data_df_compiled[
+                        data_df_compiled["Analysis"] == this_y_name
+                    ]
                     sns.lineplot(
                         x=this_x_name,
-                        y='Values',
+                        y="Values",
                         data=this_data,
                         ax=axs[row_idx, col_idx],
                         hue=xy_plot_dict["hue"],
                         ci=95,
-                        n_boot=1000
+                        n_boot=1000,
                     )
-        
-                    this_title = coll_ana_df.index[coll_ana_df["csv_col_name"] == this_y_name.replace(f"_{xy_plot_dict['compiled_type']}","") ].values
+
+                    this_title = coll_ana_df.index[
+                        coll_ana_df["csv_col_name"]
+                        == this_y_name.replace(f"_{xy_plot_dict['compiled_type']}", "")
+                    ].values
                     if row_idx == 0:
                         axs[row_idx, col_idx].set_title(this_title[0])
-                
+
         if xlog is True:
             axs[row_idx, col_idx].set_xscale("log")
         if ylog is True:
@@ -2284,7 +2352,9 @@ class Viz(VizBase):
         if self.save_figure_with_arrayidentifier is not None:
 
             # Assuming the last word in this_NG_name contains the necessary id
-            id = "_".join(y_df.columns)[:2] + "_vs_" + "_".join(x_df.columns)[:2] + "_XY"
+            id = (
+                "_".join(y_df.columns)[:2] + "_vs_" + "_".join(x_df.columns)[:2] + "_XY"
+            )
 
             self.figsave(
                 figurename=f"{self.save_figure_with_arrayidentifier}_{id}",
@@ -2340,10 +2410,12 @@ class Viz(VizBase):
                 path=this_path, data_type="IxO_analysis", exclude=None
             )
 
-        assert len(IxO_file_list) == len(metadata_file_list), 'Unequal N metadata (iter runs) and IxO files (iter analysis), check files, aborting...'
-        
-        IxO_file_list =  sorted(IxO_file_list)
-        metadata_file_list =  sorted(metadata_file_list)
+        assert len(IxO_file_list) == len(
+            metadata_file_list
+        ), "Unequal N metadata (iter runs) and IxO files (iter analysis), check files, aborting..."
+
+        IxO_file_list = sorted(IxO_file_list)
+        metadata_file_list = sorted(metadata_file_list)
         # Load IxO data into one array.
         IxO_mtx_0 = self.data_io.get_data(IxO_file_list[0])
         data_dims = IxO_mtx_0["data_dims"]
@@ -2361,7 +2433,6 @@ class Viz(VizBase):
             best_is,
         ) in enumerate(zip(ana_list, ana_suffix_list, best_is_list)):
 
-    
             full_data_mtx = full_data_mtx_nan.copy()
 
             for this_idx, this_file in enumerate(IxO_file_list):
@@ -2387,9 +2458,9 @@ class Viz(VizBase):
             # Get iterations of parameter values in one array
             # Get metadata df to find parameter match in full data mtx. This is our index to full data mtx 3rd dim
             data_df0 = self.data_io.get_data(metadata_file_list[0])
-            mask = (
-                data_df0["Dimension-1 Value"] == par_value_string_list[0]
-            ) & (data_df0["Dimension-2 Value"] == par_value_string_list[1])
+            mask = (data_df0["Dimension-1 Value"] == par_value_string_list[0]) & (
+                data_df0["Dimension-2 Value"] == par_value_string_list[1]
+            )
             idx = data_df0[mask].index[0]
 
             # Select ana_list parameter I_x E_y values x iterations x 3 x 3
@@ -2418,7 +2489,7 @@ class Viz(VizBase):
                 annot=True,
                 fmt=".2g",
                 vmin=0,
-                vmax=this_ixo_bool.shape[2], # N iterations
+                vmax=this_ixo_bool.shape[2],  # N iterations
                 linewidths=0.5,
                 linecolor="black",
             )
@@ -2440,11 +2511,11 @@ class Viz(VizBase):
                 )
 
     def show_optimal_value_analysis(self, data_for_viz, savefigname=None):
-        '''
+        """
         Visualize the optimal value analysis.
-        '''
+        """
         data, analyze, figure_type = data_for_viz
-        if figure_type == 'full_mtx':
+        if figure_type == "full_mtx":
             # Plot the full matrix as seaborn heatmap
             plt.figure()
             ax = sns.heatmap(
@@ -2459,13 +2530,21 @@ class Viz(VizBase):
             ax.set_ylabel("Source")
 
             if savefigname:
-                self.figsave(figurename=savefigname, myformat='png', subfolderpath='Analysis_Figures')
-                self.figsave(figurename=savefigname, myformat='svg', subfolderpath='Analysis_Figures')
-        
+                self.figsave(
+                    figurename=savefigname,
+                    myformat="png",
+                    subfolderpath="Analysis_Figures",
+                )
+                self.figsave(
+                    figurename=savefigname,
+                    myformat="svg",
+                    subfolderpath="Analysis_Figures",
+                )
+
         elif figure_type == "value_vs_delay":
             delay_array_in_milliseconds, value_array, noise_array, delay_report = data
-            plt.plot(delay_array_in_milliseconds, value_array, label='Value')
-            plt.plot(delay_array_in_milliseconds, noise_array, label='Noise')
+            plt.plot(delay_array_in_milliseconds, value_array, label="Value")
+            plt.plot(delay_array_in_milliseconds, noise_array, label="Noise")
             plt.title(analyze, fontsize=12)
             plt.text(
                 0.9,
@@ -2476,23 +2555,37 @@ class Viz(VizBase):
                 fontsize=8,
                 transform=plt.gcf().transFigure,
             )
-        
+
             plt.xlabel("Delay (ms)")
             plt.ylabel("Value")
-            
+
             if savefigname:
-                self.figsave(figurename=savefigname, myformat='png', subfolderpath='Analysis_Figures')
-                self.figsave(figurename=savefigname, myformat='svg', subfolderpath='Analysis_Figures')
+                self.figsave(
+                    figurename=savefigname,
+                    myformat="png",
+                    subfolderpath="Analysis_Figures",
+                )
+                self.figsave(
+                    figurename=savefigname,
+                    myformat="svg",
+                    subfolderpath="Analysis_Figures",
+                )
 
     def show_iter_optimal_value_analysis(self, folderpath, savefigname=None):
-        '''
+        """
         After running optimal value analyzes for iterations, show the results.
-        '''
+        """
 
         # Get csv filenames from folderpath.
-        csv_file_list = self.data_io.listdir_loop(folderpath, data_type='.csv', exclude=None)
-        [optimal_full_path] = [f for f in csv_file_list if str(f.name).startswith('optimal_values_df')]
-        [nonoptimal_full_path] = [f for f in csv_file_list if str(f.name).startswith('nonoptimal_values_df')]
+        csv_file_list = self.data_io.listdir_loop(
+            folderpath, data_type=".csv", exclude=None
+        )
+        [optimal_full_path] = [
+            f for f in csv_file_list if str(f.name).startswith("optimal_values_df")
+        ]
+        [nonoptimal_full_path] = [
+            f for f in csv_file_list if str(f.name).startswith("nonoptimal_values_df")
+        ]
 
         # Load both csv files to optimal and nonoptimal df:s from the folderpath
         # Use pandas read from csv function
@@ -2505,7 +2598,6 @@ class Viz(VizBase):
             analyzes_col_name_list.append(
                 self.coll_mpa_dict["coll_ana_df"].loc[this_ana]["csv_col_name"]
             )
- 
 
         # Create figure with one row of subplots. The N subplots equals optimal_df columns with suffix "_mean"
         fig, axs = plt.subplots(1, len(analyzes_col_name_list), sharey=False)
@@ -2523,7 +2615,6 @@ class Viz(VizBase):
             # Get the delay_in_ms for this analysis
             delay_in_ms = optimal_df["delay_in_ms"].values
 
-            
             # Make a new long-format dataframe for plotting.
             # The columns are: delay_in_ms, optimal_value, nonoptimal_value, optimal_value_std, nonoptimal_value_std
             df_for_plotting = pd.DataFrame(
@@ -2557,13 +2648,35 @@ class Viz(VizBase):
             )
 
             # Plot SD for optimal and nonoptimal
-            lower_bound_optimal = df_for_plotting["optimal_value"] - df_for_plotting["optimal_value_std"]
-            upper_bound_optimal = df_for_plotting["optimal_value"] + df_for_plotting["optimal_value_std"]
-            axs[this_col_idx].fill_between(df_for_plotting["delay_in_ms"], y1=lower_bound_optimal, y2=upper_bound_optimal, color="blue", alpha=.3)
+            lower_bound_optimal = (
+                df_for_plotting["optimal_value"] - df_for_plotting["optimal_value_std"]
+            )
+            upper_bound_optimal = (
+                df_for_plotting["optimal_value"] + df_for_plotting["optimal_value_std"]
+            )
+            axs[this_col_idx].fill_between(
+                df_for_plotting["delay_in_ms"],
+                y1=lower_bound_optimal,
+                y2=upper_bound_optimal,
+                color="blue",
+                alpha=0.3,
+            )
 
-            lower_bound_nonoptimal = df_for_plotting["nonoptimal_value"] - df_for_plotting["nonoptimal_value_std"]
-            upper_bound_nonoptimal = df_for_plotting["nonoptimal_value"] + df_for_plotting["nonoptimal_value_std"]
-            axs[this_col_idx].fill_between(df_for_plotting["delay_in_ms"], y1=lower_bound_nonoptimal, y2=upper_bound_nonoptimal, color="red", alpha=.3)
+            lower_bound_nonoptimal = (
+                df_for_plotting["nonoptimal_value"]
+                - df_for_plotting["nonoptimal_value_std"]
+            )
+            upper_bound_nonoptimal = (
+                df_for_plotting["nonoptimal_value"]
+                + df_for_plotting["nonoptimal_value_std"]
+            )
+            axs[this_col_idx].fill_between(
+                df_for_plotting["delay_in_ms"],
+                y1=lower_bound_nonoptimal,
+                y2=upper_bound_nonoptimal,
+                color="red",
+                alpha=0.3,
+            )
 
             axs[this_col_idx].set_title(analyzes_list[this_col_idx])
             axs[this_col_idx].set_xlabel("Delay (ms)")
@@ -2571,8 +2684,13 @@ class Viz(VizBase):
             axs[this_col_idx].legend()
 
         if savefigname:
-            self.figsave(figurename=savefigname, myformat='png', subfolderpath='Analysis_Figures')
-            self.figsave(figurename=savefigname, myformat='svg', subfolderpath='Analysis_Figures')
+            self.figsave(
+                figurename=savefigname, myformat="png", subfolderpath="Analysis_Figures"
+            )
+            self.figsave(
+                figurename=savefigname, myformat="svg", subfolderpath="Analysis_Figures"
+            )
+
 
 if __name__ == "__main__":
 

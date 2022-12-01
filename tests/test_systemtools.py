@@ -191,7 +191,7 @@ def test_ct_construction():
     assert isinstance(PM.ct.data_io, DataIO)
 
 
-def test_deneve_replace_conn():
+def test_replace_conn():
     orig_conn_file = "orig_connections_SingleSpike_ci.gz"
     orig_save_full = Path.joinpath(PM.context.input_folder, orig_conn_file)
     save_full = Path.joinpath(PM.context.input_folder, PM.context.conn_file_out)
@@ -199,7 +199,7 @@ def test_deneve_replace_conn():
     mtime = os.path.getmtime(save_full)
     conn = PM.data_io.get_data(save_full)
 
-    PM.ct.deneve_replace_conn()
+    PM.ct.replace_conn()
 
     mtime2 = os.path.getmtime(save_full)
     assert mtime != mtime2
@@ -226,14 +226,14 @@ def test_scale_values():
     assert np.ptp(scaled_data) == np.ptp(target_data)
 
 
-def test_deneve_create_current_injection_input_filename():
+def test_create_current_injection_input_filename():
     # Read existing Input
     input_filename = PM.context.input_filename
     assert input_filename is not None
     assert input_filename.suffix == ".mat"
 
 
-def test_deneve_create_current_injection():
+def test_create_current_injection():
     input_filename = PM.context.input_filename
 
     input_filename_full = Path.joinpath(PM.context.input_folder, input_filename)
@@ -247,7 +247,7 @@ def test_deneve_create_current_injection():
     # shutil.copy2(orig_current_injection_filename_full, current_injection_filename_full)
 
     ci_dict = PM.data_io.get_data(orig_current_injection_filename_full)
-    PM.ct.deneve_create_current_injection(randomize=False)
+    PM.ct.create_current_injection(randomize=False)
     ci_dict2 = PM.data_io.get_data(current_injection_filename_full)
     np.sum(
         np.abs(ci_dict["injected_current"]) - np.abs(ci_dict2["injected_current"])
@@ -1000,4 +1000,3 @@ if __name__ == "__main__":
     test__init_grcaus_regression_QA()
 
     plt.show()
-
