@@ -1,0 +1,10 @@
+jupyterlab
+matplotlib
+pandas
+scipy
+cxsystem2
+seaborn
+statsmodels
+pyinform
+scikit-learn
+colour
