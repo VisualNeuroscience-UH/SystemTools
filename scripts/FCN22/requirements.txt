@@ -7,4 +7,5 @@ seaborn
 statsmodels
 pyinform
 scikit-learn
-colour
+colour-science
+pyqt5
