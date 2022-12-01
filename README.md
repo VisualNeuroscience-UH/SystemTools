@@ -5,7 +5,7 @@ and visualization tasks.
 
 The main files are in the `project` directory:
 
-* `project/project_conf_module.py`: [?]
+* `project/project_conf_module.py`: provides the primary interface to work with SystemTools.
 * `project/project_manager_module.py` provides a facade design pattern for the rest of the code.
 
 ## Scripts 
@@ -14,7 +14,7 @@ The `scripts` folder contains research scripts and tools that are created using 
 
 ### FCN2
 
-This folder contains the notebook which includes the analysis used in the paper entitled [?].
+This folder contains the notebook which includes the analysis used in the paper entitled [TBD].
 
 #### Environment Setup
 
@@ -56,3 +56,4 @@ This folder contains the notebook which includes the analysis used in the paper 
         or http://127.0.0.1:8888/lab?token=e0537f8d814c3f274296b4c40d0357502796b86444234937
     ```
 * At this point, by clicking on one of the links in the output, you should have access to the notebook.
+
