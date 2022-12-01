@@ -9,11 +9,52 @@ import pdb
 import numpy as np
 import pandas as pd
 
+from cxsystem2.core.tools import change_parameter_value_in_file
+
 
 class ProjectUtilities:
     """
     Utilities for ProjectManager class. This class is not instantiated. It serves as a container for project independent helper functions.
     """
+
+    def update_workspace_inside_anat_csv(self, full_path_to_anat_csv):
+        """
+        Updates the path inside the anat.csv file inplace. This is useful when the the csv file is moved to another system.
+        """
+
+        full_path_to_anat_csv = Path(full_path_to_anat_csv)
+        new_workspace_path = full_path_to_anat_csv.parent
+        change_parameter_value_in_file(
+            full_path_to_anat_csv,
+            full_path_to_anat_csv,
+            "workspace_path",
+            new_workspace_path,
+        )
+
+    def update_parameter_inside_phys_csv(
+        self, full_path_to_phys_csv, variable_name, variable_value, key_name=None
+    ):
+        """
+        Updates the path inside the anat.csv file inplace.
+        This is useful when the the csv file is moved to another system.
+        """
+        
+        full_path_to_phys_csv = Path(full_path_to_phys_csv)
+        physio_config_df = pd.read_csv(full_path_to_phys_csv)
+
+        # Find row index for correct Variable
+        index = physio_config_df.index
+        condition = physio_config_df["Variable"] == variable_name
+        variable_index = index[condition].values
+
+        if key_name is None:
+            physio_config_df.loc[variable_index, "Value"] = variable_value
+        elif key_name is not None:
+            raise NotImplementedError(
+                "key_name is not implemented yet, see iterate.iterate_module.Iterator._phys_updater for an example"
+            )
+        print(physio_config_df)
+        physio_config_df.to_csv(full_path_to_phys_csv, index=False, header=True)
 
     def multiple_cluster_metadata_compiler_and_data_transfer(self):
         # This searches the cluster_metadata_XXX_.pkl files from the current path/cluster_run_XXX folders

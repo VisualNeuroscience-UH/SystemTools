@@ -10,7 +10,7 @@ ci_excitation_model,,'E_NDF',
 ci_inhibition_model,,'I_NDF',
 ,,,
 ### CURRENT INJECTION ###,,,
-base_ci_path,,r'/opt3/Laskenta/Models/FCN22/in', # *** CHANGE *** path to in-folder. The r'' is needed to correctly escape backward slashes
+base_ci_path,,/opt2/Git_Repos/SystemTools/scripts/FCN22/in, # *** CHANGE *** path to in-folder. The r'' is needed to correctly escape backward slashes
 ci_filename,,'noise_210406_SingleSpike_ci.mat', 
 ci_multiplier,,100, # 1
 ,,,
@@ -37,33 +37,33 @@ delay,delay_in_CI,3.0 * ms, # This will be replaced by current injection with ze
 ### NEURON GROUP PARAMETERS ###,,,
 VPM,,,
 ,,,
-L4_CI_BC,C,36 * pF,# Membrane capacitance 
-,gL,4 * nS,# Membrane leak conductance 
+L4_CI_BC,C,125 * pF,# Membrane capacitance 125
+,gL,4 * nS,# Membrane leak conductance 4
 ,taum_soma,C/gL,# Membrane time constant
-,EL,-72 * mV,# Membrane equilibrium potential 
-,V_init,-72.4 * mV,# V init
+,EL,-73 * mV,# Membrane equilibrium potential -73
+,V_init,-73 * mV,# V init
 ,Vcut,20 * mV,# Max membrane voltage
-,VT,-41 * mV,# Action potential threshold 
+,VT,-55 * mV,# Action potential threshold -55
 ,DeltaT,2 * mV,# Voltage sensitivity
-,V_res,-71.9 * mV,# V reset 
+,V_res,-73 * mV,# V reset -73
 ,Ee,Ee_GLOBAL,# Excitatory equilibrium potential
 ,Ei,Ei_GLOBAL,# Inhibitory equilibrium potential
 ,tau_e,tau_e_GLOBAL,# Excitatory time constant (AMPA) tau_e_GLOBAL
 ,tau_i,tau_i_GLOBAL,# Inhibitory time constant (GABA-A) tau_i_GLOBAL
 ,refractory_period,3 * ms,
 ,a,4. * nsiemens,
-,b,12. * pamp,
-,tau_w,25 * msecond,
+,b,35.8 * pamp,
+,tau_w,144 * msecond,
 ,,,
-L4_CI_SS,C,100 * pF, 
-,gL,3.9 * nS,
+L4_CI_SS,C,125 * pF, 
+,gL,4 * nS,
 ,taum_soma,C/gL,
-,EL,-72 * mV, #-73
-,V_init,-73.7 * mV,
+,EL,-73 * mV, #-73
+,V_init,-73 * mV,
 ,Vcut,20 * mV,
-,VT,-42.3 * mV, #-55
+,VT,-55 * mV, #-55
 ,DeltaT,2 * mV,
-,V_res,-67.7 * mV, #-73
+,V_res,-73 * mV, #-73
 ,Ee,Ee_GLOBAL,
 ,Ei,Ei_GLOBAL,
 ,tau_e,tau_e_GLOBAL,
@@ -73,8 +73,8 @@ L4_CI_SS,C,100 * pF,
 ,cimultiplier,ci_multiplier,
 ,refractory_period,3 * ms,
 ,a,4. * nsiemens,
-,b,60. * pamp,
-,tau_w,100 * msecond,
+,b,35.8 * pamp,
+,tau_w,144 * msecond,
 ,,,
 L4_SS,C,125 * pF,
 ,gL,4 * nS,
@@ -91,4 +91,3 @@ L4_SS,C,125 * pF,
 ,tau_i,tau_i_GLOBAL,
 ,refractory_period,3 * ms,
 ,,,
-
