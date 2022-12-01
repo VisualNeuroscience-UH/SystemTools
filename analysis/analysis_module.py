@@ -3651,13 +3651,4 @@ class Analysis(AnalysisBase):
 
 if __name__ == "__main__":
 
-    # path = r'C:\Users\Simo\Laskenta\SimuOut\Deneve\Replica_test'
-
-    # analysis = Analysis(path=path)
-    # NG_name = 'NG3_L4_SS2_L4'
-
-    # analysis.show_readout_on_input(NG_name, normalize=False, filename='Replica_test_results_20210114_1750000.gz')
-    # analysis.show_spikes(filename='Replica_test_results_20210114_1750000.gz')
-
-    # plt.show()
     pass
