@@ -38,7 +38,7 @@ elif sys.platform == "win32":
 """
 Project name
 """
-project = "Deneve"  # VenDor Deneve
+project = "FCN22"  # VenDor FCN22
 
 """
 Current experiment

@@ -1,5 +1,5 @@
 row_type,runtime,device,sys_mode,scale,grid_radius,min_distance,init_vms,compression_method,workspace_path,simulation_title,import_connections_from,load_positions_only,benchmark,profiling,save_input_video,multidimension_array_run,number_of_process,trials_per_config,default_clock,run_in_cluster,cluster_job_file_path,cluster_number_of_nodes,cluster_address,cluster_login_node,cluster_username,remote_repo_path,cluster_workspace
-params,2*second,python,expanded,1,210*um,1*um,0,gzip,/opt3/Laskenta/Models/Deneve/Single_narrow_iteration_R1,Comrad_midpoint,../in/connections_SingleSpike_ci.gz,0,0,0,0,1,1,1,0.1*ms,0,../csc_puhti_sv.job,20,puhti.csc.fi,--,svanni,/projappl/svanni/Laskenta/git_repos/CxSystem2,/scratch/svanni/CX2_Workspace
+params,2*second,python,expanded,1,210*um,1*um,0,gzip,/opt3/Laskenta/Models/FCN22/Single_narrow_iteration_R1,Comrad_midpoint,../in/connections_SingleSpike_ci.gz,0,0,0,0,1,1,1,0.1*ms,0,../csc_puhti_sv.job,20,puhti.csc.fi,--,svanni,/projappl/svanni/Laskenta/git_repos/CxSystem2,/scratch/svanni/CX2_Workspace
 row_type,idx,type,number_of_neurons,radius,spike_times,net_center,monitors,,,,,,,,,,,,,,,,,,
 IN,0,VPM,3,92*um,[]*second,--,[Sp],,,,,,,,,,,,,,,,,,
 

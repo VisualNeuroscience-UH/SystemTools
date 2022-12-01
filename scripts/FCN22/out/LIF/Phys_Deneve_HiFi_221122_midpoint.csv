@@ -10,7 +10,7 @@ ci_excitation_model,,'E_NDF',
 ci_inhibition_model,,'I_NDF',
 ,,,
 ### CURRENT INJECTION ###,,,
-base_ci_path,,r'/opt3/Laskenta/Models/Deneve/in', # *** CHANGE *** path to in-folder. The r'' is needed to correctly escape backward slashes
+base_ci_path,,r'/opt3/Laskenta/Models/FCN22/in', # *** CHANGE *** path to in-folder. The r'' is needed to correctly escape backward slashes
 ci_filename,,'noise_210406_SingleSpike_ci.mat', 
 ci_multiplier,,100, # 1
 ,,,
