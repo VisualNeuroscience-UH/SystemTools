@@ -38,7 +38,7 @@ elif sys.platform == "win32":
 """
 Project name
 """
-project = "FCN22"  # VenDor FCN22
+project = "Deneve"  # VenDor FCN22
 
 """
 Current experiment
@@ -67,7 +67,7 @@ input_filename = "noise_210406_SingleSpike.mat"  # "noise_210406_SingleSpike.mat
 Data context for single files and arrays. These midpoint and parameter strings are used only in this module.
 """
 midpoint = "Comrad"  # HiFi, Comrad, Bacon
-parameter = "midpoint"
+parameter = "gL_00"
 
 output_folder = f"{midpoint}_{parameter}"
 
@@ -156,7 +156,7 @@ if __name__ == "__main__":
     Condition 'ALL' randomizes connections from input to E--for those connections set randomize=True
     For iterations use the loop
     """
-    PM.ct.create_current_injection(randomize=False)
+    # PM.ct.create_current_injection(randomize=False)
     # for idx in range(1,101):
     #     PM.context.input_filename = Path(f'freq_{idx:02}.mat')
     #     PM.ct.create_current_injection(randomize=False)
@@ -238,7 +238,9 @@ if __name__ == "__main__":
     # PM.viz.show_readout_on_input(results_filename=file_to_display, normalize=False, unit_idx_list=[0], savefigname='')
     # Best possible outputsignal, given the leaky spikes in readout group
     # PM.viz.show_estimate_on_input(results_filename=None, simulation_engine='cxsystem', readout_group='E', unit_idx_list=[5]) # Simulation engines: 'cxsystem','matlab'. Matlab needs filename. Readout_groups 'E','I'.
-    # PM.viz.show_input_to_readout_coherence(results_filename=file_to_display, savefigname='',signal_pair=[0,0]) # HiFi_C0_I180E70_Coh.svg
+    # PM.viz.show_input_to_readout_coherence(
+    #     results_filename=file_to_display, savefigname="", signal_pair=[0, 0]
+    # )  # HiFi_C0_I180E70_Coh.svg
 
     """
     Show spikes and continuous data such as Vm. Note that param name can be any used dynamic variable in Brian2 equations
