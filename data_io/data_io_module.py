@@ -50,7 +50,7 @@ class DataIO(DataIOBase):
                 "Trying to set improper context. Context must be a context object."
             )
 
-    def _check_cadidate_file(self, path, filename):
+    def _check_candidate_file(self, path, filename):
         candidate_data_fullpath_filename = Path.joinpath(path, filename)
         if candidate_data_fullpath_filename.is_file():
             data_fullpath_filename = candidate_data_fullpath_filename
@@ -116,17 +116,17 @@ class DataIO(DataIOBase):
 
         # Check first for direct load in current directory. E.g. for direct ipython testing
         if filename:
-            data_fullpath_filename = self._check_cadidate_file(Path("./"), filename)
+            data_fullpath_filename = self._check_candidate_file(Path("./"), filename)
 
             # Next check direct load in output path, input path and project path in this order
             if not data_fullpath_filename:
-                data_fullpath_filename = self._check_cadidate_file(
+                data_fullpath_filename = self._check_candidate_file(
                     output_path, filename
                 )
             if not data_fullpath_filename:
-                data_fullpath_filename = self._check_cadidate_file(input_path, filename)
+                data_fullpath_filename = self._check_candidate_file(input_path, filename)
             if not data_fullpath_filename:
-                data_fullpath_filename = self._check_cadidate_file(path, filename)
+                data_fullpath_filename = self._check_candidate_file(path, filename)
 
         # Parse data_type next in project/input and project paths
         elif data_type is not None:

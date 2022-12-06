@@ -65,7 +65,7 @@ class ProjectUtilities:
 
 
 
-    def prepare_csvs_for_simulation(self, path_to_csvs_in: Path, path_to_csvs_out: Path, startpoint: str, anat_param_to_change: dict = None, phys_param_to_change: dict = None) -> None:
+    def prepare_csvs_for_simulation(self, anat_param_to_change: dict = None, phys_param_to_change: dict = None):
         """
         This function prepares the csv files for simulation.
 
@@ -73,25 +73,35 @@ class ProjectUtilities:
         Then it changes the anatomical and physiological parameters in the csv files according to the input dictionaries.
         """
 
-        # Check that either anatomical or physiological parameters are to be changed
-        if anat_param_to_change is None and phys_param_to_change is None:
-            print("Both anat_param_to_change and phys_param_to_change are None, nothing to do, continuing...")
-            return
+        
+        output_folder = self.context.output_folder
+        if anat_param_to_change is None:
+            anat_param_to_change={'workspace_path': self.context.path,'simulation_title' : output_folder.name}
+        if phys_param_to_change is None:
+            phys_param_to_change={'base_ci_path' : f"r'{str(self.context.input_folder)}'",'ci_filename' :  f"r'{str(self.context.input_filename)[:-4]}_ci.mat'"}
 
-        anat_file = f"Anat_{startpoint}_221122_startpoint.csv"
-        anat_file_fullpath = Path.joinpath(Path(path_to_csvs_in), anat_file)
-        # Check if the file exists
-        assert anat_file_fullpath.exists(), f"{anat_file_fullpath} does not exist"
-        phys_file = f"Phys_{startpoint}_221122_startpoint.csv"
-        phys_file_fullpath = Path.joinpath(Path(path_to_csvs_in), phys_file)
-        # Check if the file exists
-        assert phys_file_fullpath.exists(), f"{phys_file_fullpath} does not exist"
+        startpoint_string_end_idx = str(output_folder.name).find("_")
+        startpoint = str(output_folder.name)[0:startpoint_string_end_idx]
+        parameter = str(output_folder.name)[startpoint_string_end_idx + 1 :]
+        
+        startpoint_csv_folder = self.context.startpoint_csv_folder
+        path_to_csvs_in = self.context.path.parent.joinpath(startpoint_csv_folder)
 
-        anat_file_fullpath_out = Path.joinpath(Path(path_to_csvs_out), anat_file)
+        # From path_to_csvs_in find all csv files
+        csv_files = list(path_to_csvs_in.glob("*.csv"))
+        # From theses csv files check that one and only one is the anatomical file
+        anat_file_list = [file for file in csv_files if f"Anat_{startpoint}_" in file.stem and "startpoint" in file.stem]
+        assert len(anat_file_list) == 1, "Anatomical file not found or not unique"
+        anat_file_fullpath = anat_file_list[0]
+        # Get timestamp from the anat file
+        timestamp_anat = anat_file_fullpath.name.split("_")[-2]
+
+        anat_file_out = f"Anat_{startpoint}_{timestamp_anat}_{parameter}.csv"
+        anat_file_fullpath_out = Path.joinpath(self.context.path, anat_file_out)
         
         # Create the path_to_csvs_out folder if it does not exist
-        if not path_to_csvs_out.exists():
-            path_to_csvs_out.mkdir(parents=False)
+        if not self.context.path.exists():
+            self.context.path.mkdir(parents=False)
         
         # Copy original files to new folder
         shutil.copyfile(anat_file_fullpath, anat_file_fullpath_out)
@@ -106,14 +116,20 @@ class ProjectUtilities:
                     anat_param_to_change[this_key],
                 )
 
-        phys_file_fullpath_out = Path.joinpath(Path(path_to_csvs_out), phys_file)
-        # # Copy original files to new folder
-        # shutil.copyfile(phys_file_fullpath, phys_file_fullpath_out)
-        # read the phys csv file into dataframe
-        phys_df = pd.read_csv(phys_file_fullpath_out, header=0)
+        phys_file_list = [file for file in csv_files if f"Phys_{startpoint}_" in file.stem and "startpoint" in file.stem]
+        assert len(phys_file_list) == 1, "Physiological file not found or not unique"
+        phys_file_fullpath = phys_file_list[0]
+        timestamp_phys = phys_file_fullpath.name.split("_")[-2]
+        
+        phys_file_out = f"Phys_{startpoint}_{timestamp_phys}_{parameter}.csv"
+        phys_file_fullpath_out = Path.joinpath(self.context.path, phys_file_out)
+
+        # Read the phys csv file into dataframe
+        phys_df = pd.read_csv(phys_file_fullpath, header=0)
         if phys_param_to_change is not None:
             # Convert dict to list of lists
             phys_params_to_change = [
+                #  [Variable (str), Key (str/nan), Value (str), Unit (str), "variable" / "key"]
                 [Variable, nan, phys_param_to_change[Variable], "", "variable"] for Variable in phys_param_to_change
             ]
             
@@ -123,8 +139,8 @@ class ProjectUtilities:
 
         # Write the updated phys_df to file
         phys_df.to_csv(phys_file_fullpath_out, index=False, header=True)
-        #  ["base_ci_path", nan, f"r'{in_folder_full}'", "", "variable"]
 
+        return anat_file_fullpath_out, phys_file_fullpath_out
 
 
     def multiple_cluster_metadata_compiler_and_data_transfer(self):

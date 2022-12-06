@@ -117,8 +117,8 @@ def test_io_properties():
     assert isinstance(IO._properties_list, list)
 
 
-def test_check_cadidate_file():
-    checked_filepath = IO._check_cadidate_file(repo_path, single_gz_file_path)
+def test_check_candidate_file():
+    checked_filepath = IO._check_candidate_file(repo_path, single_gz_file_path)
     assert Path(checked_filepath) == single_gz_file_path
 
 
