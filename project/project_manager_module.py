@@ -116,7 +116,7 @@ class ProjectManager(ProjectBase, ProjectUtilities):
         # ProjectManager is facade to Context.
         context = Context(all_properties)
 
-        # Get corrent context attributes. Empty properties return all existing project attributes to context. That is what we want for the project manager
+        # Get correct context attributes. Empty properties return all existing project attributes to context. That is what we want for the project manager
         self.context = context.set_context()
 
         data_io = DataIO(context, map_ana_names=self.map_ana_names)
@@ -288,6 +288,7 @@ class ProjectManager(ProjectBase, ProjectUtilities):
         IT.data_io = self.data_io
         IT.ana = self.ana
         IT.coll_mpa_dict = self.coll_mpa_dict
+        IT.phys_updater = self.phys_updater # From project utilities
         self.IT = IT
 
     def run_iterator(self):

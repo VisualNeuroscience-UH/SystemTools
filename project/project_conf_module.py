@@ -11,7 +11,7 @@ import pdb
 from project.project_manager_module import ProjectManager
 
 """
-Use keyword substring "file" in filenames, and "folder" in foldernames to assert that they are turned into pathlib objects. Path structure is assumed to be root_path/project/experiment/output_folder
+Use keyword substring "file" in filenames, and "folder" in folder names to assert that they are turned into pathlib objects. Path structure is assumed to be root_path/project/experiment/output_folder
 
 Abbreviations:
 ana : analysis

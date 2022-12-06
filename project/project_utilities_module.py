@@ -3,13 +3,15 @@ from pathlib import Path
 from argparse import ArgumentError
 import copy
 import sys
+import shutil
 import pdb
+from math import nan
 
 # Analysis
 import numpy as np
 import pandas as pd
 
-from cxsystem2.core.tools import change_parameter_value_in_file
+from cxsystem2.core.tools import change_anat_file_header_value, read_config_file
 
 
 class ProjectUtilities:
@@ -17,44 +19,113 @@ class ProjectUtilities:
     Utilities for ProjectManager class. This class is not instantiated. It serves as a container for project independent helper functions.
     """
 
-    def update_workspace_inside_anat_csv(self, full_path_to_anat_csv):
-        """
-        Updates the path inside the anat.csv file inplace. This is useful when the the csv file is moved to another system.
-        """
-
-        full_path_to_anat_csv = Path(full_path_to_anat_csv)
-        new_workspace_path = full_path_to_anat_csv.parent
-        change_parameter_value_in_file(
-            full_path_to_anat_csv,
-            full_path_to_anat_csv,
-            "workspace_path",
-            new_workspace_path,
-        )
-
-    def update_parameter_inside_phys_csv(
-        self, full_path_to_phys_csv, variable_name, variable_value, key_name=None
-    ):
-        """
-        Updates the path inside the anat.csv file inplace.
-        This is useful when the the csv file is moved to another system.
-        """
+    def phys_updater(self, physio_config_df, param_list):
+        '''
+        Replace values in physio_config_df with values from param_list
+        The param_list contains five items which are either strings or nan (from built-in math module),
+        [0] = Variable name
+        [1] = Key name
+        [2] = Value 
+        [3] = Unit
+        [4] = "variable" or "key", indicating whether the value is to be assigned to the row by variable or by key
         
-        full_path_to_phys_csv = Path(full_path_to_phys_csv)
-        physio_config_df = pd.read_csv(full_path_to_phys_csv)
+        Examples:
+        Replace value of variable "base_ci_path" with in_folder_full value
+        ["base_ci_path", nan, f"r'{in_folder_full}'", "", "variable"]
+        Replace value of variable "L4_CI_BC" key "C" with "{ 30.0 | 270.0 | 10.0 } * pF" value
+        ["L4_CI_BC", "C", "{ 30.0 | 270.0 | 10.0 }", " * pF", "key"]
+        '''
+
+        #Some of the param list items might be pathlib objects, convert them to strings
+        param_list = [str(item) if isinstance(item, Path) else item for item in param_list]
 
         # Find row index for correct Variable
         index = physio_config_df.index
-        condition = physio_config_df["Variable"] == variable_name
+        condition = physio_config_df["Variable"] == param_list[0]
         variable_index = index[condition].values
+        assert (
+            len(variable_index) == 1
+        ), "Zero or non unique variable name found, aborting..."
 
-        if key_name is None:
-            physio_config_df.loc[variable_index, "Value"] = variable_value
-        elif key_name is not None:
-            raise NotImplementedError(
-                "key_name is not implemented yet, see iterate.iterate_module.Iterator._phys_updater for an example"
+        if param_list[4] == "variable":
+            physio_config_df.loc[variable_index[0], "Value"] = (
+                param_list[2] + param_list[3]
             )
-        print(physio_config_df)
-        physio_config_df.to_csv(full_path_to_phys_csv, index=False, header=True)
+        elif param_list[4] == "key":
+            condition_keys = physio_config_df["Key"] == param_list[1]
+            key_indices = index[condition_keys].values
+            # Find first correct Key after correct Variable. This is dangerous, because it does not check for missing Key
+            key_index = key_indices[key_indices >= variable_index][0]
+            physio_config_df.loc[key_index, "Value"] = param_list[2] + param_list[3] # concatenate value and unit
+        else:
+            raise NotImplementedError(
+                'Unknown row_by value, should be "key" or "variable"'
+            )
+        return physio_config_df
+
+
+
+    def prepare_csvs_for_simulation(self, path_to_csvs_in: Path, path_to_csvs_out: Path, startpoint: str, anat_param_to_change: dict = None, phys_param_to_change: dict = None) -> None:
+        """
+        This function prepares the csv files for simulation.
+
+        For each startpoint, it creates a new folder in path_to_csvs_out, and copies the csv files from path_to_csvs_in to the new folder.
+        Then it changes the anatomical and physiological parameters in the csv files according to the input dictionaries.
+        """
+
+        # Check that either anatomical or physiological parameters are to be changed
+        if anat_param_to_change is None and phys_param_to_change is None:
+            print("Both anat_param_to_change and phys_param_to_change are None, nothing to do, continuing...")
+            return
+
+        anat_file = f"Anat_{startpoint}_221122_startpoint.csv"
+        anat_file_fullpath = Path.joinpath(Path(path_to_csvs_in), anat_file)
+        # Check if the file exists
+        assert anat_file_fullpath.exists(), f"{anat_file_fullpath} does not exist"
+        phys_file = f"Phys_{startpoint}_221122_startpoint.csv"
+        phys_file_fullpath = Path.joinpath(Path(path_to_csvs_in), phys_file)
+        # Check if the file exists
+        assert phys_file_fullpath.exists(), f"{phys_file_fullpath} does not exist"
+
+        anat_file_fullpath_out = Path.joinpath(Path(path_to_csvs_out), anat_file)
+        
+        # Create the path_to_csvs_out folder if it does not exist
+        if not path_to_csvs_out.exists():
+            path_to_csvs_out.mkdir(parents=False)
+        
+        # Copy original files to new folder
+        shutil.copyfile(anat_file_fullpath, anat_file_fullpath_out)
+        
+        if anat_param_to_change is not None:
+            # Update the anat csv parameters
+            for this_key in anat_param_to_change:
+                change_anat_file_header_value(
+                    anat_file_fullpath_out,
+                    anat_file_fullpath_out,
+                    this_key,
+                    anat_param_to_change[this_key],
+                )
+
+        phys_file_fullpath_out = Path.joinpath(Path(path_to_csvs_out), phys_file)
+        # # Copy original files to new folder
+        # shutil.copyfile(phys_file_fullpath, phys_file_fullpath_out)
+        # read the phys csv file into dataframe
+        phys_df = pd.read_csv(phys_file_fullpath_out, header=0)
+        if phys_param_to_change is not None:
+            # Convert dict to list of lists
+            phys_params_to_change = [
+                [Variable, nan, phys_param_to_change[Variable], "", "variable"] for Variable in phys_param_to_change
+            ]
+            
+            # Update the phys csv parameters
+            for param_list in phys_params_to_change:
+                    phys_df = self.phys_updater(phys_df, param_list)
+
+        # Write the updated phys_df to file
+        phys_df.to_csv(phys_file_fullpath_out, index=False, header=True)
+        #  ["base_ci_path", nan, f"r'{in_folder_full}'", "", "variable"]
+
+
 
     def multiple_cluster_metadata_compiler_and_data_transfer(self):
         # This searches the cluster_metadata_XXX_.pkl files from the current path/cluster_run_XXX folders
@@ -466,18 +537,8 @@ class ProjectUtilities:
             if Path(filename).is_file():
                 format(filename, dict_key_list)
 
-    def pp_df_full(self, df):
-        with pd.option_context(
-            "display.max_rows",
-            None,
-            "display.max_columns",
-            None,
-            "display.max_colwidth",
-            -1,
-        ):
-            print(df)
-
     def end2idx(self, t_idx_end, n_samples):
+
 
         if t_idx_end is None:
             t_idx_end = n_samples
@@ -529,6 +590,17 @@ class ProjectUtilities:
         print(f"Created {new_meta_full}")
 
     # Debugging
+    def pp_df_full(self, df):
+        with pd.option_context(
+            "display.max_rows",
+            None,
+            "display.max_columns",
+            None,
+            "display.max_colwidth",
+            -1,
+        ):
+            print(df)
+
     def pp_df_memory(self, df):
         BYTES_TO_MB_DIV = 0.000001
         mem = round(df.memory_usage().sum() * BYTES_TO_MB_DIV, 3)

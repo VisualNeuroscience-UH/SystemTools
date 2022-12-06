@@ -11,7 +11,7 @@ ci_inhibition_model,,'I_NDF',
 ,,,
 ### CURRENT INJECTION ###,,,
 base_ci_path,,C:\Users\Simo\Laskenta\Git_Repos\SystemTools\scripts\FCN22\in, # *** CHANGE *** path to in-folder. The r'' is needed to correctly escape backward slashes
-ci_filename,,'noise_210406_SingleSpike_ci.mat', 
+ci_filename,,input_quadratic_three_units_2s_SingleSpike_ci.mat, 
 ci_multiplier,,100, # 1
 ,,,
 ### DEFAULT CONN WEIGHTS  ###,,,

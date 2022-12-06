@@ -5,7 +5,7 @@ import pandas as pd
 
 # This computer git repos
 from cxsystem2.core.tools import (
-    change_parameter_value_in_file,
+    change_anat_file_header_value,
     read_config_file,
     parameter_finder,
 )
@@ -155,32 +155,6 @@ class Iterator:
                     logging.error(
                         f"\nParallel IxO analysis failed at midpoint {midpoint} parameter {parameter} iteration {this_idx}"
                     )
-
-    def _phys_updater(self, physio_config_df, param_list):
-
-        # Find row index for correct Variable
-        index = physio_config_df.index
-        condition = physio_config_df["Variable"] == param_list[0]
-        variable_index = index[condition].values
-        assert (
-            len(variable_index) == 1
-        ), "Zero or nonunique variable name found, aborting..."
-
-        if param_list[4] == "variable":
-            physio_config_df.loc[variable_index[0], "Value"] = (
-                param_list[2] + param_list[3]
-            )
-        elif param_list[4] == "key":
-            condition_keys = physio_config_df["Key"] == param_list[1]
-            key_indices = index[condition_keys].values
-            # Find first correct Key after correct Variable. This is dangerous, because it does not check for missing Key
-            key_index = key_indices[key_indices >= variable_index][0]
-            physio_config_df.loc[key_index, "Value"] = param_list[2] + param_list[3]
-        else:
-            raise NotImplementedError(
-                'Unknown row_by value, should be "key" or "variable"'
-            )
-        return physio_config_df
 
     def _csv_name_builder(self, conf_type, midpoint, conf_time_stamp, simulation_title):
         """
@@ -337,7 +311,7 @@ class Iterator:
                 anat_config_iter = self._csv_name_builder(
                     "anat", midpoint, conf_time_stamp, simu_title
                 )
-                change_parameter_value_in_file(
+                change_anat_file_header_value(
                     anat_config_template,
                     anat_config_iter,
                     "simulation_title",
@@ -345,7 +319,7 @@ class Iterator:
                 )
 
                 for this_key in self.anat_update_dict.keys():
-                    change_parameter_value_in_file(
+                    change_anat_file_header_value(
                         anat_config_iter,
                         anat_config_iter,
                         this_key,
@@ -371,15 +345,15 @@ class Iterator:
                         param_list[
                             2
                         ] = f"'{self.input_fname_prefix}_{add_padding_str}{self.input_fname_ci_suffix}'"
-                        physio_config_df = self._phys_updater(
+                        physio_config_df = self.phys_updater(
                             physio_config_df, param_list
                         )
                     else:
-                        physio_config_df = self._phys_updater(
+                        physio_config_df = self.phys_updater(
                             physio_config_df, param_list
                         )
                 for param_list in self.phys_update_dict[parameter]:
-                    physio_config_df = self._phys_updater(physio_config_df, param_list)
+                    physio_config_df = self.phys_updater(physio_config_df, param_list)
                 physio_config_df.to_csv(phys_config_iter, index=False, header=True)
             toc = time.time()
             logging.info(f"\Creating csvs took {(toc-tic):.2f} seconds")
@@ -408,12 +382,12 @@ class Iterator:
                     "phys", midpoint, conf_time_stamp, simu_title
                 )
 
-                funcion_call_str = (
+                function_call_str = (
                     f"cxsystem2 -a {anat_config_iter} -p {phys_config_iter}"
                 )
-                logging.info(funcion_call_str)
-                funcion_call = shlex.split(funcion_call_str)
-                proc = subprocess.Popen(funcion_call)
+                logging.info(function_call_str)
+                function_call = shlex.split(function_call_str)
+                proc = subprocess.Popen(function_call)
                 proc_list.append(proc)
                 proc_count += 1
 
