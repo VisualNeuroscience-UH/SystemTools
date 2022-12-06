@@ -241,7 +241,6 @@ class Viz(VizBase):
             facecolor="w",
             edgecolor="w",
             orientation="portrait",
-            papertype=None,
             format=file_extension[1:],
             transparent=False,
             bbox_inches="tight",
