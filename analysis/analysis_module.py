@@ -129,15 +129,15 @@ class Analysis(AnalysisBase):
             # calculate the full output
             lags = np.arange(-in2_len + 1, in1_len)
             # determine the mean point in the full output
-            mid = lags.size // 2
+            mean_point = lags.size // 2
             # determine lag_bound to be used with respect
             # to the mean point
             lag_bound = in1_len // 2
             # calculate lag ranges for even and odd scenarios
             if in1_len % 2 == 0:
-                lags = lags[(mid - lag_bound) : (mid + lag_bound)]
+                lags = lags[(mean_point - lag_bound) : (mean_point + lag_bound)]
             else:
-                lags = lags[(mid - lag_bound) : (mid + lag_bound) + 1]
+                lags = lags[(mean_point - lag_bound) : (mean_point + lag_bound) + 1]
 
         return lags
 
@@ -2333,17 +2333,17 @@ class Analysis(AnalysisBase):
         """
 
         # Get relevant startpoints, parameters and columns names
-        coll_param_df = self.coll_mpa_dict["coll_param_df"]
-        coll_mid_list = self.coll_mpa_dict["coll_mid_list"]
+        coll_param_df = self.coll_spa_dict["coll_param_df"]
+        coll_start_list = self.coll_spa_dict["coll_start_list"]
 
         # Get the full paths of analyzed iterations. If missing, abort
         startpoint_parameter_dict = {}
         not_found = []
-        for startpoint in coll_mid_list:
+        for startpoint in coll_start_list:
             for parameter in coll_param_df.index.tolist():
-                this_mid_par = startpoint + "_" + parameter
+                this_start_par = startpoint + "_" + parameter
                 full_paths_list = self.data_io.listdir_loop(
-                    self.context.path, this_mid_par.lower(), None
+                    self.context.path, this_start_par.lower(), None
                 )
                 # Include only folders and Remove earlier analyzes
                 dir_full_paths_list = sorted(
@@ -2366,13 +2366,15 @@ class Analysis(AnalysisBase):
                 dir_full_paths_list_clean = [
                     f
                     for f in dir_full_paths_list_numsuffix
-                    if this_mid_par + results_folder_suffix not in str(f)
+                    if this_start_par + results_folder_suffix not in str(f)
                 ]
 
                 if dir_full_paths_list_clean:
-                    startpoint_parameter_dict[this_mid_par] = dir_full_paths_list_clean
+                    startpoint_parameter_dict[
+                        this_start_par
+                    ] = dir_full_paths_list_clean
                 else:
-                    not_found.append(this_mid_par)
+                    not_found.append(this_start_par)
 
         # Report missing folder or abort
         assert (
@@ -2970,7 +2972,7 @@ class Analysis(AnalysisBase):
 
         # Get startpoint, parameter, and update output folder if it exists
         if startpoint is None:
-            startpoint = self.contexstartpointnt
+            startpoint = self.context.startpoint
         if parameter is None:
             parameter = self.context.parameter
         if output_folder is not None:
@@ -3038,19 +3040,19 @@ class Analysis(AnalysisBase):
             results_folder_suffix=results_folder_suffix
         )
 
-        coll_ana_df = self.coll_mpa_dict["coll_ana_df"]
+        coll_ana_df = self.coll_spa_dict["coll_ana_df"]
         csv_col_list = coll_ana_df["csv_col_name"].values.tolist()
 
         # Collect iterations from mapped folders to one numpy array.
         # Loop over "_compiled_results" folders
-        for this_mid_par in startpoint_parameter_dict.keys():
+        for this_start_par in startpoint_parameter_dict.keys():
 
-            first_path = startpoint_parameter_dict[this_mid_par][0]
+            first_path = startpoint_parameter_dict[this_start_par][0]
             basepath, folder_name = first_path.parent, first_path.name
 
             # Make output folders
             this_statpath = Path.joinpath(
-                basepath, this_mid_par + results_folder_suffix
+                basepath, this_start_par + results_folder_suffix
             )
             if not Path.exists(this_statpath):
                 Path.mkdir(this_statpath, parents=True)
@@ -3073,7 +3075,7 @@ class Analysis(AnalysisBase):
                 data_columns_list = [
                     c for c in dependent_var_col_list for s in csv_col_list if s in c
                 ]
-            n_iter = len(startpoint_parameter_dict[this_mid_par])
+            n_iter = len(startpoint_parameter_dict[this_start_par])
             ini_stats_df = data_df_compiled[independent_var_col_list]
 
             if analysis_type in ["mean", "TEDrift"]:
@@ -3087,7 +3089,7 @@ class Analysis(AnalysisBase):
 
                 # Collect startpoint_parameter iteration data
                 for iter_idx, this_path in enumerate(
-                    startpoint_parameter_dict[this_mid_par]
+                    startpoint_parameter_dict[this_start_par]
                 ):
                     (
                         data0_df,
@@ -3134,7 +3136,7 @@ class Analysis(AnalysisBase):
                 # loop itererations folders; get all_data_mtx_np
                 print("Loading data from iterations...")
                 for this_iteration_idx, this_iteration_folder in enumerate(
-                    startpoint_parameter_dict[this_mid_par]
+                    startpoint_parameter_dict[this_start_par]
                 ):
                     data_type_str = "IxO_analysis"
                     ixo_full_filename_list = self.data_io.listdir_loop(

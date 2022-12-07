@@ -68,7 +68,7 @@ NG_name = "NG3_L4_SS_L4"
 t_idx_start = 2000
 t_idx_end = -2000
 
-to_mpa_dict = {
+to_spa_dict = {
     "startpoints": ["Comrad"],
     "parameters": ["C"],
     "analyzes": ["Excitatory Firing Rate", "Inhibitory Firing Rate"],
@@ -87,11 +87,11 @@ pm_kw_dict = dict(
     NG_name=NG_name,
     t_idx_start=t_idx_start,
     t_idx_end=t_idx_end,
-    to_mpa_dict=to_mpa_dict,
+    to_spa_dict=to_spa_dict,
 )
 PM = ProjectManager(**pm_kw_dict)
 
-to_mpa_dict_persist = deepcopy(to_mpa_dict)
+to_spa_dict_persist = deepcopy(to_spa_dict)
 # ###################
 # # Unit tests
 # ###################
@@ -626,7 +626,7 @@ def test__get_startpoint_parameter_dict():
     startpoint_parameter_dict = ana._get_startpoint_parameter_dict(
         results_folder_suffix=results_folder_suffix
     )
-    test_key = to_mpa_dict["startpoints"][0] + "_" + to_mpa_dict["parameters"][0]
+    test_key = to_spa_dict["startpoints"][0] + "_" + to_spa_dict["parameters"][0]
 
     assert test_key in startpoint_parameter_dict.keys()
     assert len(startpoint_parameter_dict[test_key]) == 2
@@ -918,7 +918,7 @@ def test_system_polar_bar():
 
 def test_show_catplot():
 
-    viz.context.to_mpa_dict = deepcopy(to_mpa_dict_persist)
+    viz.context.to_spa_dict = deepcopy(to_spa_dict_persist)
     param_plot_dict = {
         "title": "parameters",
         "outer": "analyzes",
@@ -952,7 +952,7 @@ def test_show_catplot():
 
 def test_show_xy_plot():
 
-    viz.context.to_mpa_dict = deepcopy(to_mpa_dict_persist)
+    viz.context.to_spa_dict = deepcopy(to_spa_dict_persist)
     xy_plot_dict = {
         "x_ana": [
             "Excitatory Firing Rate"

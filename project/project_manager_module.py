@@ -124,7 +124,7 @@ class ProjectManager(ProjectBase, ProjectUtilities):
 
         self.ct = ConnectionTranslator(context, data_io)
 
-        # Build necessary analyzes from to_mpa_dict
+        # Build necessary analyzes from to_spa_dict
         self.build_mid_par_ana()
         stat_tests = Statistics()
 
@@ -140,7 +140,7 @@ class ProjectManager(ProjectBase, ProjectUtilities):
             map_data_types=self.map_data_types,
             map_stat_types=self.map_stat_types,
             extra_ana_args=self.kw_ana_args,
-            coll_mpa_dict=self.coll_mpa_dict,
+            coll_spa_dict=self.coll_spa_dict,
             # Methods, which are needed also elsewhere
             round_to_n_significant=self.round_to_n_significant,
             pp_df_full=self.pp_df_full,
@@ -158,7 +158,7 @@ class ProjectManager(ProjectBase, ProjectUtilities):
             cxparser,
             # Dictionaries
             map_ana_names=self.map_ana_names,
-            coll_mpa_dict=self.coll_mpa_dict,
+            coll_spa_dict=self.coll_spa_dict,
             # Methods, which are needed also elsewhere
             round_to_n_significant=self.round_to_n_significant,
             end2idx=self.end2idx,
@@ -192,18 +192,18 @@ class ProjectManager(ProjectBase, ProjectUtilities):
 
     def build_mid_par_ana(self):
         """
-        Build mapping from to_mpa_dict in conf file to dataframes which include parameter and analysis details.
+        Build mapping from to_spa_dict in conf file to dataframes which include parameter and analysis details.
         """
-        if not hasattr(self.context, "to_mpa_dict") or self.context.to_mpa_dict is None:
-            print("No to_mpa_dict in conf file. Only one file will be processed.")
-            self.coll_mpa_dict = None
+        if not hasattr(self.context, "to_spa_dict") or self.context.to_spa_dict is None:
+            print("No to_spa_dict in conf file. Only one file will be processed.")
+            self.coll_spa_dict = None
             return
 
-        startpoints = self.context.to_mpa_dict["startpoints"]
-        parameters = self.context.to_mpa_dict["parameters"]
-        analyzes = self.context.to_mpa_dict["analyzes"]
+        startpoints = self.context.to_spa_dict["startpoints"]
+        parameters = self.context.to_spa_dict["parameters"]
+        analyzes = self.context.to_spa_dict["analyzes"]
 
-        all_startpoints_list = ["Comrad", "Baconstartpoint"]
+        all_startpoints_list = ["Comrad", "Bacon", "HiFi"]
 
         all_param_col_list = ["Name", "Unit", "Dims"]
         all_param_dict = {
@@ -253,9 +253,9 @@ class ProjectManager(ProjectBase, ProjectUtilities):
 
         # Assertions
         if startpoints is not None:
-            coll_mid_list = list(sorted(set(all_startpoints_list) & set(startpoints)))
+            coll_start_list = list(sorted(set(all_startpoints_list) & set(startpoints)))
             assert (
-                len(coll_mid_list) > 0
+                len(coll_start_list) > 0
             ), 'variable "startpoints" not set or names do not match get_collated_analyzes method data'
         if parameters is not None:
             collated_parameters = list(set(all_param_dict.keys()) & set(parameters))
@@ -268,22 +268,22 @@ class ProjectManager(ProjectBase, ProjectUtilities):
                 len(coll_ana_list) > 0
             ), 'variable "analyzes" not set or names do not match get_collated_analyzes method data'
 
-        coll_mpa_dict = {}
+        coll_spa_dict = {}
         if parameters is not None:
-            coll_mpa_dict["coll_param_df"] = coll_param_df
+            coll_spa_dict["coll_param_df"] = coll_param_df
         if startpoints is not None:
-            coll_mpa_dict["coll_mid_list"] = coll_mid_list
+            coll_spa_dict["coll_start_list"] = coll_start_list
         if analyzes is not None:
-            coll_mpa_dict["coll_ana_df"] = coll_ana_df
+            coll_spa_dict["coll_ana_df"] = coll_ana_df
 
-        self.coll_mpa_dict = coll_mpa_dict
+        self.coll_spa_dict = coll_spa_dict
 
     def build_iterator(self, **all_parameters):
         IT = Iterator(all_parameters)
         IT.context = self.context
         IT.data_io = self.data_io
         IT.ana = self.ana
-        IT.coll_mpa_dict = self.coll_mpa_dict
+        IT.coll_spa_dict = self.coll_spa_dict
         IT.phys_updater = self.phys_updater  # From project utilities
         self.IT = IT
 

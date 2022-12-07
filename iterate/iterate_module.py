@@ -282,15 +282,15 @@ class Iterator:
         else:
             idx_iterator = [0]
 
-        if self.coll_mpa_dict is None:
-            print("No coll_mpa_dict provided, iteration disabled.")
+        if self.coll_spa_dict is None:
+            print("No coll_spa_dict provided, iteration disabled.")
             return
 
-        # to_mpa_dict formed at the top of project_conf_module
-        startpoints = self.context.to_mpa_dict["startpoints"]
-        parameters = self.context.to_mpa_dict["parameters"]
-        # analyzes = self.context.to_mpa_dict["analyzes"]
-        analyzes = self.coll_mpa_dict["coll_ana_df"]["ana_name_prefix"]
+        # to_spa_dict formed at the top of project_conf_module
+        startpoints = self.context.to_spa_dict["startpoints"]
+        parameters = self.context.to_spa_dict["parameters"]
+        # analyzes = self.context.to_spa_dict["analyzes"]
+        analyzes = self.coll_spa_dict["coll_ana_df"]["ana_name_prefix"]
         analyzes_list = analyzes.tolist()
 
         ncpus = os.cpu_count() - 1
@@ -490,7 +490,7 @@ class Iterator:
             # Here, we exceptionally use full analysis names, not the shortened ones.
             # This is because the analysis names are used one-by-one in the analysis
 
-            analyzes_list = self.context.to_mpa_dict["analyzes"]
+            analyzes_list = self.context.to_spa_dict["analyzes"]
 
             logging.info(
                 f"Running optimal values for analyze methods {analyzes_list}, for {len(idx_iterator)} inputs"
@@ -539,11 +539,11 @@ class Iterator:
                 * np.nan
             )
 
-            # Map the analysis names to coll_mpa_dict["coll_ana_df"]["csv_col_name"]
+            # Map the analysis names to coll_spa_dict["coll_ana_df"]["csv_col_name"]
             analyzes_col_name_list = []
             for this_ana in analyzes_list:
                 analyzes_col_name_list.append(
-                    self.coll_mpa_dict["coll_ana_df"].loc[this_ana]["csv_col_name"]
+                    self.coll_spa_dict["coll_ana_df"].loc[this_ana]["csv_col_name"]
                 )
 
             optimal_values_df = pd.DataFrame(

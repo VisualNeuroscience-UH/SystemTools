@@ -44,7 +44,7 @@ class Viz(VizBase):
         "t_idx_start",
         "t_idx_end",
         "conn_file_out",
-        "to_mpa_dict",
+        "to_spa_dict",
     ]
 
     save_figure_with_arrayidentifier = None
@@ -1503,7 +1503,7 @@ class Viz(VizBase):
                 myformat="svg",
             )
 
-    def _build_param_plot(self, coll_ana_df_in, param_plot_dict, to_mpa_dict_in):
+    def _build_param_plot(self, coll_ana_df_in, param_plot_dict, to_spa_dict_in):
         """
         Prepare for parametric plotting of multiple conditions.
         This method fetch all data to
@@ -1520,19 +1520,19 @@ class Viz(VizBase):
             coll_ana_df = coll_ana_df_in.drop(
                 index=param_plot_dict["inner_sub_ana"], inplace=False
             )
-            analyzes_list = copy.deepcopy(to_mpa_dict_in["analyzes"])
+            analyzes_list = copy.deepcopy(to_spa_dict_in["analyzes"])
             analyzes_list.remove(param_plot_dict["inner_sub_ana"])
-            to_mpa_dict = {k: to_mpa_dict_in[k] for k in ["startpoints", "parameters"]}
-            to_mpa_dict["analyzes"] = analyzes_list
+            to_spa_dict = {k: to_spa_dict_in[k] for k in ["startpoints", "parameters"]}
+            to_spa_dict["analyzes"] = analyzes_list
             # Short ana name for sub to diff from data col names
             sub_col_name = coll_sub_S["ana_name_prefix"]
         else:
-            to_mpa_dict = to_mpa_dict_in
+            to_spa_dict = to_spa_dict_in
             coll_ana_df = coll_ana_df_in
 
-        [title] = to_mpa_dict[param_plot_dict["title"]]
-        outer_list = to_mpa_dict[param_plot_dict["outer"]]
-        inner_list = to_mpa_dict[param_plot_dict["inner"]]
+        [title] = to_spa_dict[param_plot_dict["title"]]
+        outer_list = to_spa_dict[param_plot_dict["outer"]]
+        inner_list = to_spa_dict[param_plot_dict["inner"]]
 
         # if paths to data provided, take inner names from distinct list
         if param_plot_dict["inner_paths"] is True:
@@ -1623,7 +1623,7 @@ class Viz(VizBase):
 
         Definitions for parametric plotting of multiple conditions/categories.
 
-        First, define what data is going to be visualized in to_mpa_dict.
+        First, define what data is going to be visualized in to_spa_dict.
         Second, define how it is visualized in param_plot_dict.
 
         Limitations:
@@ -1633,7 +1633,7 @@ class Viz(VizBase):
         outer : panel (distinct subplots) # analyzes, startpoints, parameters, controls
         inner : inside one axis (subplot) # startpoints, parameters, controls
         inner_sub : bool, further subdivision by value, such as mean firing rate
-        inner_sub_ana : name of ana. This MUST be included into to_mpa_dict "analyzes"
+        inner_sub_ana : name of ana. This MUST be included into to_spa_dict "analyzes"
         plot_type : parametric plot type # box
 
         inner_paths : bool (only inner available for setting paths). Provide comparison from arbitrary paths, e.g. controls
@@ -1657,10 +1657,10 @@ class Viz(VizBase):
         }
         """
 
-        coll_ana_df = copy.deepcopy(self.coll_mpa_dict["coll_ana_df"])
-        to_mpa_dict = copy.deepcopy(self.context.to_mpa_dict)
+        coll_ana_df = copy.deepcopy(self.coll_spa_dict["coll_ana_df"])
+        to_spa_dict = copy.deepcopy(self.context.to_spa_dict)
 
-        titles = to_mpa_dict[param_plot_dict["title"]]
+        titles = to_spa_dict[param_plot_dict["title"]]
 
         if param_plot_dict["save_description"] is True:
             describe_df_list = []
@@ -1671,7 +1671,7 @@ class Viz(VizBase):
         # Recursive call for multiple titles => multiple figures
         for this_title in titles:
             this_title_list = [this_title]
-            to_mpa_dict[param_plot_dict["title"]] = this_title_list
+            to_spa_dict[param_plot_dict["title"]] = this_title_list
 
             (
                 data_list,
@@ -1679,7 +1679,7 @@ class Viz(VizBase):
                 data_sub_list,
                 outer_name_list,
                 sub_col_name,
-            ) = self._build_param_plot(coll_ana_df, param_plot_dict, to_mpa_dict)
+            ) = self._build_param_plot(coll_ana_df, param_plot_dict, to_spa_dict)
 
             sharey = param_plot_dict["sharey"]
             palette = param_plot_dict["palette"]
@@ -2017,7 +2017,7 @@ class Viz(VizBase):
                     try:
                         col_stem = coll_ana_df.loc[this_ana]["csv_col_name"]
                     except KeyError:
-                        raise KeyError(f"to_mpa_dict missing key {this_ana}")
+                        raise KeyError(f"to_spa_dict missing key {this_ana}")
 
                     if (
                         col_stem[: col_stem.find("_")].lower() in ["meanfr", "edist"]
@@ -2100,7 +2100,7 @@ class Viz(VizBase):
                     try:
                         col_stem = coll_ana_df.loc[this_ana]["csv_col_name"]
                     except KeyError:
-                        raise KeyError(f"to_mpa_dict missing key {this_ana}")
+                        raise KeyError(f"to_spa_dict missing key {this_ana}")
 
                     if (
                         col_stem[: col_stem.find("_")].lower() in ["meanfr", "edist"]
@@ -2176,7 +2176,7 @@ class Viz(VizBase):
 
         """ """
 
-        coll_ana_df = self.coll_mpa_dict["coll_ana_df"]
+        coll_ana_df = self.coll_spa_dict["coll_ana_df"]
 
         # Confirm list format
         keys_to_check = ["x_ana", "x_mid", "x_para", "y_ana", "y_mid", "y_para"]
@@ -2591,11 +2591,11 @@ class Viz(VizBase):
         optimal_df = pd.read_csv(optimal_full_path)
         nonoptimal_df = pd.read_csv(nonoptimal_full_path)
 
-        analyzes_list = self.context.to_mpa_dict["analyzes"]
+        analyzes_list = self.context.to_spa_dict["analyzes"]
         analyzes_col_name_list = []
         for this_ana in analyzes_list:
             analyzes_col_name_list.append(
-                self.coll_mpa_dict["coll_ana_df"].loc[this_ana]["csv_col_name"]
+                self.coll_spa_dict["coll_ana_df"].loc[this_ana]["csv_col_name"]
             )
 
         # Create figure with one row of subplots. The N subplots equals optimal_df columns with suffix "_mean"

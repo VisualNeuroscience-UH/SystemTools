@@ -20,7 +20,7 @@ col : column
 coll : collated, collected
 conn : connections
 full : full absolute path
-mid : startpoint
+start : startpoint
 param : parameter
 """
 
@@ -68,7 +68,7 @@ startpoint_csv_folder = "startpoint_csvs/LIF"
 Data context for single files and arrays. These startpoint and parameter strings are used only in this module.
 """
 startpoint = "Bacon"  # HiFi, Comrad, Bacon
-parameter = "gL_compiled_results"
+parameter = "startpoint"  # C, gL, VT, EL, delay
 
 output_folder = f"{startpoint}_{parameter}"
 
@@ -86,9 +86,9 @@ startpoints: 'Comrad', 'Bacon', 'HiFi'
 parameters: 'C', 'gL', 'VT', 'EL', 'delay'
 analyzes: 
     'Coherence', 'Granger Causality', 'GC as TE', 'Transfer Entropy', 'Simulation Error', 'Excitatory Firing Rate', 'Inhibitory Firing Rate', 'Euclidean Distance'
-If you give to_mpa_dict = None, only single files will be handled.
+If you give to_spa_dict = None, only single files will be handled.
 """
-to_mpa_dict = {
+to_spa_dict = {
     # "startpoints": ["Comrad", "Bacon", "HiFi"],
     "startpoints": ["Bacon"],
     # "parameters": ["C", "gL", "VT", "EL", "delay"],
@@ -129,7 +129,7 @@ if __name__ == "__main__":
         NG_name=NG_output,
         t_idx_start=t_idx_start,
         t_idx_end=t_idx_end,
-        to_mpa_dict=to_mpa_dict,
+        to_spa_dict=to_spa_dict,
         project=project,
         experiment=experiment,
         startpoint_csv_folder=startpoint_csv_folder,
@@ -421,7 +421,7 @@ if __name__ == "__main__":
     """
     Show xy plot allows any parametric data plotted against each other.
     Uses seaborn regplot or lineplot. Seaborn options easy to include into code (viz_module).
-    All analyzes MUST be included into to_mpa_dict
+    All analyzes MUST be included into to_spa_dict
     Same data at the x and y axis simultaneously can be used with regplot.
     If compiled_type is accuracy, and only mean datatype is available, 
     uses the mean. 
@@ -433,7 +433,7 @@ if __name__ == "__main__":
 
     kind: regplot, binned_lineplot 
         regplot is scatterplot, where only single startpoint and parameter should be plotted at a time. draw_regression available.
-        binned_lineplot bins x-data, then compiles parameters/startpoints and finally shows distincstartpointnts/parameters (according to "hue") with distinct hues. Error shading 
+        binned_lineplot bins x-data, then compiles parameters/startpoints and finally shows distinct startpoints/parameters (according to "hue") with distinct hues. Error shading 
         indicates 95% confidence interval, obtained by bootstrapping the data 1000 times (seaborn default)
     """
     # xy_plot_dict = {
@@ -472,7 +472,7 @@ if __name__ == "__main__":
     #     "y_ave": False,  # Weighted average over NGs. Works only for kind = regplot
     #     "kind": "binned_lineplot",  # binned_lineplot, regplot
     #     "n_bins": 10,  # ignored for regplot
-    #     "hue": "startpoint",  startpointnt or Parameter.startpointoint is selected, each line istartpointdpoint and parameters will be combined. And vice versa. Ignored for regplot
+    #     "hue": "startpoint",  startpoint or Parameter. If startpoint is selected, each line is one startpoint and parameters will be combined. And vice versa. Ignored for regplot
     #     "compiled_results": True,  # x and y data from folder XX'_compiled_results'
     #     "compiled_type": "accuracy",  # mean, accuracy; falls back to mean if accuracy not found
     #     "draw_regression": False,  # only for regplot
@@ -500,7 +500,7 @@ if __name__ == "__main__":
     """
     Categorical plot of parametric data.
     Definitions for parametric plotting of multiple conditions/categories.
-    First, define what data is going to be visualized in to_mpa_dict.
+    First, define what data is going to be visualized in to_spa_dict.
     Second, define how it is visualized in param_plot_dict.
 
     Limitations: 
@@ -510,7 +510,7 @@ if __name__ == "__main__":
     outer : panel (distinct subplots) # analyzes, startpoints, parameters, controls
     inner : inside one axis (subplot) # startpoints, parameters, controls
     inner_sub : bool, further subdivision by value, such as mean firing rate
-    inner_sub_ana : name of ana. This MUST be included into to_mpa_dict "analyzes"
+    inner_sub_ana : name of ana. This MUST be included into to_spa_dict "analyzes"
     plot_type : parametric plot type # box
 
     compiled_results : data at compiled_results folder, mean over iterations
@@ -580,7 +580,7 @@ if __name__ == "__main__":
     # 'matched_IO' : create csv:s from matched input to output pairs. All analyzes are valid.
     parallel_analysis = True
     analysis_type = "full_IxO"
-    create_log_file = True
+    create_log_file = False
 
     optimal_value_delays = [
         0,
