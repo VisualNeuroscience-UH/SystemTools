@@ -20,7 +20,7 @@ col : column
 coll : collated, collected
 conn : connections
 full : full absolute path
-mid : midpoint
+mid : startpoint
 param : parameter
 """
 
@@ -65,12 +65,12 @@ input_filename = "noise_210406_SingleSpike.mat"  # "noise_210406_SingleSpike.mat
 startpoint_csv_folder = "startpoint_csvs/LIF"
 
 """
-Data context for single files and arrays. These midpoint and parameter strings are used only in this module.
+Data context for single files and arrays. These startpoint and parameter strings are used only in this module.
 """
-midpoint = "Bacon"  # HiFi, Comrad, Bacon
+startpoint = "Bacon"  # HiFi, Comrad, Bacon
 parameter = "gL_compiled_results"
 
-output_folder = f"{midpoint}_{parameter}"
+output_folder = f"{startpoint}_{parameter}"
 
 """
 Analysis context
@@ -82,15 +82,15 @@ NG_output = "NG3_L4_SS_L4"
 
 """
 Data context for multiple analyzes and visualizations. 
-midpoints: 'Comrad', 'Bacon', 'HiFi'
+startpoints: 'Comrad', 'Bacon', 'HiFi'
 parameters: 'C', 'gL', 'VT', 'EL', 'delay'
 analyzes: 
     'Coherence', 'Granger Causality', 'GC as TE', 'Transfer Entropy', 'Simulation Error', 'Excitatory Firing Rate', 'Inhibitory Firing Rate', 'Euclidean Distance'
 If you give to_mpa_dict = None, only single files will be handled.
 """
 to_mpa_dict = {
-    # "midpoints": ["Comrad", "Bacon", "HiFi"],
-    "midpoints": ["Bacon"],
+    # "startpoints": ["Comrad", "Bacon", "HiFi"],
+    "startpoints": ["Bacon"],
     # "parameters": ["C", "gL", "VT", "EL", "delay"],
     "parameters": ["gL"],
     "analyzes": [
@@ -281,14 +281,14 @@ if __name__ == "__main__":
     # PM.show_currents(results_filename=None, savefigname='', neuron_index=neuron_index)
 
     ##########################################################################
-    ###### Analysis & Viz, array runs, single midpoint, single analysis ######
+    ###### Analysis & Viz, array runs, single startpoint, single analysis ######
     ##########################################################################
 
     """
     If the following is active, the displayed array analysis figures are saved as 
     arrayIdentifier_analysis_identifier.svg at your path.
     """
-    # PM.viz.save_figure_with_arrayidentifier = f'{midpoint}_XXX'
+    # PM.viz.save_figure_with_arrayidentifier = f'{startpoint}_XXX'
     # PM.viz.save_figure_to_folder = f'Analysis_Figures'
 
     """
@@ -426,14 +426,14 @@ if __name__ == "__main__":
     If compiled_type is accuracy, and only mean datatype is available, 
     uses the mean. 
 
-    midpoints: 'Comrad', 'HiFi', 'Bacon'
+    startpoints: 'Comrad', 'HiFi', 'Bacon'
     parameters: 'C', 'gL', 'VT', 'EL', 'delay'
     analyzes: 
     'Coherence', 'Granger Causality', 'Transfer Entropy', 'Simulation Error', 'Excitatory Firing Rate', 'Inhibitory Firing Rate', 'Euclidean Distance'
 
     kind: regplot, binned_lineplot 
-        regplot is scatterplot, where only single midpoint and parameter should be plotted at a time. draw_regression available.
-        binned_lineplot bins x-data, then compiles parameters/midpoints and finally shows distinct midpoints/parameters (according to "hue") with distinct hues. Error shading 
+        regplot is scatterplot, where only single startpoint and parameter should be plotted at a time. draw_regression available.
+        binned_lineplot bins x-data, then compiles parameters/startpoints and finally shows distincstartpointnts/parameters (according to "hue") with distinct hues. Error shading 
         indicates 95% confidence interval, obtained by bootstrapping the data 1000 times (seaborn default)
     """
     # xy_plot_dict = {
@@ -472,7 +472,7 @@ if __name__ == "__main__":
     #     "y_ave": False,  # Weighted average over NGs. Works only for kind = regplot
     #     "kind": "binned_lineplot",  # binned_lineplot, regplot
     #     "n_bins": 10,  # ignored for regplot
-    #     "hue": "Midpoint",  # Midpoint or Parameter. If Midpoint is selected, each line is one midpoint and parameters will be combined. And vice versa. Ignored for regplot
+    #     "hue": "startpoint",  startpointnt or Parameter.startpointoint is selected, each line istartpointdpoint and parameters will be combined. And vice versa. Ignored for regplot
     #     "compiled_results": True,  # x and y data from folder XX'_compiled_results'
     #     "compiled_type": "accuracy",  # mean, accuracy; falls back to mean if accuracy not found
     #     "draw_regression": False,  # only for regplot
@@ -487,9 +487,9 @@ if __name__ == "__main__":
 
     """
     Show input-to-output classification confusion matrix
-    midpoints Comrad, Bacon, HiFi; parameter 'C', 'gL', 'VT', 'EL', 'delay'
+    startpoints Comrad, Bacon, HiFi; parameter 'C', 'gL', 'VT', 'EL', 'delay'
     """
-    # PM.viz.show_IxO_conf_mtx(midpoint='Comrad', parameter='VT', ana_list=['Coherence', 'GrCaus', 'TransferEntropy', 'NormError'],
+    # PM.viz.show_IxO_conf_mtx(startpoint='Comrad', parameter='VT', ana_list=['Coherence', 'GrCaus', 'TransferEntropy', 'NormError'],
     #     ana_suffix_list=['sum', 'Information', 'TransfEntropy', 'SimErr'], par_value_string_list=['-44.0', '-46.0'],
     #     best_is_list=['max', 'max', 'max', 'min'])
 
@@ -507,8 +507,8 @@ if __name__ == "__main__":
         You cannot have analyzes as title AND inner_sub = True.
         For violinplot and inner_sub = True, N bin edges MUST be two (split view)
 
-    outer : panel (distinct subplots) # analyzes, midpoints, parameters, controls
-    inner : inside one axis (subplot) # midpoints, parameters, controls
+    outer : panel (distinct subplots) # analyzes, startpoints, parameters, controls
+    inner : inside one axis (subplot) # startpoints, parameters, controls
     inner_sub : bool, further subdivision by value, such as mean firing rate
     inner_sub_ana : name of ana. This MUST be included into to_mpa_dict "analyzes"
     plot_type : parametric plot type # box
@@ -526,7 +526,7 @@ if __name__ == "__main__":
     # param_plot_dict = {
     #     "title": "parameters",  # multiple allowed => each in separate figure
     #     "outer": "analyzes",  # multiple allowed => plt subplot panels
-    #     "inner": "midpoints",  # multiple allowed => direct comparison
+    #     "inner": "startpoints",  # multiple allowed => direct comparison
     #     "inner_sub": False,  # A singular analysis => subdivisions
     #     "inner_sub_ana": "Excitatory Firing Rate",  #  The singular analysis
     #     "bin_edges": [[0.001, 150], [150, 300]],
@@ -561,7 +561,7 @@ if __name__ == "__main__":
 
     """
     Configuration for iterations, i.e. generating anat and phys csv
-    files from midpoint files, running simulations in parallel subprocesses
+    files from startpoint files, running simulations in parallel subprocesses
     and running analysis with parallel threads. 
     Run optimal analysis provides values for input vs itself with given
     delays (optimal, bas case scenario), and each input vs all other inputs 

@@ -55,7 +55,7 @@ class Analysis(AnalysisBase):
         "path",
         "output_folder",
         "input_filename",
-        "midpoint",
+        "startpoint",
         "parameter",
         "NG_name",
         "t_idx_start",
@@ -128,10 +128,10 @@ class Analysis(AnalysisBase):
             # with respect to the 'full' output.
             # calculate the full output
             lags = np.arange(-in2_len + 1, in1_len)
-            # determine the midpoint in the full output
+            # determine the mean point in the full output
             mid = lags.size // 2
             # determine lag_bound to be used with respect
-            # to the midpoint
+            # to the mean point
             lag_bound = in1_len // 2
             # calculate lag ranges for even and odd scenarios
             if in1_len % 2 == 0:
@@ -2327,21 +2327,21 @@ class Analysis(AnalysisBase):
 
         return analyzed_data_dict
 
-    def _get_midpoint_parameter_dict(self, results_folder_suffix=""):
+    def _get_startpoint_parameter_dict(self, results_folder_suffix=""):
         """
         Collect a dictionary of folders containing the iterations for distinct inputs
         """
 
-        # Get relevant midpoints, parameters and columns names
+        # Get relevant startpoints, parameters and columns names
         coll_param_df = self.coll_mpa_dict["coll_param_df"]
         coll_mid_list = self.coll_mpa_dict["coll_mid_list"]
 
         # Get the full paths of analyzed iterations. If missing, abort
-        midpoint_parameter_dict = {}
+        startpoint_parameter_dict = {}
         not_found = []
-        for midpoint in coll_mid_list:
+        for startpoint in coll_mid_list:
             for parameter in coll_param_df.index.tolist():
-                this_mid_par = midpoint + "_" + parameter
+                this_mid_par = startpoint + "_" + parameter
                 full_paths_list = self.data_io.listdir_loop(
                     self.context.path, this_mid_par.lower(), None
                 )
@@ -2370,16 +2370,16 @@ class Analysis(AnalysisBase):
                 ]
 
                 if dir_full_paths_list_clean:
-                    midpoint_parameter_dict[this_mid_par] = dir_full_paths_list_clean
+                    startpoint_parameter_dict[this_mid_par] = dir_full_paths_list_clean
                 else:
                     not_found.append(this_mid_par)
 
         # Report missing folder or abort
         assert (
             not not_found
-        ), f"The following requested midpoint_parameter combinations were not found: {not_found}, aborting..."
+        ), f"The following requested startpoint_parameter combinations were not found: {not_found}, aborting..."
 
-        return midpoint_parameter_dict
+        return startpoint_parameter_dict
 
     def _get_system_profile_metrics(self, data_df_compiled, independent_var_col_list):
 
@@ -2952,7 +2952,7 @@ class Analysis(AnalysisBase):
 
     def collate_best_values(
         self,
-        midpoint=None,
+        startpoint=None,
         parameter=None,
         analyzes=None,
         save_as_csv=True,
@@ -2968,9 +2968,9 @@ class Analysis(AnalysisBase):
                 "Coherence_NG3_L4_SS_L4_Sum": "max",
             }
 
-        # Get midpoint, parameter, and update output folder if it exists
-        if midpoint is None:
-            midpoint = self.context.midpoint
+        # Get startpoint, parameter, and update output folder if it exists
+        if startpoint is None:
+            startpoint = self.contexstartpointnt
         if parameter is None:
             parameter = self.context.parameter
         if output_folder is not None:
@@ -2981,7 +2981,7 @@ class Analysis(AnalysisBase):
         # Init df for collated data
         collated_best_values_df = pd.DataFrame(
             columns=[
-                "midpoint",
+                "startpoint",
                 "parameter",
                 "analyzes",
                 "best_param_x",
@@ -3006,7 +3006,7 @@ class Analysis(AnalysisBase):
                 y_values,
             ) = self._get_best_values(df, this_column, best_is=analyzes[this_column])
             collated_best_values_df.loc[idx] = [
-                midpoint,
+                startpoint,
                 parameter,
                 this_column,
                 at_param_list[0],
@@ -3034,7 +3034,7 @@ class Analysis(AnalysisBase):
         """
 
         results_folder_suffix = "_compiled_results"
-        midpoint_parameter_dict = self._get_midpoint_parameter_dict(
+        startpoint_parameter_dict = self._get_startpoint_parameter_dict(
             results_folder_suffix=results_folder_suffix
         )
 
@@ -3043,9 +3043,9 @@ class Analysis(AnalysisBase):
 
         # Collect iterations from mapped folders to one numpy array.
         # Loop over "_compiled_results" folders
-        for this_mid_par in midpoint_parameter_dict.keys():
+        for this_mid_par in startpoint_parameter_dict.keys():
 
-            first_path = midpoint_parameter_dict[this_mid_par][0]
+            first_path = startpoint_parameter_dict[this_mid_par][0]
             basepath, folder_name = first_path.parent, first_path.name
 
             # Make output folders
@@ -3073,7 +3073,7 @@ class Analysis(AnalysisBase):
                 data_columns_list = [
                     c for c in dependent_var_col_list for s in csv_col_list if s in c
                 ]
-            n_iter = len(midpoint_parameter_dict[this_mid_par])
+            n_iter = len(startpoint_parameter_dict[this_mid_par])
             ini_stats_df = data_df_compiled[independent_var_col_list]
 
             if analysis_type in ["mean", "TEDrift"]:
@@ -3085,9 +3085,9 @@ class Analysis(AnalysisBase):
 
                 collated_mtx_np = np.full(dims_list, np.nan)
 
-                # Collect midpoint_parameter iteration data
+                # Collect startpoint_parameter iteration data
                 for iter_idx, this_path in enumerate(
-                    midpoint_parameter_dict[this_mid_par]
+                    startpoint_parameter_dict[this_mid_par]
                 ):
                     (
                         data0_df,
@@ -3134,7 +3134,7 @@ class Analysis(AnalysisBase):
                 # loop itererations folders; get all_data_mtx_np
                 print("Loading data from iterations...")
                 for this_iteration_idx, this_iteration_folder in enumerate(
-                    midpoint_parameter_dict[this_mid_par]
+                    startpoint_parameter_dict[this_mid_par]
                 ):
                     data_type_str = "IxO_analysis"
                     ixo_full_filename_list = self.data_io.listdir_loop(
@@ -3233,7 +3233,7 @@ class Analysis(AnalysisBase):
                             upper_bound,
                         )
 
-            # Save to midpoint_parameter -named folders with names including analysis column title prefixes
+            # Save to startpoint_parameter -named folders with names including analysis column title prefixes
             prefix_list = [ana[: ana.find("_")] + "_" for ana in data_columns_list]
             uniques_prefix_list = sorted(set(prefix_list))
             csv_name_prefix = "".join(

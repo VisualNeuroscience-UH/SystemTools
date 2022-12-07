@@ -86,21 +86,18 @@ class ProjectManager(ProjectBase, ProjectUtilities):
     TE_args = {
         "max_time_lag_seconds": 0.1,
         "downsampling_factor": 40,
-        "n_states": 4, # 4, 2
+        "n_states": 4,  # 4, 2
         "embedding_vector": 1,
         "te_shift_start_time": 0.004,  # only for TE_Drift analysis
         "te_shift_end_time": 0.08,
     }  # only for TEDrift analysis
     GrCaus_args = {
         "max_time_lag_seconds": 0.1,
-        "downsampling_factor": 40, # 40, 2
+        "downsampling_factor": 40,  # 40, 2
         "save_gc_fit_dg_and_QA": False,
         "show_gc_fit_diagnostics_figure": False,
     }
-    NormError_args = {
-        "decoding_method": "least_squares",
-        "do_only_simerror": True
-        }
+    NormError_args = {"decoding_method": "least_squares", "do_only_simerror": True}
     kw_ana_args = {
         "TE_args": TE_args,
         "GrCaus_args": GrCaus_args,
@@ -127,7 +124,6 @@ class ProjectManager(ProjectBase, ProjectUtilities):
 
         self.ct = ConnectionTranslator(context, data_io)
 
-
         # Build necessary analyzes from to_mpa_dict
         self.build_mid_par_ana()
         stat_tests = Statistics()
@@ -153,7 +149,7 @@ class ProjectManager(ProjectBase, ProjectUtilities):
         )
 
         self.ana = ana
-        
+
         self.viz = Viz(
             # Interfaces
             context,
@@ -198,16 +194,16 @@ class ProjectManager(ProjectBase, ProjectUtilities):
         """
         Build mapping from to_mpa_dict in conf file to dataframes which include parameter and analysis details.
         """
-        if not hasattr(self.context, 'to_mpa_dict') or self.context.to_mpa_dict is None:
-            print('No to_mpa_dict in conf file. Only one file will be processed.')
+        if not hasattr(self.context, "to_mpa_dict") or self.context.to_mpa_dict is None:
+            print("No to_mpa_dict in conf file. Only one file will be processed.")
             self.coll_mpa_dict = None
             return
 
-        midpoints = self.context.to_mpa_dict["midpoints"]
+        startpoints = self.context.to_mpa_dict["startpoints"]
         parameters = self.context.to_mpa_dict["parameters"]
         analyzes = self.context.to_mpa_dict["analyzes"]
 
-        all_midpoints_list = ["Comrad", "Bacon", "HiFi"]
+        all_startpoints_list = ["Comrad", "Baconstartpoint"]
 
         all_param_col_list = ["Name", "Unit", "Dims"]
         all_param_dict = {
@@ -256,11 +252,11 @@ class ProjectManager(ProjectBase, ProjectUtilities):
             coll_ana_df = pd.DataFrame(all_ana_df, index=analyzes)
 
         # Assertions
-        if midpoints is not None:
-            coll_mid_list = list(sorted(set(all_midpoints_list) & set(midpoints)))
+        if startpoints is not None:
+            coll_mid_list = list(sorted(set(all_startpoints_list) & set(startpoints)))
             assert (
                 len(coll_mid_list) > 0
-            ), 'variable "midpoints" not set or names do not match get_collated_analyzes method data'
+            ), 'variable "startpoints" not set or names do not match get_collated_analyzes method data'
         if parameters is not None:
             collated_parameters = list(set(all_param_dict.keys()) & set(parameters))
             assert (
@@ -275,7 +271,7 @@ class ProjectManager(ProjectBase, ProjectUtilities):
         coll_mpa_dict = {}
         if parameters is not None:
             coll_mpa_dict["coll_param_df"] = coll_param_df
-        if midpoints is not None:
+        if startpoints is not None:
             coll_mpa_dict["coll_mid_list"] = coll_mid_list
         if analyzes is not None:
             coll_mpa_dict["coll_ana_df"] = coll_ana_df
@@ -288,7 +284,7 @@ class ProjectManager(ProjectBase, ProjectUtilities):
         IT.data_io = self.data_io
         IT.ana = self.ana
         IT.coll_mpa_dict = self.coll_mpa_dict
-        IT.phys_updater = self.phys_updater # From project utilities
+        IT.phys_updater = self.phys_updater  # From project utilities
         self.IT = IT
 
     def run_iterator(self):

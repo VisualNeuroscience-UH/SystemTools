@@ -112,10 +112,12 @@ class Iterator:
 
         # Create parallel obj for holding _meta_fname_full, _input_file_full, and _output_folder_full.
         # The underscore denotes internally generated items, not visible in project_conf file
-        midpoint, parameter, this_idx = this_mpi[:]
+        startpoint, parameter, this_idx = this_mpi[:]
 
-        # simu_title = self._get_simu_title("not_none", midpoint, parameter, this_idx)
-        simu_title = self._get_simu_title(iter_idx_list, midpoint, parameter, this_idx)
+        # simu_title = self._get_simu_title("not_none", startpoint, parameter, this_idx)
+        simu_title = self._get_simu_title(
+            iter_idx_list, startpoint, parameter, this_idx
+        )
 
         _output_folder_full = self.context.path.joinpath(simu_title)
 
@@ -141,7 +143,7 @@ class Iterator:
                 except:
                     if self.create_log_file:
                         logging.error(
-                            f"\nParallel matched_IO analysis failed at midpoint {midpoint} parameter {parameter} iteration {this_idx} analysis {this_analysis}"
+                            f"\nParallel matched_IO analysis failed at startpoint {startpoint} parameter {parameter} iteration {this_idx} analysis {this_analysis}"
                         )
         elif analysis_type == "full_IxO":
             try:
@@ -153,14 +155,16 @@ class Iterator:
             except:
                 if self.create_log_file:
                     logging.error(
-                        f"\nParallel IxO analysis failed at midpoint {midpoint} parameter {parameter} iteration {this_idx}"
+                        f"\nParallel IxO analysis failed at startpoint {startpoint} parameter {parameter} iteration {this_idx}"
                     )
 
-    def _csv_name_builder(self, conf_type, midpoint, conf_time_stamp, simulation_title):
+    def _csv_name_builder(
+        self, conf_type, startpoint, conf_time_stamp, simulation_title
+    ):
         """
         Strings to build automatically conf csv file names.
         :param conf_type, str, anatomy, physiology
-        :param midpoint, str, search midpoint aka template name
+        :param startpoint, str, search startpoint aka template name
         :param conf_time_stamp, integer or string, conf template creation time
         :param simulation_title, string, same as sim folder name. Includes iter if relevant.
         """
@@ -177,7 +181,7 @@ class Iterator:
             )
 
         name_part_list.append(project)
-        name_part_list.append(midpoint)
+        name_part_list.append(startpoint)
         name_part_list.append(str(conf_time_stamp))
         name_part_list.append(simulation_title)
 
@@ -185,20 +189,22 @@ class Iterator:
 
         return csv_name
 
-    def _get_simu_title(self, iter_idx_list, midpoint, parameter, this_idx):
+    def _get_simu_title(self, iter_idx_list, startpoint, parameter, this_idx):
 
         if iter_idx_list is None:
-            simu_title = f"{midpoint}_{parameter}"
+            simu_title = f"{startpoint}_{parameter}"
         else:
             add_padding_str = self.pad_format_str % this_idx
-            simu_title = f"{midpoint}_{parameter}_{add_padding_str}"  # N padded zeros 2
+            simu_title = (
+                f"{startpoint}_{parameter}_{add_padding_str}"  # N padded zeros 2
+            )
 
         return simu_title
 
     def _get_meta_full(self, output_folder_full):
         """
         Get metadata full path for one iterator.
-        :param midpoint, str, current midpoint
+        :param startpoint, str, current startpoint
         :param parameter, str, current parameter
         :param idx, integer, iterator index
         """
@@ -279,37 +285,37 @@ class Iterator:
         if self.coll_mpa_dict is None:
             print("No coll_mpa_dict provided, iteration disabled.")
             return
-        
+
         # to_mpa_dict formed at the top of project_conf_module
-        midpoints = self.context.to_mpa_dict["midpoints"]
+        startpoints = self.context.to_mpa_dict["startpoints"]
         parameters = self.context.to_mpa_dict["parameters"]
         # analyzes = self.context.to_mpa_dict["analyzes"]
         analyzes = self.coll_mpa_dict["coll_ana_df"]["ana_name_prefix"]
         analyzes_list = analyzes.tolist()
 
         ncpus = os.cpu_count() - 1
-        n_items = len(midpoints) * len(parameters) * len(idx_iterator)
+        n_items = len(startpoints) * len(parameters) * len(idx_iterator)
 
-        all_mpi_list = list(product(midpoints, parameters, idx_iterator))
+        all_mpi_list = list(product(startpoints, parameters, idx_iterator))
 
         if self.create_csvs:
             logging.info(f"Creating {n_items} anat-phys pairs of conf csvs")
             tic = time.time()
             for this_mpi in all_mpi_list:
-                midpoint, parameter, this_idx = this_mpi[:]
-                conf_time_stamp = self.time_ids[midpoint]
+                startpoint, parameter, this_idx = this_mpi[:]
+                conf_time_stamp = self.time_ids[startpoint]
 
                 # Anatomy and system
                 anat_config_template = self._csv_name_builder(
-                    "anat", midpoint, conf_time_stamp, "midpoint"
+                    "anat", startpoint, conf_time_stamp, "startpoint"
                 )
 
                 simu_title = self._get_simu_title(
-                    self.iter_idx_list, midpoint, parameter, this_idx
+                    self.iter_idx_list, startpoint, parameter, this_idx
                 )
 
                 anat_config_iter = self._csv_name_builder(
-                    "anat", midpoint, conf_time_stamp, simu_title
+                    "anat", startpoint, conf_time_stamp, simu_title
                 )
                 change_anat_file_header_value(
                     anat_config_template,
@@ -328,11 +334,11 @@ class Iterator:
 
                 # Physiology
                 phys_config_template = self._csv_name_builder(
-                    "phys", midpoint, conf_time_stamp, "midpoint"
+                    "phys", startpoint, conf_time_stamp, "startpoint"
                 )
                 physio_config_df = read_config_file(phys_config_template, header=True)
                 phys_config_iter = self._csv_name_builder(
-                    "phys", midpoint, conf_time_stamp, simu_title
+                    "phys", startpoint, conf_time_stamp, simu_title
                 )
 
                 for param_list in self.phys_update_dict["current_injection"]:
@@ -365,21 +371,21 @@ class Iterator:
             proc_count = 0
 
             for this_mpi in all_mpi_list:
-                midpoint, parameter, this_idx = this_mpi[:]
-                conf_time_stamp = self.time_ids[midpoint]
+                startpoint, parameter, this_idx = this_mpi[:]
+                conf_time_stamp = self.time_ids[startpoint]
 
-                conf_time_stamp = self.time_ids[midpoint]
+                conf_time_stamp = self.time_ids[startpoint]
                 if self.iter_idx_list is None:
-                    simu_title = f"{midpoint}_{parameter}"
+                    simu_title = f"{startpoint}_{parameter}"
                 else:
                     add_padding_str = self.pad_format_str % this_idx
-                    simu_title = f"{midpoint}_{parameter}_{add_padding_str}"
+                    simu_title = f"{startpoint}_{parameter}_{add_padding_str}"
 
                 anat_config_iter = self._csv_name_builder(
-                    "anat", midpoint, conf_time_stamp, simu_title
+                    "anat", startpoint, conf_time_stamp, simu_title
                 )
                 phys_config_iter = self._csv_name_builder(
-                    "phys", midpoint, conf_time_stamp, simu_title
+                    "phys", startpoint, conf_time_stamp, simu_title
                 )
 
                 function_call_str = (
@@ -405,7 +411,7 @@ class Iterator:
             logging.info(f"\nSimulations took {(toc-tic):.2f} seconds")
 
         if self.run_analysis:
-            # Create iterator including all midpoints, parameters and iterations. Note that the order is critical for correct names
+            # Create iterator including all startpoints, parameters and iterations. Note that the order is critical for correct names
             logging.info(
                 f"Running analyses {analyzes_list}, for {n_items} simulation results data file"
             )
@@ -443,10 +449,10 @@ class Iterator:
                 failed_grcaus_iterations = []
                 # Search failed files
                 for this_mpi in _tmp_all_mpi_list:
-                    midpoint, parameter, this_idx = this_mpi[:]
+                    startpoint, parameter, this_idx = this_mpi[:]
                     add_padding_str = self.pad_format_str % this_idx
                     self.context.output_folder = Path(
-                        f"{midpoint}_{parameter}_{add_padding_str}"
+                        f"{startpoint}_{parameter}_{add_padding_str}"
                     )
                     tmp_full_filename = Path.joinpath(
                         self.context.output_folder,

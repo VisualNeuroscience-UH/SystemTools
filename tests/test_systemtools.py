@@ -58,9 +58,9 @@ substring_exclude = "400pF.gz"
 substring_in = "connections"
 substring_test_root = "tests"
 
-midpoint = "Comrad"
+startpoint = "Comrad"
 parameter = "C_0"
-output_folder = Path(midpoint + "_" + parameter)
+output_folder = Path(startpoint + "_" + parameter)
 conn_file_out = "connections_SingleSpike_ci.gz"
 
 input_filename = "noise_210916_SingleSpike_0.mat"
@@ -69,7 +69,7 @@ t_idx_start = 2000
 t_idx_end = -2000
 
 to_mpa_dict = {
-    "midpoints": ["Comrad"],
+    "startpoints": ["Comrad"],
     "parameters": ["C"],
     "analyzes": ["Excitatory Firing Rate", "Inhibitory Firing Rate"],
 }
@@ -82,7 +82,7 @@ pm_kw_dict = dict(
     conn_skeleton_file_in=conn_skeleton_file_in,
     conn_file_out=conn_file_out,
     input_filename=input_filename,
-    midpoint=midpoint,
+    startpoint=startpoint,
     parameter=parameter,
     NG_name=NG_name,
     t_idx_start=t_idx_start,
@@ -620,16 +620,16 @@ def test__get_analyzed_full_array_as_np():
     assert 56 < np.sum(ana_data_dict["GrCaus_NG3_L4_SS_L4_Information"]) < 57
 
 
-def test__get_midpoint_parameter_dict():
+def test__get_startpoint_parameter_dict():
 
     results_folder_suffix = "_compiled_results"
-    midpoint_parameter_dict = ana._get_midpoint_parameter_dict(
+    startpoint_parameter_dict = ana._get_startpoint_parameter_dict(
         results_folder_suffix=results_folder_suffix
     )
-    test_key = to_mpa_dict["midpoints"][0] + "_" + to_mpa_dict["parameters"][0]
+    test_key = to_mpa_dict["startpoints"][0] + "_" + to_mpa_dict["parameters"][0]
 
-    assert test_key in midpoint_parameter_dict.keys()
-    assert len(midpoint_parameter_dict[test_key]) == 2
+    assert test_key in startpoint_parameter_dict.keys()
+    assert len(startpoint_parameter_dict[test_key]) == 2
 
 
 def test_get_PCA():
@@ -709,7 +709,7 @@ def analyze_TE_drift():
 @pytest.mark.skip(reason="method inactive")
 def test_collate_best_values():
     collated_best_values_df, x_val, y_val = ana.collate_best_values(
-        midpoint=None,
+        startpoint=None,
         parameter=None,
         analyzes=None,
         save_as_csv=False,
@@ -922,7 +922,7 @@ def test_show_catplot():
     param_plot_dict = {
         "title": "parameters",
         "outer": "analyzes",
-        "inner": "midpoints",
+        "inner": "startpoints",
         "inner_sub": False,
         "inner_sub_ana": "Excitatory Firing Rate",
         "bin_edges": [[270, 280], [280, 290], [290, 300]],

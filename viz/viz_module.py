@@ -38,7 +38,7 @@ class Viz(VizBase):
         "path",
         "output_folder",
         "input_filename",
-        "midpoint",
+        "startpoint",
         "parameter",
         "NG_name",
         "t_idx_start",
@@ -1522,7 +1522,7 @@ class Viz(VizBase):
             )
             analyzes_list = copy.deepcopy(to_mpa_dict_in["analyzes"])
             analyzes_list.remove(param_plot_dict["inner_sub_ana"])
-            to_mpa_dict = {k: to_mpa_dict_in[k] for k in ["midpoints", "parameters"]}
+            to_mpa_dict = {k: to_mpa_dict_in[k] for k in ["startpoints", "parameters"]}
             to_mpa_dict["analyzes"] = analyzes_list
             # Short ana name for sub to diff from data col names
             sub_col_name = coll_sub_S["ana_name_prefix"]
@@ -1538,7 +1538,7 @@ class Viz(VizBase):
         if param_plot_dict["inner_paths"] is True:
             inner_list = param_plot_dict["inner_path_names"]
 
-        mid_idx = list(param_plot_dict.values()).index("midpoints")
+        mid_idx = list(param_plot_dict.values()).index("startpoints")
         par_idx = list(param_plot_dict.values()).index("parameters")
         ana_idx = list(param_plot_dict.values()).index("analyzes")
 
@@ -1630,8 +1630,8 @@ class Viz(VizBase):
             You cannot have analyzes as title AND inner_sub = True.
             For violinplot and inner_sub = True, N bin edges MUST be two (split view)
 
-        outer : panel (distinct subplots) # analyzes, midpoints, parameters, controls
-        inner : inside one axis (subplot) # midpoints, parameters, controls
+        outer : panel (distinct subplots) # analyzes, startpoints, parameters, controls
+        inner : inside one axis (subplot) # startpoints, parameters, controls
         inner_sub : bool, further subdivision by value, such as mean firing rate
         inner_sub_ana : name of ana. This MUST be included into to_mpa_dict "analyzes"
         plot_type : parametric plot type # box
@@ -1645,7 +1645,7 @@ class Viz(VizBase):
         param_plot_dict = {
             "title": "parameters",  # multiple allowed => each in separate figure
             "outer":  "analyzes",  # multiple allowed => plt subplot panels
-            "inner": "midpoints",  # multiple allowed => direct comparison
+            "inner": "startpoints",  # multiple allowed => direct comparison
             "inner_sub": False,  # A singular analysis => subdivisions
             "inner_sub_ana": "Excitatory Firing Rate",  #  The singular analysis
             "bin_edges": [[0.001, 150], [150, 300]],
@@ -2116,7 +2116,7 @@ class Viz(VizBase):
 
         # Get df. This is the same w/ and wo/ ave
         # get columns
-        cols = ["Analysis", "Values", "Midpoint", "Parameter"]
+        cols = ["Analysis", "Values", "startpoint", "Parameter"]
 
         df_coll = pd.DataFrame(columns=cols)
         for [this_path, this_col, col_suffix, this_mid, this_para] in path_col_list:
@@ -2133,11 +2133,11 @@ class Viz(VizBase):
             data_df_tmp = pd.DataFrame(columns=cols)
             data_df_tmp["Values"] = data_df_compiled[this_col]
             data_df_tmp["Analysis"] = this_col
-            data_df_tmp["Midpoint"] = this_mid
+            data_df_tmp["startpoint"] = this_mid
             data_df_tmp["Parameter"] = this_para
             if x_data is not None:
                 data_df_tmp2 = x_data[
-                    (x_data["Midpoint"] == this_mid)
+                    (x_data["startpoint"] == this_mid)
                     & (x_data["Parameter"] == this_para)
                 ]
                 data_df_tmp2.reset_index(inplace=True)
@@ -2195,7 +2195,7 @@ class Viz(VizBase):
                     len(xy_plot_dict["y_mid"]) == 1,
                     len(xy_plot_dict["y_para"]) == 1,
                 ]
-            ), "regplot accepts only single midpoints and parameters at a time, aborting..."
+            ), "regplot accepts only single startpoints and parameters at a time, aborting..."
 
             x_df = self._get_df_for_xy_plot(
                 xy_plot_dict["x_mid"],
@@ -2368,7 +2368,7 @@ class Viz(VizBase):
 
     def show_IxO_conf_mtx(
         self,
-        midpoint="",
+        startpoint="",
         parameter="",
         ana_list=[],
         ana_suffix_list=[],
@@ -2378,9 +2378,9 @@ class Viz(VizBase):
         """
         At the moment this works only for 2D data
         """
-        # Get IxO...gz data from all midpoint_parameter_iterations
+        # Get IxO...gz data from all startpoint_parameter_iterations
         assert all(
-            [midpoint, parameter, ana_list, ana_suffix_list, best_is_list]
+            [startpoint, parameter, ana_list, ana_suffix_list, best_is_list]
         ), "You need to define all input parameteres, sorry, aborting..."
         assert (
             len(ana_list) == len(ana_suffix_list) == len(best_is_list)
@@ -2389,7 +2389,7 @@ class Viz(VizBase):
         # Get a list of files
         iteration_paths_list = self.data_io.listdir_loop(
             path=self.context.path,
-            data_type=f"{midpoint}_{parameter}_",
+            data_type=f"{startpoint}_{parameter}_",
             exclude="_compiled_results",
         )
         IxO_file_list = []
