@@ -570,8 +570,8 @@ if __name__ == "__main__":
 
     # What to do
     create_csvs = 0
-    run_simulation = 0
-    run_analysis = 0
+    run_simulation = 1
+    run_analysis = 1
     run_optimal_analysis = 0  # Always nonparallel
 
     # Two parallel analyzes exist (None for non-parallel):
@@ -580,7 +580,7 @@ if __name__ == "__main__":
     # 'matched_IO' : create csv:s from matched input to output pairs. All analyzes are valid.
     parallel_analysis = True
     analysis_type = "full_IxO"
-    create_log_file = False
+    create_log_file = True
 
     optimal_value_delays = [
         0,

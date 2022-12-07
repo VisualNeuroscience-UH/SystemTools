@@ -168,7 +168,7 @@ class Iterator:
         :param conf_time_stamp, integer or string, conf template creation time
         :param simulation_title, string, same as sim folder name. Includes iter if relevant.
         """
-        project = self.context.project
+        # project = self.context.project
 
         name_part_list = []
         if "anatomy".startswith(conf_type.lower()):
@@ -180,7 +180,7 @@ class Iterator:
                 f"{conf_type=}, should be anatomy, physiology, or string starting with same chars, aborting..."
             )
 
-        name_part_list.append(project)
+        # name_part_list.append(project)
         name_part_list.append(startpoint)
         name_part_list.append(str(conf_time_stamp))
         name_part_list.append(simulation_title)
