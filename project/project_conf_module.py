@@ -31,7 +31,8 @@ if sys.platform == "linux":
     # root_path = "/opt3/Laskenta/Models"  # pikkuveli
     root_path = r"/opt2/Git_Repos/SystemTools/scripts/"
 elif sys.platform == "win32":
-    root_path = r"C:\Users\Simo\Laskenta\Models"
+    # root_path = r"C:\Users\Simo\Laskenta\Models"
+    root_path = r"C:\Users\Simo\Laskenta\Git_Repos\SystemTools\scripts"
 
 
 """
@@ -42,7 +43,7 @@ project = "FCN22"  # FCN22
 """
 Current experiment
 """
-experiment = "Figure1CDE"  # Single_narrow_iterations_control_EI_R1 'Canonical_folder',
+experiment = "Figure2"  # Single_narrow_iterations_control_EI_R1 'Canonical_folder',
 
 """
 ### Housekeeping ###. Do not comment out.
@@ -65,8 +66,8 @@ startpoint_csv_folder = "startpoint_csvs/LIF"
 """
 Data context for single files and arrays. These startpoint and parameter strings are used only in this module.
 """
-startpoint = "Comrad"  # HiFi, Comrad, Bacon
-parameter = "noise"  # C, gL, VT, EL, delay
+startpoint = "Bacon"  # HiFi, Comrad, Bacon
+parameter = "gL"  # C, gL, VT, EL, delay
 
 output_folder = f"{startpoint}_{parameter}"
 
@@ -98,7 +99,7 @@ to_spa_dict = {
         "Transfer Entropy",
         "Simulation Error",
         # 'GC as TE',
-        # "Excitatory Firing Rate",
+        "Excitatory Firing Rate",
         # "Euclidean Distance",
     ],
 }
@@ -244,9 +245,9 @@ if __name__ == "__main__":
     # PM.viz.show_readout_on_input(results_filename=file_to_display, normalize=False, unit_idx_list=[0], savefigname='')
     # Best possible outputsignal, given the leaky spikes in readout group
     # PM.viz.show_estimate_on_input(results_filename=None, simulation_engine='cxsystem', readout_group='E', unit_idx_list=[5]) # Simulation engines: 'cxsystem','matlab'. Matlab needs filename. Readout_groups 'E','I'.
-    PM.viz.show_input_to_readout_coherence(
-        results_filename=file_to_display, savefigname="", signal_pair=[0, 0]
-    )  # HiFi_C0_I180E70_Coh.svg
+    # PM.viz.show_input_to_readout_coherence(
+    #     results_filename=file_to_display, savefigname="", signal_pair=[0, 0]
+    # )  # HiFi_C0_I180E70_Coh.svg
 
     """
     Show spikes and continuous data such as Vm. Note that param name can be any used dynamic variable in Brian2 equations
@@ -532,16 +533,18 @@ if __name__ == "__main__":
     #     "compiled_results": True, # True, False
     #     "sharey": False,
     #     "palette": "Greys",
-    #     "inner_paths": False,
-    #     # "inner_path_names": ["Comrad", "Bacon", "Bacon_EI", "Bacon_ALL"],
+    #     "inner_paths": True,
+    #     "inner_path_names": ["Comrad", "Bacon", "Random_EI", "Random_all"],
     #     "paths": [
-    #         # (Path(root_path), Path(project), 'Single_narrow_iterations', 'Comrad_gL_compiled_results'),
-    #         # (Path(root_path), Path(project), 'Single_narrow_iterations_control_EI', 'Bacon_gL_compiled_results'),
+    #         (path, 'Comrad_gL_compiled_results'),
+    #         (path, 'Bacon_gL_compiled_results'),
+    #         (path, 'Bacon_gL_compiled_results_EI'),
+    #         (path, 'Bacon_gL_compiled_results_ALL'),
     #         ],
     #     "inner_stat_test": False,
     #     "save_description": False,
     #     "save_name": "description_simulated",
-    #     "display_optimal_values": True,
+    #     "display_optimal_values": False,
     #     "optimal_value_foldername": optimal_value_foldername,
     #     "optimal_description_name": optimal_description_name
     # }
