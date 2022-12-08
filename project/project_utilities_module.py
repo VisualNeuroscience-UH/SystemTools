@@ -20,24 +20,26 @@ class ProjectUtilities:
     """
 
     def phys_updater(self, physio_config_df, param_list):
-        '''
+        """
         Replace values in physio_config_df with values from param_list
         The param_list contains five items which are either strings or nan (from built-in math module),
         [0] = Variable name
         [1] = Key name
-        [2] = Value 
+        [2] = Value
         [3] = Unit
         [4] = "variable" or "key", indicating whether the value is to be assigned to the row by variable or by key
-        
+
         Examples:
         Replace value of variable "base_ci_path" with in_folder_full value
         ["base_ci_path", nan, f"r'{in_folder_full}'", "", "variable"]
         Replace value of variable "L4_CI_BC" key "C" with "{ 30.0 | 270.0 | 10.0 } * pF" value
         ["L4_CI_BC", "C", "{ 30.0 | 270.0 | 10.0 }", " * pF", "key"]
-        '''
+        """
 
-        #Some of the param list items might be pathlib objects, convert them to strings
-        param_list = [str(item) if isinstance(item, Path) else item for item in param_list]
+        # Some of the param list items might be pathlib objects, convert them to strings
+        param_list = [
+            str(item) if isinstance(item, Path) else item for item in param_list
+        ]
 
         # Find row index for correct Variable
         index = physio_config_df.index
@@ -56,41 +58,67 @@ class ProjectUtilities:
             key_indices = index[condition_keys].values
             # Find first correct Key after correct Variable. This is dangerous, because it does not check for missing Key
             key_index = key_indices[key_indices >= variable_index][0]
-            physio_config_df.loc[key_index, "Value"] = param_list[2] + param_list[3] # concatenate value and unit
+            physio_config_df.loc[key_index, "Value"] = (
+                param_list[2] + param_list[3]
+            )  # concatenate value and unit
         else:
             raise NotImplementedError(
                 'Unknown row_by value, should be "key" or "variable"'
             )
         return physio_config_df
 
-
-
-    def prepare_csvs_for_simulation(self, anat_param_to_change: dict = None, phys_param_to_change: dict = None):
+    def prepare_csvs_for_simulation(
+        self,
+        anat_name=None,
+        phys_name=None,
+        anat_param_to_change: dict = None,
+        phys_param_to_change: dict = None,
+    ):
         """
         This function prepares the csv files for simulation.
 
         For each startpoint, it creates a new folder in path_to_csvs_out, and copies the csv files from path_to_csvs_in to the new folder.
-        Then it changes the anatomical and physiological parameters in the csv files according to the input dictionaries.
+        Then it changes the anatomical and physiological parameters in the csv files according to the input dictionaries. Note that
+        only anat header values can be changed, not neuron group or synapse parameters. For these, the csv files must be edited manually
+        and the manually edited csv files must be copied to path_to_csvs_in. Provide the manually edited file name as the anat_file.
         """
 
-        
         output_folder = self.context.output_folder
         if anat_param_to_change is None:
-            anat_param_to_change={'workspace_path': self.context.path,'simulation_title' : output_folder.name}
+            anat_param_to_change = {
+                "workspace_path": self.context.path,
+                "simulation_title": output_folder.name,
+            }
         if phys_param_to_change is None:
-            phys_param_to_change={'base_ci_path' : f"r'{str(self.context.input_folder)}'",'ci_filename' :  f"r'{str(self.context.input_filename)[:-4]}_ci.mat'"}
+            phys_param_to_change = {
+                "base_ci_path": f"r'{str(self.context.input_folder)}'",
+                "ci_filename": f"r'{str(self.context.input_filename)[:-4]}_ci.mat'",
+            }
 
         startpoint_string_end_idx = str(output_folder.name).find("_")
         startpoint = str(output_folder.name)[0:startpoint_string_end_idx]
         parameter = str(output_folder.name)[startpoint_string_end_idx + 1 :]
-        
+
         startpoint_csv_folder = self.context.startpoint_csv_folder
         path_to_csvs_in = self.context.path.parent.joinpath(startpoint_csv_folder)
 
         # From path_to_csvs_in find all csv files
         csv_files = list(path_to_csvs_in.glob("*.csv"))
+
+        if anat_name is not None:
+            anat_file_list = [
+                file
+                for file in csv_files
+                if anat_name == file.stem or anat_name == file.name
+            ]
+        else:
+            anat_file_list = [
+                file
+                for file in csv_files
+                if f"Anat_{startpoint}_" in file.stem and "startpoint" in file.stem
+            ]
+
         # From theses csv files check that one and only one is the anatomical file
-        anat_file_list = [file for file in csv_files if f"Anat_{startpoint}_" in file.stem and "startpoint" in file.stem]
         assert len(anat_file_list) == 1, "Anatomical file not found or not unique"
         anat_file_fullpath = anat_file_list[0]
         # Get timestamp from the anat file
@@ -98,14 +126,14 @@ class ProjectUtilities:
 
         anat_file_out = f"Anat_{startpoint}_{timestamp_anat}_{parameter}.csv"
         anat_file_fullpath_out = Path.joinpath(self.context.path, anat_file_out)
-        
+
         # Create the path_to_csvs_out folder if it does not exist
         if not self.context.path.exists():
             self.context.path.mkdir(parents=False)
-        
+
         # Copy original files to new folder
         shutil.copyfile(anat_file_fullpath, anat_file_fullpath_out)
-        
+
         if anat_param_to_change is not None:
             # Update the anat csv parameters
             for this_key in anat_param_to_change:
@@ -116,11 +144,18 @@ class ProjectUtilities:
                     anat_param_to_change[this_key],
                 )
 
-        phys_file_list = [file for file in csv_files if f"Phys_{startpoint}_" in file.stem and "startpoint" in file.stem]
+        if phys_name is not None:
+            phys_file_list = [file for file in csv_files if phys_name == file.stem]
+        else:
+            phys_file_list = [
+                file
+                for file in csv_files
+                if f"Phys_{startpoint}_" in file.stem and "startpoint" in file.stem
+            ]
         assert len(phys_file_list) == 1, "Physiological file not found or not unique"
         phys_file_fullpath = phys_file_list[0]
         timestamp_phys = phys_file_fullpath.name.split("_")[-2]
-        
+
         phys_file_out = f"Phys_{startpoint}_{timestamp_phys}_{parameter}.csv"
         phys_file_fullpath_out = Path.joinpath(self.context.path, phys_file_out)
 
@@ -130,18 +165,18 @@ class ProjectUtilities:
             # Convert dict to list of lists
             phys_params_to_change = [
                 #  [Variable (str), Key (str/nan), Value (str), Unit (str), "variable" / "key"]
-                [Variable, nan, phys_param_to_change[Variable], "", "variable"] for Variable in phys_param_to_change
+                [Variable, nan, phys_param_to_change[Variable], "", "variable"]
+                for Variable in phys_param_to_change
             ]
-            
+
             # Update the phys csv parameters
             for param_list in phys_params_to_change:
-                    phys_df = self.phys_updater(phys_df, param_list)
+                phys_df = self.phys_updater(phys_df, param_list)
 
         # Write the updated phys_df to file
         phys_df.to_csv(phys_file_fullpath_out, index=False, header=True)
 
         return anat_file_fullpath_out, phys_file_fullpath_out
-
 
     def multiple_cluster_metadata_compiler_and_data_transfer(self):
         # This searches the cluster_metadata_XXX_.pkl files from the current path/cluster_run_XXX folders
@@ -554,7 +589,6 @@ class ProjectUtilities:
                 format(filename, dict_key_list)
 
     def end2idx(self, t_idx_end, n_samples):
-
 
         if t_idx_end is None:
             t_idx_end = n_samples

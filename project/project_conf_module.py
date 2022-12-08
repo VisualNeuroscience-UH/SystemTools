@@ -43,7 +43,7 @@ project = "Deneve"  # VenDor FCN22
 """
 Current experiment
 """
-experiment = "Single_narrow_iterations_control_EI_R1"  # Single_narrow_iterations_control_EI_R1 'Canonical_folder',
+experiment = "Single_narrow_iterations_control_ALL_R1"  # Single_narrow_iterations_control_EI_R1 'Canonical_folder',
 
 """
 ### Housekeeping ###. Do not comment out.
@@ -211,7 +211,7 @@ if __name__ == "__main__":
     Prepare startpoint csv files for simulations.
     Updates paths, and input file, copies csv:s to output_path
     """
-    anat_file_fullpath_out, phys_file_fullpath_out = PM.prepare_csvs_for_simulation()
+    # anat_file_fullpath_out, phys_file_fullpath_out = PM.prepare_csvs_for_simulation()
 
     # ####################################################
     # ###### Do not use unless you know what you are doing
@@ -604,15 +604,15 @@ if __name__ == "__main__":
         iter_idx_list = list(range(iter_start_idx, iter_start_idx + n_iters))
     # iter_idx_list = []
 
-    # input_fname_prefix = f"noise_220309"
     input_fname_prefix = f"noise_210916_SingleSpike"
-    input_fname_ci_suffix = f"_ci.mat"
+    # input_fname_ci_suffix = f"_ci.mat"
+    input_fname_ci_suffix = f"_permuted_ci.mat"
     # time_ids = {"Comrad": "211118", "Bacon": "211222", "HiFi": "211118"}
     time_ids = {"Comrad": "221122", "Bacon": "221122", "HiFi": "221122"}
 
     anat_update_dict = {
         "workspace_path": f"{path}",
-        "import_connections_from": f"../in/connections_SingleSpike_ci_permuted_EI.gz",
+        "import_connections_from": f"../in/connections_SingleSpike_ci_permuted_ALL.gz",
         # "import_connections_from": f"../in/connections_SingleSpike_ci.gz",
         "run_in_cluster": 0,  # SIC(!)
         "cluster_job_file_path": "../csc_puhti_sv.job",
