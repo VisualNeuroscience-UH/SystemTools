@@ -19,6 +19,39 @@ class ProjectUtilities:
     Utilities for ProjectManager class. This class is not instantiated. It serves as a container for project independent helper functions.
     """
 
+    def transfer_precalculated_results(self, input_folder=None, output_folder=None):
+        """
+        iput_folder: Path to folder containing precalculated results. If no input_folder is provided, use self.context.input_folder.
+        If no output_folder is provided, transfer precalculated results from input_folder to self.context.output_folder.
+        """
+        if input_folder is None:
+            input_folder = self.context.input_folder
+        if output_folder is None:
+            output_folder = self.context.output_folder
+
+        # Check that input_folder and output_folder are both pathlib Path object. If not, convert them to Path objects.
+        if not isinstance(input_folder, Path):
+            input_folder = Path(input_folder)
+        if not isinstance(output_folder, Path):
+            output_folder = Path(output_folder)
+
+        # Prepend input_folder project path
+        input_folder = self.context.path.parent / input_folder
+        # Prepend input_folder experiment path
+        output_folder = self.context.path / output_folder
+
+        # Check that input_folder exists
+        assert input_folder.exists(), f"Input folder {input_folder} does not exist"
+        # Create output_folder with parents if it does not exist
+        output_folder.mkdir(parents=True, exist_ok=True)
+
+        # Find all files in input_folder
+        files = list(input_folder.glob("*"))
+        # Copy files to output_folder
+        for file in files:
+            shutil.copy(file, output_folder)
+            print(f"Transferred {file.name} to {output_folder.name}")
+
     def phys_updater(self, physio_config_df, param_list):
         """
         Replace values in physio_config_df with values from param_list

@@ -28,9 +28,8 @@ param : parameter
 Main paths in different operating systems
 """
 if sys.platform == "linux":
-    root_path = "/opt3/Laskenta/Models"  # pikkuveli
-    # root_path = "/opt2/Laskenta_ssd/Models"  # isosisko
-    # root_path = "/opt3/Matteo/"  # Matteo
+    # root_path = "/opt3/Laskenta/Models"  # pikkuveli
+    root_path = r"/opt2/Git_Repos/SystemTools/scripts/"
 elif sys.platform == "win32":
     root_path = r"C:\Users\Simo\Laskenta\Models"
 
@@ -38,12 +37,12 @@ elif sys.platform == "win32":
 """
 Project name
 """
-project = "Deneve"  # VenDor FCN22
+project = "FCN22"  # FCN22
 
 """
 Current experiment
 """
-experiment = "Single_narrow_iterations_control_ALL_R1"  # Single_narrow_iterations_control_EI_R1 'Canonical_folder',
+experiment = "Figure1CDE"  # Single_narrow_iterations_control_EI_R1 'Canonical_folder',
 
 """
 ### Housekeeping ###. Do not comment out.
@@ -55,20 +54,19 @@ path = Path.joinpath(Path(root_path), Path(project), experiment)
 Input context
 """
 input_folder = "../in"
-# matlab_workspace_file = "workspace_220104_fast.mat"
 matlab_workspace_file = "matlab_workspace_SingleSpike.mat"
 # conn_skeleton_file_in = "skeleton_connections_20220210_2242135.gz"
 conn_skeleton_file_in = "Replica_skeleton_connections_20210211_1453238_L4_SS.gz"
-conn_file_out = "connections_SingleSpike_ci_permuted_EI.gz"
-# conn_file_out = "connections_SingleSpike_ci.gz"
+# conn_file_out = "connections_SingleSpike_ci_permuted_EI.gz"
+conn_file_out = "connections_SingleSpike_ci.gz"
 input_filename = "noise_210406_SingleSpike.mat"  # "noise_210406_SingleSpike.mat"  # "input_quadratic_oscillation_220215.mat" "input_noise_220215.mat"
 startpoint_csv_folder = "startpoint_csvs/LIF"
 
 """
 Data context for single files and arrays. These startpoint and parameter strings are used only in this module.
 """
-startpoint = "Bacon"  # HiFi, Comrad, Bacon
-parameter = "startpoint"  # C, gL, VT, EL, delay
+startpoint = "Comrad"  # HiFi, Comrad, Bacon
+parameter = "noise"  # C, gL, VT, EL, delay
 
 output_folder = f"{startpoint}_{parameter}"
 
@@ -246,9 +244,9 @@ if __name__ == "__main__":
     # PM.viz.show_readout_on_input(results_filename=file_to_display, normalize=False, unit_idx_list=[0], savefigname='')
     # Best possible outputsignal, given the leaky spikes in readout group
     # PM.viz.show_estimate_on_input(results_filename=None, simulation_engine='cxsystem', readout_group='E', unit_idx_list=[5]) # Simulation engines: 'cxsystem','matlab'. Matlab needs filename. Readout_groups 'E','I'.
-    # PM.viz.show_input_to_readout_coherence(
-    #     results_filename=file_to_display, savefigname="", signal_pair=[0, 0]
-    # )  # HiFi_C0_I180E70_Coh.svg
+    PM.viz.show_input_to_readout_coherence(
+        results_filename=file_to_display, savefigname="", signal_pair=[0, 0]
+    )  # HiFi_C0_I180E70_Coh.svg
 
     """
     Show spikes and continuous data such as Vm. Note that param name can be any used dynamic variable in Brian2 equations
@@ -570,8 +568,8 @@ if __name__ == "__main__":
 
     # What to do
     create_csvs = 0
-    run_simulation = 1
-    run_analysis = 1
+    run_simulation = 0
+    run_analysis = 0
     run_optimal_analysis = 0  # Always nonparallel
 
     # Two parallel analyzes exist (None for non-parallel):
@@ -579,7 +577,7 @@ if __name__ == "__main__":
     # Valid IxO analyzes include Coherence, TransferEntropy, GrCaus, NormError
     # 'matched_IO' : create csv:s from matched input to output pairs. All analyzes are valid.
     parallel_analysis = True
-    analysis_type = "full_IxO"
+    analysis_type = "matched_IO"
     create_log_file = True
 
     optimal_value_delays = [
@@ -605,14 +603,14 @@ if __name__ == "__main__":
     # iter_idx_list = []
 
     input_fname_prefix = f"noise_210916_SingleSpike"
-    # input_fname_ci_suffix = f"_ci.mat"
-    input_fname_ci_suffix = f"_permuted_ci.mat"
+    input_fname_ci_suffix = f"_ci.mat"
+    # input_fname_ci_suffix = f"_permuted_ci.mat"
     # time_ids = {"Comrad": "211118", "Bacon": "211222", "HiFi": "211118"}
     time_ids = {"Comrad": "221122", "Bacon": "221122", "HiFi": "221122"}
 
     anat_update_dict = {
         "workspace_path": f"{path}",
-        "import_connections_from": f"../in/connections_SingleSpike_ci_permuted_ALL.gz",
+        "import_connections_from": f"../in/connections_SingleSpike_ci_permuted_EI.gz",
         # "import_connections_from": f"../in/connections_SingleSpike_ci.gz",
         "run_in_cluster": 0,  # SIC(!)
         "cluster_job_file_path": "../csc_puhti_sv.job",

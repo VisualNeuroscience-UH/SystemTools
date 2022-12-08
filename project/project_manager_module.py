@@ -195,7 +195,6 @@ class ProjectManager(ProjectBase, ProjectUtilities):
         Build mapping from to_spa_dict in conf file to dataframes which include parameter and analysis details.
         """
         if not hasattr(self.context, "to_spa_dict") or self.context.to_spa_dict is None:
-            print("No to_spa_dict in conf file. Only one file will be processed.")
             self.coll_spa_dict = None
             return
 
