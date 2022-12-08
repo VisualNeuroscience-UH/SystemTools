@@ -69,7 +69,7 @@ class ProjectManager(ProjectBase, ProjectUtilities):
     }
 
     map_stat_types = {
-        "Coherence": {"Sum": "mean", "Latency": "mean"},
+        "Coherence": {"Mean": "mean", "Latency": "mean"},
         "TransferEntropy": {"TransfEntropy": "mean"},
         "GrCaus": {
             "Information": "mean",
@@ -237,7 +237,7 @@ class ProjectManager(ProjectBase, ProjectUtilities):
             "Granger Causality": ["GrCaus_NG3_L4_SS_L4_Information", "max", "GrCaus"],
             # "Granger Causality": ["GrCaus_NG3_L4_SS_L4_GCAsTE", "max", "GrCaus"],
             "GC as TE": ["GrCaus_NG3_L4_SS_L4_GCAsTE", "max", "GrCaus"],
-            "Coherence": ["Coherence_NG3_L4_SS_L4_Sum", "max", "Coherence"],
+            "Coherence": ["Coherence_NG3_L4_SS_L4_Mean", "max", "Coherence"],
             "Excitatory Firing Rate": ["MeanFR_NG1_L4_CI_SS_L4", "min", "MeanFR"],
             "Inhibitory Firing Rate": ["MeanFR_NG2_L4_CI_BC_L4", "min", "MeanFR"],
             "Euclidean Distance": ["EDist_NG3_L4_SS_L4_EDist", "min", "EDist"],

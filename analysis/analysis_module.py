@@ -185,7 +185,7 @@ class Analysis(AnalysisBase):
             Pwelch_spec_x = Pwelch_spec_x[indexes]
             Pwelch_spec_y = Pwelch_spec_y[indexes]
 
-        coherence_sum = np.sum(Cxy)
+        coherence_mean = np.mean(Cxy)
 
         return (
             f,
@@ -195,7 +195,7 @@ class Analysis(AnalysisBase):
             Pxy,
             lags,
             corr,
-            coherence_sum,
+            coherence_mean,
             x_scaled,
             y_scaled,
         )
@@ -1032,7 +1032,7 @@ class Analysis(AnalysisBase):
                 Pxy,
                 lags,
                 corr,
-                coherence_sum,
+                coherence_mean,
                 _source_scaled,
                 _target_scaled,
             ) = self.get_coherence_of_two_signals(
@@ -1146,7 +1146,7 @@ class Analysis(AnalysisBase):
                 Pxy,
                 lags,
                 corr,
-                coherence_sum,
+                coherence_mean,
                 _source_scaled,
                 _target_scaled,
             ) = self.get_coherence_of_two_signals(
@@ -1475,7 +1475,7 @@ class Analysis(AnalysisBase):
                     Pxy,
                     lags,
                     corr,
-                    coherence_sum,
+                    coherence_mean,
                     _source_scaled,
                     _target_scaled,
                 ) = self.get_coherence_of_two_signals(
@@ -1483,13 +1483,13 @@ class Analysis(AnalysisBase):
                 )
                 shift_in_seconds = self.get_cross_corr_latency(lags, corr, dt)
 
-                coherence_matrix_np_sum[pre_idx, post_idx] = coherence_sum
+                coherence_matrix_np_sum[pre_idx, post_idx] = coherence_mean
                 coherence_matrix_np_latency[pre_idx, post_idx] = shift_in_seconds
 
         # Index to diagonal, ie "correctly" classified units and get median of values on diagonal
         eye_idx = np.eye(source_signal.shape[1], target_signal.shape[1], dtype=bool)
         coherences_on_diagonal = coherence_matrix_np_sum[eye_idx]
-        MedianCoherenceSum = np.nanmedian(coherences_on_diagonal)
+        MedianCoherence = np.nanmedian(coherences_on_diagonal)
         latencies_on_diagonal = coherence_matrix_np_latency[eye_idx]
         MedianCoherenceLatency = np.nanmedian(latencies_on_diagonal)
 
@@ -1497,8 +1497,8 @@ class Analysis(AnalysisBase):
             print(f"coherence_matrix_np_sum = {coherence_matrix_np_sum}")
             print(f"coherence_matrix_np_latency = {coherence_matrix_np_latency}")
 
-        # return MedianCoherenceSum, MedianCoherenceLatency, MedianError, MedianErrorShifted
-        return MedianCoherenceSum, MedianCoherenceLatency
+        # return MedianCoherence, MedianCoherenceLatency, MedianError, MedianErrorShifted
+        return MedianCoherence, MedianCoherenceLatency
 
     def _analyze_normerror(self, data_dict, source_signal):
 
@@ -1619,7 +1619,7 @@ class Analysis(AnalysisBase):
             for NG in NG_list:
                 data_df[f"{analysisHR}_" + NG] = np.nan
         elif analysisHR.lower() in ["coherence"]:
-            data_df[f"{analysisHR}_" + target_group + "_Sum"] = np.nan
+            data_df[f"{analysisHR}_" + target_group + "_Mean"] = np.nan
             data_df[f"{analysisHR}_" + target_group + "_Latency"] = np.nan
         elif analysisHR.lower() in ["transferentropy"]:
             data_df[f"{analysisHR}_" + target_group + "_TransfEntropy"] = np.nan
@@ -1715,12 +1715,12 @@ class Analysis(AnalysisBase):
                     data_df.loc[this_index, f"{analysisHR}_" + NG] = analyzed_results
 
             elif analysisHR.lower() in ["coherence"]:
-                MedianCoherenceSum, MedianCoherenceLatency = self._analyze_coherence(
+                MedianCoherence, MedianCoherenceLatency = self._analyze_coherence(
                     data, source_signal, target_signal_dt, target_group
                 )
                 data_df.loc[
-                    this_index, f"{analysisHR}_" + target_group + "_Sum"
-                ] = MedianCoherenceSum
+                    this_index, f"{analysisHR}_" + target_group + "_Mean"
+                ] = MedianCoherence
                 data_df.loc[
                     this_index, f"{analysisHR}_" + target_group + "_Latency"
                 ] = MedianCoherenceLatency
@@ -1907,7 +1907,7 @@ class Analysis(AnalysisBase):
         samp_freq = 1.0 / target_signal_dt
 
         if set(["coherence"]).issubset(analyzes_lowercase_list):
-            analyzed_data_dict[f"Coherence_{target_group}_Sum"] = empty_np_array.copy()
+            analyzed_data_dict[f"Coherence_{target_group}_Mean"] = empty_np_array.copy()
             analyzed_data_dict[
                 f"Coherence_{target_group}_Latency"
             ] = empty_np_array.copy()
@@ -2046,7 +2046,7 @@ class Analysis(AnalysisBase):
                             Pxy,
                             lags,
                             corr,
-                            coherence_sum,
+                            coherence_mean,
                             _source_scaled,
                             _target_scaled,
                         ) = self.get_coherence_of_two_signals(
@@ -2055,9 +2055,9 @@ class Analysis(AnalysisBase):
                         shift_in_seconds = self.get_cross_corr_latency(
                             lags, corr, target_signal_dt
                         )
-                        analyzed_data_dict[f"Coherence_{target_group}_Sum"][
+                        analyzed_data_dict[f"Coherence_{target_group}_Mean"][
                             source_idx, target_idx, file_idx
-                        ] = coherence_sum
+                        ] = coherence_mean
                         analyzed_data_dict[f"Coherence_{target_group}_Latency"][
                             source_idx, target_idx, file_idx
                         ] = shift_in_seconds
@@ -2066,7 +2066,7 @@ class Analysis(AnalysisBase):
                         analyzes_lowercase_list
                     ):  # Information transfer
                         if (
-                            "coherence_sum" not in locals()
+                            "coherence_mean" not in locals()
                             or shift_in_seconds not in locals()
                         ):
                             (
@@ -2077,7 +2077,7 @@ class Analysis(AnalysisBase):
                                 Pxy,
                                 lags,
                                 corr,
-                                coherence_sum,
+                                coherence_mean,
                                 _source_scaled,
                                 _target_scaled,
                             ) = self.get_coherence_of_two_signals(
@@ -2479,7 +2479,7 @@ class Analysis(AnalysisBase):
 
         ## Get input-output coherence ##
         coherence_column_list, pruned_names = _column_comprehension(
-            "Coherence", key_list=["Sum"]
+            "Coherence", key_list=["Mean"]
         )
         selected_columns = data_df_compiled[coherence_column_list]
         df_for_barplot[pruned_names] = selected_columns
@@ -2967,7 +2967,7 @@ class Analysis(AnalysisBase):
                 "NormError_SimErr": "min",
                 "TransferEntropy_NG3_L4_SS_L4_TransfEntropy": "max",
                 "GrCaus_NG3_L4_SS_L4_Information": "max",
-                "Coherence_NG3_L4_SS_L4_Sum": "max",
+                "Coherence_NG3_L4_SS_L4_Mean": "max",
             }
 
         # Get startpoint, parameter, and update output folder if it exists
@@ -3325,7 +3325,7 @@ class Analysis(AnalysisBase):
         if analyze == "Coherence":
             # Loop over source and target dimension 1.
             # Get coherence of the two signals.
-            # Divide the coherence_sum by the length if Cxy.
+            # Divide the coherence_mean by the length if Cxy.
             # optimal value is the nanmean of this divided sum.
             for source_idx in range(source_signal_cut.shape[1]):
                 for target_idx in range(target_signal_cut.shape[1]):
@@ -3338,7 +3338,7 @@ class Analysis(AnalysisBase):
                         Pxy,
                         lags,
                         corr,
-                        coherence_sum,
+                        coherence_mean,
                         _source_scaled,
                         _target_scaled,
                     ) = self.get_coherence_of_two_signals(
@@ -3410,7 +3410,7 @@ class Analysis(AnalysisBase):
                         Pxy,
                         lags,
                         corr,
-                        coherence_sum,
+                        coherence_mean,
                         _source_scaled,
                         _target_scaled,
                     ) = self.get_coherence_of_two_signals(
@@ -3486,7 +3486,7 @@ class Analysis(AnalysisBase):
                         Pxy,
                         lags,
                         corr,
-                        coherence_sum,
+                        coherence_mean,
                         _source_scaled,
                         _target_scaled,
                     ) = self.get_coherence_of_two_signals(

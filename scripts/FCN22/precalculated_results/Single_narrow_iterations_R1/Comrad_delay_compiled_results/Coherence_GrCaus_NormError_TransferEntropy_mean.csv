@@ -1,4 +1,4 @@
-Dimension-1 Parameter,Dimension-1 Value,Coherence_NG3_L4_SS_L4_Sum_mean,GrCaus_NG3_L4_SS_L4_Information_mean,NormError_SimErr_mean,TransferEntropy_NG3_L4_SS_L4_TransfEntropy_mean
+Dimension-1 Parameter,Dimension-1 Value,Coherence_NG3_L4_SS_L4_Mean_mean,GrCaus_NG3_L4_SS_L4_Information_mean,NormError_SimErr_mean,TransferEntropy_NG3_L4_SS_L4_TransfEntropy_mean
 delay_CI_CI,0.5,14.077407612,3.89297626495,1.80007709695,0.0569714209781
 delay_CI_CI,0.75,14.2789344366,3.86997537967,1.76234535127,0.0574352631208
 delay_CI_CI,1.0,14.1034451166,3.88159933434,1.7547362585,0.0518744862124

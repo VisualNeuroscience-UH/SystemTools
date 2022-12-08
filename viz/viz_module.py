@@ -555,7 +555,7 @@ class Viz(VizBase):
         ax1.set_title("Coherence")
 
         self._string_on_plot(
-            ax1, variable_name="Sum", variable_value=Cxy.sum(), variable_unit="a.u."
+            ax1, variable_name="Mean", variable_value=Cxy.sum(), variable_unit="a.u."
         )
 
         # ax2.semilogy(f,Pwelch_spec_x/np.max(Pwelch_spec_x))
@@ -1191,7 +1191,7 @@ class Viz(VizBase):
             Pxy,
             lags,
             corr,
-            coherence_sum,
+            coherence_mean,
             x_scaled,
             y_scaled,
         ) = self.ana.get_coherence_of_two_signals(
@@ -2476,7 +2476,7 @@ class Viz(VizBase):
                 this_ixo_bool = (
                     data_mtx_np == data_mtx_np.min(axis=1)[:, None]
                 ).astype(int)
-            # Sum across iterations (dim 2)
+            # Mean across iterations (dim 2)
             this_ixo_sum = this_ixo_bool.sum(axis=2)
 
             # show conf mtx

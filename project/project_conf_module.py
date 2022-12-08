@@ -381,7 +381,7 @@ if __name__ == "__main__":
     # PM.viz.show_analyzed_arrayrun(
     #     csv_filename=csv_filename,
     #     analysis=analysis,
-    #     variable_unit="Sum a.u.",
+    #     variable_unit="Mean a.u.",
     #     annotation_2D=False,
     # )
 

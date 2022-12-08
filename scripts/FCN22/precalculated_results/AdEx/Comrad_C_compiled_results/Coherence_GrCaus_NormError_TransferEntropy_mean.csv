@@ -1,4 +1,4 @@
-Dimension-1 Parameter,Dimension-1 Value,Dimension-2 Parameter,Dimension-2 Value,Coherence_NG3_L4_SS_L4_Sum_mean,GrCaus_NG3_L4_SS_L4_Information_mean,NormError_SimErr_mean,TransferEntropy_NG3_L4_SS_L4_TransfEntropy_mean
+Dimension-1 Parameter,Dimension-1 Value,Dimension-2 Parameter,Dimension-2 Value,Coherence_NG3_L4_SS_L4_Mean_mean,GrCaus_NG3_L4_SS_L4_Information_mean,NormError_SimErr_mean,TransferEntropy_NG3_L4_SS_L4_TransfEntropy_mean
 C,30.0,C_1,30.0,10.431125015,3.18532569991,0.980728822171,0.110950166805
 C,30.0,C_1,40.0,14.8627135993,4.13720016894,0.765897333916,0.187084597727
 C,30.0,C_1,50.0,14.4781290676,4.11024609431,0.97069978518,0.136794159568

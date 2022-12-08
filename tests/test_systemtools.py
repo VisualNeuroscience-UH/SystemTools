@@ -317,7 +317,7 @@ def test_get_coherence_of_two_signals():
         Pxy,
         lags,
         corr,
-        coherence_sum,
+        coherence_mean,
         _source_scaled,
         _target_scaled,
     ) = ana.get_coherence_of_two_signals(
@@ -328,7 +328,7 @@ def test_get_coherence_of_two_signals():
         len(f) == len(Cxy) == len(Pwelch_spec_x) == len(Pwelch_spec_y) == len(Pxy) == 34
     )
     assert len(lags) == len(corr) == 39999
-    assert np.floor(coherence_sum) == 16
+    assert np.floor(coherence_mean * 100) == 49
 
 
 def test_end2idx():
@@ -392,7 +392,7 @@ def test_get_cross_corr_latency():
         Pxy,
         lags,
         corr,
-        coherence_sum,
+        coherence_mean,
         _source_scaled,
         _target_scaled,
     ) = ana.get_coherence_of_two_signals(
@@ -560,10 +560,10 @@ def test__analyze_transfer_entropy():
 
 
 def test__analyze_coherence():
-    coh_sum, coh_lat = ana._analyze_coherence(
+    coh_mean, coh_lat = ana._analyze_coherence(
         data_dict, source_signal_np, dt, target_group
     )
-    assert 20 < coh_sum < 21
+    assert 0.60 < coh_mean < 0.61
     assert 0.005 < coh_lat < 0.006
 
 
@@ -610,7 +610,7 @@ def test__get_analyzed_full_array_as_np():
     ana_data_dict = ana._get_analyzed_full_array_as_np(data_df, analyzes_list=ana_list)
 
     assert ana_data_dict["data_dims"] == (3, 3, 4)
-    assert 344 < np.sum(ana_data_dict["Coherence_NG3_L4_SS_L4_Sum"]) < 345
+    assert 10 < np.sum(ana_data_dict["Coherence_NG3_L4_SS_L4_Mean"]) < 11
     assert (
         2.5
         < np.nansum(ana_data_dict["TransferEntropy_NG3_L4_SS_L4_TransfEntropy"])
