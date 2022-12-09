@@ -19,7 +19,9 @@ class ProjectUtilities:
     Utilities for ProjectManager class. This class is not instantiated. It serves as a container for project independent helper functions.
     """
 
-    def transfer_precalculated_results(self, input_folder=None, output_folder=None):
+    def transfer_precalculated_results(
+        self, input_folder=None, output_folder=None, verbose=False
+    ):
         """
         iput_folder: Path to folder containing precalculated results. If no input_folder is provided, use self.context.input_folder.
         If no output_folder is provided, transfer precalculated results from input_folder to self.context.output_folder.
@@ -50,7 +52,8 @@ class ProjectUtilities:
         # Copy files to output_folder
         for file in files:
             shutil.copy(file, output_folder)
-            print(f"Transferred {file.name} to {output_folder.name}")
+            if verbose:
+                print(f"Transferred {file.name} to {output_folder.name}")
 
     def phys_updater(self, physio_config_df, param_list):
         """
@@ -178,7 +181,11 @@ class ProjectUtilities:
                 )
 
         if phys_name is not None:
-            phys_file_list = [file for file in csv_files if phys_name == file.stem]
+            phys_file_list = [
+                file
+                for file in csv_files
+                if phys_name == file.stem or phys_name == file.name
+            ]
         else:
             phys_file_list = [
                 file

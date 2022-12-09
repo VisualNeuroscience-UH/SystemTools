@@ -1714,9 +1714,10 @@ class Viz(VizBase):
 
                 self.data_is_valid(inner_df_coll.values, accept_empty=False)
 
-                # Temporary fix 220421 SV
+                # For backwards compatibility in FCN22 project 221209 SV
                 if outer_name == "Coherence":
-                    inner_df_coll = inner_df_coll / 34
+                    if inner_df_coll.max().max() > 1:
+                        inner_df_coll = inner_df_coll / 34
                 if param_plot_dict["save_description"] is True:
                     describe_df_list.append(inner_df_coll)  # for saving
                     describe_df_columns_list.append(f"{outer_name}")

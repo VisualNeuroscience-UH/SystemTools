@@ -3158,7 +3158,8 @@ class Analysis(AnalysisBase):
 
                     # There should be only one file starting IxO_analysis
                     ixo_dict = self.data_io.load_from_file(ixo_full_filename_list[0])
-                    print(f"Loaded file {ixo_full_filename_list[0]}")
+                    if logging.getLogger().hasHandlers():
+                        logging.info(f"Loaded file {ixo_full_filename_list[0]}")
 
                     # Loop over analyses; get all_data_mtx_np
                     for this_analysis_idx, this_analysis in enumerate(

@@ -124,7 +124,9 @@ class DataIO(DataIOBase):
                     output_path, filename
                 )
             if not data_fullpath_filename:
-                data_fullpath_filename = self._check_candidate_file(input_path, filename)
+                data_fullpath_filename = self._check_candidate_file(
+                    input_path, filename
+                )
             if not data_fullpath_filename:
                 data_fullpath_filename = self._check_candidate_file(path, filename)
 
@@ -205,7 +207,7 @@ class DataIO(DataIOBase):
         else:
             raise TypeError("U r trying to input unknown filetype, aborting...")
 
-        print(f"Loaded file {data_fullpath_filename}")
+        # print(f"Loaded file {data_fullpath_filename}")
         # Check for existing loggers (python builtin, called from other modules, such as the run_script.py)
         if logging.getLogger().hasHandlers():
             logging.info(f"Loaded file {data_fullpath_filename}")

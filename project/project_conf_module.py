@@ -88,10 +88,10 @@ analyzes:
 If you give to_spa_dict = None, only single files will be handled.
 """
 to_spa_dict = {
-    # "startpoints": ["Comrad", "Bacon", "HiFi"],
-    "startpoints": ["Bacon"],
+    "startpoints": ["Comrad", "Bacon", "HiFi"],
+    # "startpoints": ["Bacon"],
     # "parameters": ["C", "gL", "VT", "EL", "delay"],
-    "parameters": ["gL"],
+    "parameters": ["C"],
     "analyzes": [
         # "Inhibitory Firing Rate",
         "Coherence",
@@ -99,7 +99,7 @@ to_spa_dict = {
         "Transfer Entropy",
         "Simulation Error",
         # 'GC as TE',
-        "Excitatory Firing Rate",
+        # "Excitatory Firing Rate",
         # "Euclidean Distance",
     ],
 }
@@ -522,33 +522,33 @@ if __name__ == "__main__":
     save_description: bool, if True, saves pd.describe() to csv files for each title into path/Description/
     """
 
-    # param_plot_dict = {
-    #     "title": "parameters",  # multiple allowed => each in separate figure
-    #     "outer": "analyzes",  # multiple allowed => plt subplot panels
-    #     "inner": "startpoints",  # multiple allowed => direct comparison
-    #     "inner_sub": False,  # A singular analysis => subdivisions
-    #     "inner_sub_ana": "Excitatory Firing Rate",  #  The singular analysis
-    #     "bin_edges": [[0.001, 150], [150, 300]],
-    #     "plot_type": "box",  # "violin" (2), "box", "strip", "swarm", "boxen", "point", "bar"
-    #     "compiled_results": True, # True, False
-    #     "sharey": False,
-    #     "palette": "Greys",
-    #     "inner_paths": True,
-    #     "inner_path_names": ["Comrad", "Bacon", "Random_EI", "Random_all"],
-    #     "paths": [
-    #         (path, 'Comrad_gL_compiled_results'),
-    #         (path, 'Bacon_gL_compiled_results'),
-    #         (path, 'Bacon_gL_compiled_results_EI'),
-    #         (path, 'Bacon_gL_compiled_results_ALL'),
-    #         ],
-    #     "inner_stat_test": False,
-    #     "save_description": False,
-    #     "save_name": "description_simulated",
-    #     "display_optimal_values": False,
-    #     "optimal_value_foldername": optimal_value_foldername,
-    #     "optimal_description_name": optimal_description_name
-    # }
-    # PM.viz.show_catplot(param_plot_dict)
+    param_plot_dict = {
+        "title": "parameters",  # multiple allowed => each in separate figure
+        "outer": "analyzes",  # multiple allowed => plt subplot panels
+        "inner": "startpoints",  # multiple allowed => direct comparison
+        "inner_sub": False,  # A singular analysis => subdivisions
+        "inner_sub_ana": "Excitatory Firing Rate",  #  The singular analysis
+        "bin_edges": [[0.001, 150], [150, 300]],
+        "plot_type": "box",  # "violin" (2), "box", "strip", "swarm", "boxen", "point", "bar"
+        "compiled_results": True,  # True, False
+        "sharey": False,
+        "palette": "Greys",
+        "inner_paths": False,
+        "inner_path_names": ["Comrad", "Bacon", "Random_EI", "Random_all"],
+        "paths": [
+            (path, "Comrad_gL_compiled_results"),
+            (path, "Bacon_gL_compiled_results"),
+            (path, "Bacon_gL_compiled_results_EI"),
+            (path, "Bacon_gL_compiled_results_ALL"),
+        ],
+        "inner_stat_test": False,
+        "save_description": False,
+        "save_name": "description_simulated",
+        "display_optimal_values": False,
+        "optimal_value_foldername": optimal_value_foldername,
+        "optimal_description_name": optimal_description_name,
+    }
+    PM.viz.show_catplot(param_plot_dict)
 
     """
     ### Housekeeping ###. Do not comment out.
