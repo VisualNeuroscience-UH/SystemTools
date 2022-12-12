@@ -91,15 +91,15 @@ to_spa_dict = {
     "startpoints": ["Comrad", "Bacon", "HiFi"],
     # "startpoints": ["Bacon"],
     # "parameters": ["C", "gL", "VT", "EL", "delay"],
-    "parameters": ["C"],
+    "parameters": ["VT"],
     "analyzes": [
-        # "Inhibitory Firing Rate",
         "Coherence",
         "Granger Causality",
         "Transfer Entropy",
         "Simulation Error",
         # 'GC as TE',
         "Excitatory Firing Rate",
+        "Inhibitory Firing Rate",
         # "Euclidean Distance",
     ],
 }

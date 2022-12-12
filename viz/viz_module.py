@@ -979,7 +979,12 @@ class Viz(VizBase):
                 "MAX at Params",
             ]
             text_values_list = []
-            text_values_list.append(analysisHR)
+            if analysisHR.lower() in ["accuracy"]:
+                # Get the analysis name
+                end_idx = this_data_column.find("_")
+                text_values_list.append(f"{this_data_column[:end_idx]}_accuracy")
+            else:
+                text_values_list.append(analysisHR)
             text_values_list.append(this_NG_id)
             text_values_list.append(this_NG_name)
 
