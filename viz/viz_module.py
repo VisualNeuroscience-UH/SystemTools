@@ -2180,7 +2180,7 @@ class Viz(VizBase):
         coll_ana_df = self.coll_spa_dict["coll_ana_df"]
 
         # Confirm list format
-        keys_to_check = ["x_ana", "x_mid", "x_para", "y_ana", "y_mid", "y_para"]
+        keys_to_check = ["x_ana", "x_start", "x_para", "y_ana", "y_start", "y_para"]
         for this_key in keys_to_check:
             if isinstance(xy_plot_dict[this_key], str):
                 xy_plot_dict[this_key] = [xy_plot_dict[this_key]]
@@ -2191,15 +2191,15 @@ class Viz(VizBase):
         if kind == "regplot":
             assert np.all(
                 [
-                    len(xy_plot_dict["x_mid"]) == 1,
+                    len(xy_plot_dict["x_start"]) == 1,
                     len(xy_plot_dict["x_para"]) == 1,
-                    len(xy_plot_dict["y_mid"]) == 1,
+                    len(xy_plot_dict["y_start"]) == 1,
                     len(xy_plot_dict["y_para"]) == 1,
                 ]
             ), "regplot accepts only single startpoints and parameters at a time, aborting..."
 
             x_df = self._get_df_for_xy_plot(
-                xy_plot_dict["x_mid"],
+                xy_plot_dict["x_start"],
                 xy_plot_dict["x_para"],
                 xy_plot_dict["x_ana"],
                 xy_plot_dict["x_ave"],
@@ -2209,7 +2209,7 @@ class Viz(VizBase):
             )
 
             y_df = self._get_df_for_xy_plot(
-                xy_plot_dict["y_mid"],
+                xy_plot_dict["y_start"],
                 xy_plot_dict["y_para"],
                 xy_plot_dict["y_ana"],
                 xy_plot_dict["y_ave"],
@@ -2226,7 +2226,7 @@ class Viz(VizBase):
         # Long format df, accepts multiple mids and params, no averaging
         elif kind == "binned_lineplot":
             x_df, x_cols = self._get_df_for_binned_lineplot(
-                xy_plot_dict["x_mid"],
+                xy_plot_dict["x_start"],
                 xy_plot_dict["x_para"],
                 xy_plot_dict["x_ana"],
                 xy_plot_dict["x_ave"],
@@ -2245,7 +2245,7 @@ class Viz(VizBase):
             x_df["Values_binned"] = x_df["Values_binned"].replace(x_bin_idx, bins)
 
             y_df, y_cols = self._get_df_for_binned_lineplot(
-                xy_plot_dict["y_mid"],
+                xy_plot_dict["y_start"],
                 xy_plot_dict["y_para"],
                 xy_plot_dict["y_ana"],
                 xy_plot_dict["y_ave"],

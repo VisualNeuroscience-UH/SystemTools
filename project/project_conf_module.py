@@ -99,7 +99,7 @@ to_spa_dict = {
         "Transfer Entropy",
         "Simulation Error",
         # 'GC as TE',
-        # "Excitatory Firing Rate",
+        "Excitatory Firing Rate",
         # "Euclidean Distance",
     ],
 }
@@ -441,14 +441,14 @@ if __name__ == "__main__":
     #         # "Transfer Entropy",
     #         "Excitatory Firing Rate",
     #     ],  # multiple allowed => subplot rows, unless ave
-    #     "x_mid": [
+    #     "x_start": [
     #         "Comrad",
-    #         "Bacon",
+    #         # "Bacon",
     #         # 'HiFi',
     #     ],  # single allowed, multiple (same mids for y) if type binned_lineplot
     #     # "x_para": ['C', 'gL', 'VT', 'EL'],  # single allowed, multiple (same params for y) if type binned_lineplot
     #     "x_para": [
-    #         "gL"
+    #         "C"
     #     ],  # single allowed, multiple (same params for y) if type binned_lineplot
     #     "x_ave": False,  # Weighted average over NGs. Works only for kind = regplot
     #     "y_ana": [
@@ -459,27 +459,27 @@ if __name__ == "__main__":
     #         # 'Euclidean Distance', # Note: Euclidean Distance cannot have accuracy
     #         "Simulation Error",
     #     ],  # multiple allowed => subplot columns, unless ave
-    #     "y_mid": [
+    #     "y_start": [
     #         "Comrad",
-    #         "Bacon",
+    #         # "Bacon",
     #         # 'HiFi',
     #     ],  # single allowed, multiple (same mids for x) if type binned_lineplot
     #     # "y_para": ['C', 'gL', 'VT', 'EL'],  # single allowed, multiple (same params for x) if type binned_lineplot 'C','gL','EL','VT'
     #     "y_para": [
-    #         "gL"
+    #         "C"
     #     ],  # single allowed, multiple (same params for x) if type binned_lineplot 'C','gL','EL','VT'
     #     "y_ave": False,  # Weighted average over NGs. Works only for kind = regplot
     #     "kind": "binned_lineplot",  # binned_lineplot, regplot
     #     "n_bins": 10,  # ignored for regplot
-    #     "hue": "startpoint",  startpoint or Parameter. If startpoint is selected, each line is one startpoint and parameters will be combined. And vice versa. Ignored for regplot
+    #     "hue": "startpoint",  # startpoint or Parameter. If startpoint is selected, each line is one startpoint and parameters will be combined. And vice versa. Ignored for regplot
     #     "compiled_results": True,  # x and y data from folder XX'_compiled_results'
-    #     "compiled_type": "accuracy",  # mean, accuracy; falls back to mean if accuracy not found
+    #     "compiled_type": "mean",  # mean, accuracy; falls back to mean if accuracy not found
     #     "draw_regression": False,  # only for regplot
     #     "order": 1,  # Regression polynomial fit order, only for regplot
     #     "draw_diagonal": False,  # only for regplot
     #     "xlog": False,
     #     "ylog": False,
-    #     "sharey": True,
+    #     "sharey": False,
     # }
 
     # PM.viz.show_xy_plot(xy_plot_dict)
@@ -522,33 +522,33 @@ if __name__ == "__main__":
     save_description: bool, if True, saves pd.describe() to csv files for each title into path/Description/
     """
 
-    param_plot_dict = {
-        "title": "parameters",  # multiple allowed => each in separate figure
-        "outer": "analyzes",  # multiple allowed => plt subplot panels
-        "inner": "startpoints",  # multiple allowed => direct comparison
-        "inner_sub": False,  # A singular analysis => subdivisions
-        "inner_sub_ana": "Excitatory Firing Rate",  #  The singular analysis
-        "bin_edges": [[0.001, 150], [150, 300]],
-        "plot_type": "box",  # "violin" (2), "box", "strip", "swarm", "boxen", "point", "bar"
-        "compiled_results": True,  # True, False
-        "sharey": False,
-        "palette": "Greys",
-        "inner_paths": False,
-        "inner_path_names": ["Comrad", "Bacon", "Random_EI", "Random_all"],
-        "paths": [
-            (path, "Comrad_gL_compiled_results"),
-            (path, "Bacon_gL_compiled_results"),
-            (path, "Bacon_gL_compiled_results_EI"),
-            (path, "Bacon_gL_compiled_results_ALL"),
-        ],
-        "inner_stat_test": False,
-        "save_description": False,
-        "save_name": "description_simulated",
-        "display_optimal_values": False,
-        "optimal_value_foldername": optimal_value_foldername,
-        "optimal_description_name": optimal_description_name,
-    }
-    PM.viz.show_catplot(param_plot_dict)
+    # param_plot_dict = {
+    #     "title": "parameters",  # multiple allowed => each in separate figure
+    #     "outer": "analyzes",  # multiple allowed => plt subplot panels
+    #     "inner": "startpoints",  # multiple allowed => direct comparison
+    #     "inner_sub": False,  # A singular analysis => subdivisions
+    #     "inner_sub_ana": "Excitatory Firing Rate",  #  The singular analysis
+    #     "bin_edges": [[0.001, 150], [150, 300]],
+    #     "plot_type": "box",  # "violin" (2), "box", "strip", "swarm", "boxen", "point", "bar"
+    #     "compiled_results": True,  # True, False
+    #     "sharey": False,
+    #     "palette": "Greys",
+    #     "inner_paths": False,
+    #     "inner_path_names": ["Comrad", "Bacon", "Random_EI", "Random_all"],
+    #     "paths": [
+    #         (path, "Comrad_gL_compiled_results"),
+    #         (path, "Bacon_gL_compiled_results"),
+    #         (path, "Bacon_gL_compiled_results_EI"),
+    #         (path, "Bacon_gL_compiled_results_ALL"),
+    #     ],
+    #     "inner_stat_test": False,
+    #     "save_description": False,
+    #     "save_name": "description_simulated",
+    #     "display_optimal_values": False,
+    #     "optimal_value_foldername": optimal_value_foldername,
+    #     "optimal_description_name": optimal_description_name,
+    # }
+    # PM.viz.show_catplot(param_plot_dict)
 
     """
     ### Housekeeping ###. Do not comment out.

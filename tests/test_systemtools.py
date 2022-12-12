@@ -957,13 +957,13 @@ def test_show_xy_plot():
         "x_ana": [
             "Excitatory Firing Rate"
         ],  # multiple allowed => subplot rows, unless ave
-        "x_mid": "Comrad",  # multiple allowed
+        "x_start": "Comrad",  # multiple allowed
         "x_para": "C",  # multiple allowed
         "x_ave": False,  # All x_ana data will be averaged
         "y_ana": [
             "Inhibitory Firing Rate"
         ],  # multiple allowed => subplot columns, unless ave
-        "y_mid": "Comrad",  # multiple allowed
+        "y_start": "Comrad",  # multiple allowed
         "y_para": "C",  # multiple allowed
         "y_ave": False,  # All y_ana data will be averaged
         "compiled_results": True,  # both x and y data
