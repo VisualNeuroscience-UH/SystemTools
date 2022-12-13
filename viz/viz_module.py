@@ -2031,9 +2031,9 @@ class Viz(VizBase):
                         col_stem[: col_stem.find("_")].lower() in ["meanfr", "edist"]
                         and col_suffix == "_accuracy"
                     ):
-                        print(
-                            f"{col_suffix} does not exist for 'meanfr' or 'edist', replacing with '_mean' "
-                        )
+                        # print(
+                        #     f"{col_suffix} does not exist for 'meanfr' or 'edist', replacing with '_mean' "
+                        # )
                         col_suffix = "_mean"
                     col = f"{col_stem}{col_suffix}"
                     path_col_list.append([_path, col, col_suffix])
@@ -2114,9 +2114,9 @@ class Viz(VizBase):
                         col_stem[: col_stem.find("_")].lower() in ["meanfr", "edist"]
                         and col_suffix == "_accuracy"
                     ):
-                        print(
-                            f"{col_suffix} does not exist for 'meanfr' or 'edist', replacing with '_mean' "
-                        )
+                        # print(
+                        #     f"{col_suffix} does not exist for 'meanfr' or 'edist', replacing with '_mean' "
+                        # )
                         col_suffix = "_mean"
                     col = f"{col_stem}{col_suffix}"
                     path_col_list.append([_path, col, col_suffix, this_mid, this_para])
