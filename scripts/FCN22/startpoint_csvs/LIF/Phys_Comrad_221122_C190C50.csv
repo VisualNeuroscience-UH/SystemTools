@@ -31,13 +31,13 @@ tau_i_GLOBAL,,5 * ms,#GABA-A
 ### SYNAPTIC DELAYS ###,,,
 delay,delay_in_CI,3.0 * ms, # This will be replaced by current injection with zero delay
 ,,,
-,delay_CI_SS,1.0 * ms,# Changed for HiFi
+,delay_CI_SS,3.0 * ms,
 ,delay_CI_CI,3.0 * ms, 
 ,,,
 ### NEURON GROUP PARAMETERS ###,,,
 VPM,,,
 ,,,
-L4_CI_BC,C,180 * pF,# Membrane capacitance 125
+L4_CI_BC,C,190 * pF,# Membrane capacitance 125
 ,gL,4 * nS,# Membrane leak conductance 4
 ,taum_soma,C/gL,# Membrane time constant
 ,EL,-73 * mV,# Membrane equilibrium potential -73
@@ -55,7 +55,7 @@ L4_CI_BC,C,180 * pF,# Membrane capacitance 125
 ,b,35.8 * pamp,
 ,tau_w,144 * msecond,
 ,,,
-L4_CI_SS,C,70 * pF, 
+L4_CI_SS,C,50 * pF, 
 ,gL,4 * nS,
 ,taum_soma,C/gL,
 ,EL,-73 * mV, #-73
@@ -77,7 +77,7 @@ L4_CI_SS,C,70 * pF,
 ,tau_w,144 * msecond,
 ,,,
 L4_SS,C,125 * pF,
-,gL,40 * nS,# Changed for HiFi
+,gL,4 * nS,
 ,taum_soma,C/gL,
 ,EL,-73 * mV,
 ,V_init,-73 * mV,
