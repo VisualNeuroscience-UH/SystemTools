@@ -90,7 +90,7 @@ class Viz(VizBase):
         return is_valid
 
     # Helper functions
-    def _build_columns(self, data_dict, new_data, Ntimepoints, datatype):
+    def _build_columns(self, data_dict, new_data, Ntimepoints, datatype, unit_idx_list):
 
         tmp_dict = copy.deepcopy(data_dict)
         # columns for input
@@ -101,7 +101,7 @@ class Viz(VizBase):
             new_data_shape = np.asarray(new_data.shape)
 
         for ch_idx in np.arange(new_data_shape[1]):
-            ch_name = f"{datatype}_ch_{ch_idx}"
+            ch_name = f"{datatype}_ch_{unit_idx_list[ch_idx]}"
             ch_data = new_data[:, ch_idx]
             tmp_dict[ch_name] = ch_data
 
@@ -446,6 +446,8 @@ class Viz(VizBase):
             idx = np.asarray(unit_idx_list)
             analog_signal = analog_signal[:, idx]
             data_vm = data_vm[:, idx]
+        else:
+            unit_idx_list = np.arange(analog_signal.shape[1]).tolist()
 
         if normalize == True:
             analog_signal = (analog_signal - np.min(analog_signal)) / np.ptp(
@@ -454,17 +456,17 @@ class Viz(VizBase):
 
         # Create dict and column for timepoints
         id_var = "t"
-        data_dict = {id_var: t}
+        time_array_dict = {id_var: t}
         Ntimepoints = t.shape[0]
 
         # columns for input
         data_dict_in, dims_IN = self._build_columns(
-            data_dict, analog_signal, Ntimepoints, "IN"
+            time_array_dict, analog_signal, Ntimepoints, "IN", unit_idx_list
         )
 
         # columns for vm
         data_dict_vm, dims_Dec_vm = self._build_columns(
-            data_dict, data_vm, Ntimepoints, "Dec_vm"
+            time_array_dict, data_vm, Ntimepoints, "Dec_vm", unit_idx_list
         )
 
         # # Get final output dimension, to get values for unpivot
@@ -555,7 +557,7 @@ class Viz(VizBase):
         ax1.set_title("Coherence")
 
         self._string_on_plot(
-            ax1, variable_name="Mean", variable_value=Cxy.sum(), variable_unit="a.u."
+            ax1, variable_name="Mean", variable_value=Cxy.mean(), variable_unit="a.u."
         )
 
         # ax2.semilogy(f,Pwelch_spec_x/np.max(Pwelch_spec_x))
