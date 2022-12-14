@@ -206,13 +206,23 @@ class Viz(VizBase):
 
     def figsave(self, figurename="", myformat="png", subfolderpath="", suffix=""):
 
-        # Saves current figure to working dir
+        # Saves current figure to working dir, or to subfolderpath if specified.
+        # If figurename is not specified, the figure is saved as MyFigure.png
+        # If figurename is specified, the figure is saved as figurename.png
+        # If figurename is specified with extension, the figure is saved as figurename
+        # If figurename is a relative path, the figure is saved in the specified path
+
         plt.rcParams["svg.fonttype"] = "none"  # Fonts as fonts and not as paths
         plt.rcParams["ps.fonttype"] = "type3"  # Fonts as fonts and not as paths
 
         # Confirm pathlib type
         figurename = Path(figurename)
         subfolderpath = Path(subfolderpath)
+
+        # Check if figurename is a path. If yes, parse the figurename and subfolderpath
+        if str(figurename.parent) != ".":
+            subfolderpath = figurename.parent
+            figurename = Path(figurename.name)
 
         if myformat[0] == ".":
             myformat = myformat[1:]
@@ -1674,6 +1684,10 @@ class Viz(VizBase):
             describe_df_columns_list = []
             describe_folder_full = Path.joinpath(self.context.path, "Descriptions")
             describe_folder_full.mkdir(parents=True, exist_ok=True)
+
+        # If param_plot_dict["inner_paths"] is True, replace titles with and [""] .
+        if param_plot_dict["inner_paths"] is True:
+            titles = [""]
 
         # Recursive call for multiple titles => multiple figures
         for this_title in titles:
