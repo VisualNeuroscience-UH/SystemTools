@@ -1940,6 +1940,9 @@ class Viz(VizBase):
                         axs[out_idx].axhline(y=min_value, color="black", linestyle="--")
                         axs[out_idx].axhline(y=max_value, color="black", linestyle="--")
 
+                # To get min max etc if necessary
+                # print(inner_df_coll.describe())
+
                 # If statistics is tested, set statistics value and name to each axs subplot
                 if param_plot_dict["inner_stat_test"] is True:
                     """
@@ -1974,7 +1977,7 @@ class Viz(VizBase):
                     # If p-value is less than 0.05, append
                     # the str(max_median_idx) to stat_p_value
                     if stat_p_value < 0.05:
-                        stat_corrected_p_value_str = f"{stat_p_value:.3f} ({data_name_list[out_idx][max_median_idx]} largest)"
+                        stat_corrected_p_value_str = f"{stat_p_value:.3f} (max median at {data_name_list[out_idx][max_median_idx]})"
                     else:
                         stat_corrected_p_value_str = f"{stat_p_value:.3f}"
 
