@@ -1452,7 +1452,7 @@ class Analysis(AnalysisBase):
         target_signal = target_signal[t_idx_start:t_idx_end, :]
 
         # Init data matrix
-        coherence_matrix_np_sum = np.full_like(
+        coherence_matrix_np_mean = np.full_like(
             np.empty((source_signal.shape[1], target_signal.shape[1])), 0
         )
         coherence_matrix_np_latency = np.full_like(
@@ -1483,22 +1483,22 @@ class Analysis(AnalysisBase):
                 )
                 shift_in_seconds = self.get_cross_corr_latency(lags, corr, dt)
 
-                coherence_matrix_np_sum[pre_idx, post_idx] = coherence_mean
+                coherence_matrix_np_mean[pre_idx, post_idx] = coherence_mean
                 coherence_matrix_np_latency[pre_idx, post_idx] = shift_in_seconds
 
         # Index to diagonal, ie "correctly" classified units and get median of values on diagonal
         eye_idx = np.eye(source_signal.shape[1], target_signal.shape[1], dtype=bool)
-        coherences_on_diagonal = coherence_matrix_np_sum[eye_idx]
-        MedianCoherence = np.nanmedian(coherences_on_diagonal)
+        coherences_on_diagonal = coherence_matrix_np_mean[eye_idx]
+        MeanCoherence = np.nanmean(coherences_on_diagonal)
         latencies_on_diagonal = coherence_matrix_np_latency[eye_idx]
         MedianCoherenceLatency = np.nanmedian(latencies_on_diagonal)
 
         if 1:
-            print(f"coherence_matrix_np_sum = {coherence_matrix_np_sum}")
+            print(f"coherence_matrix_np_mean = {coherence_matrix_np_mean}")
             print(f"coherence_matrix_np_latency = {coherence_matrix_np_latency}")
 
-        # return MedianCoherence, MedianCoherenceLatency, MedianError, MedianErrorShifted
-        return MedianCoherence, MedianCoherenceLatency
+        # return MeanCoherence, MedianCoherenceLatency, MedianError, MedianErrorShifted
+        return MeanCoherence, MedianCoherenceLatency
 
     def _analyze_normerror(self, data_dict, source_signal):
 
@@ -1715,12 +1715,12 @@ class Analysis(AnalysisBase):
                     data_df.loc[this_index, f"{analysisHR}_" + NG] = analyzed_results
 
             elif analysisHR.lower() in ["coherence"]:
-                MedianCoherence, MedianCoherenceLatency = self._analyze_coherence(
+                MeanCoherence, MedianCoherenceLatency = self._analyze_coherence(
                     data, source_signal, target_signal_dt, target_group
                 )
                 data_df.loc[
                     this_index, f"{analysisHR}_" + target_group + "_Mean"
-                ] = MedianCoherence
+                ] = MeanCoherence
                 data_df.loc[
                     this_index, f"{analysisHR}_" + target_group + "_Latency"
                 ] = MedianCoherenceLatency
