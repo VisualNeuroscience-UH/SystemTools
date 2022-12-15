@@ -1963,12 +1963,23 @@ class Viz(VizBase):
                             "len(inner_data_list) must be 2 or more for stat_test, aborting..."
                         )
 
-                    stat_corrected_p_value = stat_p_value * len(
-                        data_list
-                    )  # Bonferroni correction
+                    # Find the column with largest median value, excluding nans
+                    median_list = []
+                    for this_idx, this_column in enumerate(inner_df_coll.columns):
+                        median_list.append(
+                            np.nanmedian(inner_df_coll.values[:, this_idx])
+                        )
+                    max_median_idx = np.argmax(median_list)
+
+                    # If p-value is less than 0.05, append
+                    # the str(max_median_idx) to stat_p_value
+                    if stat_p_value < 0.05:
+                        stat_corrected_p_value_str = f"{stat_p_value:.3f} ({data_name_list[out_idx][max_median_idx]} largest)"
+                    else:
+                        stat_corrected_p_value_str = f"{stat_p_value:.3f}"
 
                     axs[out_idx].set_title(
-                        f"{outer_name}\n{stat_test_name} =\n{stat_corrected_p_value:.3f}\nN = {inner_df_coll.shape[0]}"
+                        f"{outer_name}\n{stat_test_name} =\n{stat_corrected_p_value_str}\n{statistics:.1f}\nN = {inner_df_coll.shape[0]}"
                     )
                 else:
                     axs[out_idx].set_title(outer_name)
