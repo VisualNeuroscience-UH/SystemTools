@@ -1722,12 +1722,52 @@ class Viz(VizBase):
 
             fig, [axs] = plt.subplots(1, len(data_list), sharey=sharey, squeeze=False)
 
+            if param_plot_dict["divide_by_frequency"] is True:
+                # Divide by frequency
+
+                frequency_names_list = [
+                    "Excitatory Firing Rate",
+                    "Inhibitory Firing Rate",
+                ]
+
+                # Get the index of the frequency names
+                # pdb.set_trace()
+                out_fr_idx = np.array([], dtype=int)
+                for out_idx, this_name in enumerate(outer_name_list):
+                    if this_name in frequency_names_list:
+                        out_fr_idx = np.append(out_fr_idx, out_idx)
+
+                # Sum the two frequency values, separately for each inner
+                frequencies = np.zeros([len(data_list[0][0]), len(data_list[0])])
+                # Make a numpy array of zeros, whose shape is length
+                for this_idx in out_fr_idx:
+                    this_fr_list = data_list[this_idx]
+                    for fr_idx, this_fr in enumerate(this_fr_list):
+                        frequencies[:, fr_idx] += this_fr.values
+
+                # Drop the out_fr_idx from the data_list
+                data_list = [
+                    l for idx, l in enumerate(data_list) if idx not in out_fr_idx
+                ]
+                outer_name_list = [
+                    l for idx, l in enumerate(outer_name_list) if idx not in out_fr_idx
+                ]
+
+                # Divide the values by the frequencies
+                for out_idx, this_data_list in enumerate(data_list):
+                    for in_idx, this_data in enumerate(this_data_list):
+                        new_values = this_data.values / frequencies[:, in_idx]
+                        # Assign this_data.values back to the data_list
+                        data_list[out_idx][in_idx] = pd.Series(
+                            new_values, name=this_data.name
+                        )
+
             for out_idx, inner_data_list in enumerate(data_list):
                 outer_name = outer_name_list[out_idx]
                 inner_df_coll = pd.DataFrame()
                 sub_df_coll = pd.DataFrame()
-                for in_idx, inner_df in enumerate(inner_data_list):
-                    inner_df_coll[data_name_list[out_idx][in_idx]] = inner_df
+                for in_idx, inner_series in enumerate(inner_data_list):
+                    inner_df_coll[data_name_list[out_idx][in_idx]] = inner_series
                     if param_plot_dict["inner_sub"] is True:
                         sub_df_coll[data_name_list[out_idx][in_idx]] = data_sub_list[
                             out_idx
