@@ -1722,7 +1722,10 @@ class Viz(VizBase):
 
             fig, [axs] = plt.subplots(1, len(data_list), sharey=sharey, squeeze=False)
 
-            if param_plot_dict["divide_by_frequency"] is True:
+            if (
+                "divide_by_frequency" in param_plot_dict
+                and param_plot_dict["divide_by_frequency"] is True
+            ):
                 # Divide by frequency
 
                 frequency_names_list = [
