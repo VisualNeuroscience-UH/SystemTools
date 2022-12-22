@@ -260,6 +260,16 @@ class Iterator:
 
     def run_iterator(self):
 
+        if (
+            self.create_csvs
+            == self.run_simulation
+            == self.run_analysis
+            == self.run_optimal_analysis
+            == 0
+        ):
+            print("All flags set to 0, nothing to do, aborting...")
+            return
+
         path = self.context.path
 
         if self.create_log_file:
