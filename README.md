@@ -1,7 +1,6 @@
 # SystemTools
 
-This repository provides a set of tools for CxSystem2 data analysis 
-and visualization tasks. 
+This repository provides a set of tools for CxSystem2 data analysis, visualization and iterative tasks. 
 
 The main files are in the `project` directory:
 
@@ -26,7 +25,7 @@ The `scripts` folder contains the following projects:
 
 ### FCN22
 
-This folder contains jupyter notebooks for creating figures for the paper entitled **Biophysical Parameters Control Signal Transfer in Spiking Network** by *Tomás Garnier Artiñano, Vafa Andalibi, Iiris Atula, Matteo Maestri and Simo Vanni*. The manuscript is currently (22 Dec 2022) under revision for Frontiers in Computational Neuroscience.
+This folder contains jupyter notebooks for creating figures for the paper entitled **Biophysical Parameters Control Signal Transfer in Spiking Network** by *Tomás Garnier Artiñano, Vafa Andalibi, Iiris Atula, Matteo Maestri and Simo Vanni*. The manuscript is currently (3rd Jan 2022) under revision for Frontiers in Computational Neuroscience.
 <br><br>
 
 ## Environment Setup and Installation
