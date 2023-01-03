@@ -19,7 +19,10 @@ The main visualization tools include
       * any parametric data against each other 
       * categorical plots of parametric data
 
-SystemTools is in active research use by the `Visual Neuroscience group <https://www.helsinki.fi/en/researchgroups/visual-neuroscience/>`_ at the University of Helsinki. Active use implies active evolution of the code.
+SystemTools is in active research use by the `Visual Neuroscience group <https://www.helsinki.fi/en/researchgroups/visual-neuroscience/>`_ at the University of Helsinki. 
+
+.. note::
+   Active use implies active evolution of the code.
 
 
 .. toctree::
