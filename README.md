@@ -10,7 +10,7 @@ The main files are in the `project` directory:
 <br><br>
 
 ## Use for research
-* Remove a comment to activate a  *conf* statement
+* Remove comment character # to activate a  *conf* statement
     #### Example
     * PM.viz.show_spikes(results_filename=file_to_display, savefigname="")
         * PM is a ProjectManager instance
