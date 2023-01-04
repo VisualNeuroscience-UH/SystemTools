@@ -43,7 +43,7 @@ project = "FCN22"  # FCN22
 """
 Current experiment
 """
-experiment = "Figure2"  # Single_narrow_iterations_control_EI_R1 'Canonical_folder',
+experiment = "Figure1B"  # Single_narrow_iterations_control_EI_R1 'Canonical_folder',
 
 """
 ### Housekeeping ###. Do not comment out.
@@ -150,7 +150,7 @@ if __name__ == "__main__":
     'D' from EI to output
     'ALL' all of the above
     """
-    # PM.create_control_conn(conn='D')
+    # PM.ct.create_control_conn(conn='D')
 
     """
     Creates file named input_filename but with _ci.mat suffix to experiment folder
@@ -252,7 +252,7 @@ if __name__ == "__main__":
     """
     Show spikes and continuous data such as Vm. Note that param name can be any used dynamic variable in Brian2 equations
     """
-    # PM.viz.show_spikes(results_filename=file_to_display, savefigname="")
+    PM.viz.show_spikes(results_filename=file_to_display, savefigname="")
 
     # # neuron_index = {"NG3_L4_SS_L4": [0, 1, 2]}
     # # neuron_index = {"NG1_L4_CI_SS_L4": [0, 1, 2]} # Only three neurons are monitored

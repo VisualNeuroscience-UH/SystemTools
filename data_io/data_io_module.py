@@ -60,7 +60,22 @@ class DataIO(DataIOBase):
 
     def listdir_loop(self, path, data_type=None, exclude=None):
         """
-        Find files and folders in path with key substring data_type and exclusion substring exclude
+        Parameters
+        ----------
+        path : str
+            The path to search for files and folders.
+        data_type : str, optional
+            A substring to search for in the names of the files and folders. Only files and folders with names
+            containing this substring will be returned. If not provided, all files and folders will be returned.
+        exclude : str, optional
+            A substring to exclude from the search. Any files and folders with names containing this substring
+            will be skipped. If not provided, no files or folders will be excluded.
+
+        Returns
+        -------
+        List[str]
+            A list of the full path names of the files and folders in `path` that match the criteria specified by
+            `data_type` and do not contain `exclude`.
         """
         files = []
         for f in Path.iterdir(path):
@@ -84,7 +99,24 @@ class DataIO(DataIOBase):
         return paths
 
     def most_recent(self, path, data_type=None, exclude=None):
+        """
+        Parameters
+        ----------
+        path : str
+            The path to search for the most recently modified file or folder.
+        data_type : str, optional
+            A substring to search for in the names of the files and folders. Only files and folders with names
+            containing this substring will be considered. If not provided, all files and folders will be considered.
+        exclude : str, optional
+            A substring to exclude from the search. Any files and folders with names containing this substring
+            will be skipped. If not provided, no files or folders will be excluded.
 
+        Returns
+        -------
+        str
+            The name of the most recently modified file or folder in `path` that matches the criteria specified by
+            `data_type` and does not contain `exclude`.
+        """
         paths = self.listdir_loop(path, data_type, exclude)
 
         if not paths:
@@ -95,10 +127,36 @@ class DataIO(DataIOBase):
 
     def parse_path(self, filename, data_type=None, exclude=None):
         """
-        This function returns full path to either given filename or to most recently
-        updated file of given data_type (a.k.a. containing key substring in filename).
-        Note that the data_type can be timestamp.
+        The search for the file is performed in the following order:
+            1. The current directory (e.g., for direct IPython testing).
+            2. The project's output directory.
+            3. The project's input directory.
+            4. The project's root directory.
+
+        If `filename` is provided, the function returns the full path to that file if it exists in one of the above
+        directories. If `filename` is not provided, the function searches for the most recently modified file in the
+        above directories that has a name containing `data_type`. If no such file is found, an assertion error is raised.
+
+        Note that `data_type` can also be a timestamp.
+
+        Parameters
+        ----------
+        filename : str, optional
+            The name of the file to search for.
+        data_type : str, optional
+            A substring to search for in the names of the files. If `filename` is not provided, only files with names
+            containing this substring will be considered. If not provided, all files will be considered.
+        exclude : str, optional
+            A substring to exclude from the search. Any files with names containing this substring will be skipped. If
+            not provided, no files will be excluded.
+
+        Returns
+        -------
+        str
+            The full path to the file that was found.
+
         """
+
         data_fullpath_filename = None
         path = self.context.path
         input_folder = self.context.input_folder
@@ -162,10 +220,29 @@ class DataIO(DataIOBase):
         full_path=None,
     ):
         """
-        Open requested file and get data.
-        :param filename: str, filename
-        :param data_type: str, keyword in filename
-        :param exclude: str, exclusion keyword, exclude despite data_type keyword in filename
+        Open the requested file and get the data. If `filename` is not provided, the most recent file in the path with the specified `data_type` will be used. If `data_type` is not provided, the file with the specified `filename` will be used. Either `filename`, `data_type` or `full_path` must be provided.
+        Allowed extensions are .csv, .pkl, .gz, .mat, and .txt.
+
+
+        Parameters
+        ----------
+        filename : str, optional
+            The name of the file to be opened.
+        data_type : str, optional
+            A keyword in the filename.
+        exclude : str, optional
+            An exclusion keyword. If the filename contains this keyword, it will be excluded even if it also contains the `data_type` keyword.
+        return_filename : bool, optional
+            If True, returns the full path to the filename as well.
+        full_path : str, optional
+            The full path to the filename.
+
+        Returns
+        -------
+        data : array_like
+            The data from the file.
+        filename : str, optional
+            The full path to the file (only returned if `return_filename` is True).
         """
 
         if full_path is None:
@@ -218,8 +295,38 @@ class DataIO(DataIOBase):
             return data
 
     def get_csv_as_df(self, folder_name=None, csv_path=None, include_only=None):
+        """The function searches for CSV files that contain the string `include_only` in their names, or, if `include_only` is not provided, CSV files with either a time stamp or the string 'mean' in their names. If no such files are found, an assertion error is raised.
 
-        ## Get csv files recursively from folder and its subfolders ##
+        The search for the files is performed in the following order:
+            1. If `csv_path` is provided, it is used as the root directory for the search.
+            2. If `folder_name` is provided, the function searches for CSV files in the `path`/specified directory and its subdirectories.
+            3. If neither `csv_path` nor `folder_name` is provided, the function searches for CSV files in the project's output directory and its subdirectories.
+
+        Parameters
+        ----------
+        folder_name : str, optional
+            The name of the root directory to search for CSV files.
+        csv_path : str, optional
+            The path to the root directory to search for CSV files.
+        include_only : str or list of str, optional
+            A substring or list of substrings to search for in the names of the CSV files. If provided, only CSV files with names
+            containing one of these substrings will be considered. If not provided, CSV files with either a time stamp or the
+            string 'mean' in their names will be considered.
+
+        Returns
+        -------
+        Pandas DataFrame
+            A DataFrame containing the data from the first CSV file that were found.
+        Pandas DataFrame
+            A DataFrame containing the data compiled from all the CSV files that were found.
+        List[str]
+            A list of the independent variable column names from the DataFrame.
+        List[str]
+            A list of the dependent variable column names from the DataFrame.
+        str
+            The time stamp of the CSV files that were used to create the DataFrame, or None if no time stamp was found.
+        """
+
         if csv_path is None:
             if folder_name is None:
                 csv_path = Path.joinpath(self.context.path, self.context.output_folder)
@@ -347,7 +454,20 @@ class DataIO(DataIOBase):
         )
 
     def read_input_matfile(self, filename=None, variable="stimulus"):
-        # print(filename)
+        """
+        Parameters
+        ----------
+        filename : str
+            The name of the Matlab file to read.
+        variable : str
+            The name of the variable to extract from the Matlab file.
+
+        Returns
+        -------
+        numpy.ndarray
+            A 2D NumPy array containing the `variable` data from the Matlab file.
+        """
+
         assert (
             filename is not None
         ), "Filename not defined for read_input_matfile(), aborting..."

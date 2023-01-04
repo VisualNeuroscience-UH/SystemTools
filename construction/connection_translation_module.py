@@ -9,9 +9,16 @@ import pdb
 
 
 class ConnectionTranslator:
-    # This is what this class needs from context.
-    # After construction, these attributes are under
-    # self.context
+    """
+    Translate connection weights from one format to another.
+
+    Attributes
+    ----------
+    _properties_list : list, optional. If empty, takes all properties from the context.
+        List of properties needed from the context. After construction, these attributes will be available under `self.context`.
+        Default value: ['path', 'matlab_workspace_file', 'conn_skeleton_file_in', 'conn_file_out', 'input_filename', 'input_folder']
+    """
+
     _properties_list = [
         "path",
         "matlab_workspace_file",
@@ -52,12 +59,32 @@ class ConnectionTranslator:
         show_histograms=False,
         constant_scaling=False,
         constant_value=1e-9,
-        randomize_conn_list=[],
+        randomize_conn_list=None,
     ):
         """
-        After creating a CxSystem neural system with correct cell numbers and random connectivity, here we assign
-        precomputed connection weights to this system.
+        Replace connection weights in a CxSystem neural system with precomputed values.
+        Transforms the original simulation connections from .mat file to CxSystem .gz format.
+        Creates conn_file_out to input_folder.
+
+        Parameters
+        ----------
+        show_histograms : bool, optional
+            If True, histograms of the connection weights will be displayed.
+        constant_scaling : bool, optional
+            If True, connection weights will be scaled by a constant value.
+        constant_value : float, optional
+            The constant value to scale the connection weights by.
+        randomize_conn_list : list, optional
+            List of connections to randomize.
+
+        Returns
+        -------
+        None
         """
+
+        if randomize_conn_list == None:
+            randomize_conn_list = []
+
         mat_data_dict = self.data_io.get_data(self.context.matlab_workspace_file)
         conn_skeleton_dict = self.data_io.get_data(self.context.conn_skeleton_file_in)
 
@@ -166,12 +193,26 @@ class ConnectionTranslator:
         preserve_sign=True,
     ):
         """
-        Scale data to same distribution but between target data min and max values.
-        If target data are missing, normalizes to 0-1
-        -skip_under_zeros_in_scaling: When True, assumes values at zero or negative are minor and not
-        contributing to responses.
-        -preserve sign: let negative weights remain negative
+        Scale data to same distribution but between target data min and max values. If target data are missing, normalizes to 0-1.
+
+        Parameters
+        ----------
+        source_data : array_like
+            The data to be scaled.
+        target_data : array_like, optional
+            The target data to scale the source data to. If not provided, the source data will be normalized to the range [0, 1].
+        skip_under_zeros_in_scaling : bool, optional
+            If True, assumes values at zero or negative are minor and not contributing to responses.
+        preserve_sign : bool, optional
+            If True, negative weights will remain negative after scaling.
+
+        Returns
+        -------
+        scaled_data : ndarray
+            The scaled data.
         """
+
+
         if target_data is None:
             min_value = 0
             max_value = 1
@@ -213,9 +254,25 @@ class ConnectionTranslator:
         return data_out
 
     def create_current_injection(self, randomize=False):
-        # Multiply time x Nx matrix of Input with Nx x Nunits matrix of original FE mapping
-        # (input to excitatory neuron group mapping). Ref Brendel_2020_PLoSComputNeurosci
+        """
+        Creates file named input_filename but with _ci.mat suffix to experiment folder.
+        If conn='ALL' for create_control_conn method, set randomize=True
+        Multiplies time x Nx matrix of Input with Nx x Nunits matrix of original FE mapping (input to excitatory neuron group mapping).
 
+        Parameters
+        ----------
+        randomize : bool, optional
+            If True, the input matrix will be randomized.
+
+        Returns
+        -------
+        None
+
+        References
+        ----------
+        Brendel_2020_PLoSComputNeurosci
+        """
+        
         # Get FE -- from input forward to e group connection matrix
         mat_data_dict = self.data_io.get_data(self.context.matlab_workspace_file)
         mat_key = "FsE"
@@ -260,10 +317,21 @@ class ConnectionTranslator:
         self.data_io.savemat(current_injection_filename_full, mat_out_dict)
 
     def create_control_conn(self, conn="ALL"):
-        # Randomize learned connectivity for control conditions.
-        # 'EI' all mutual NG1 and NG2 connections
-        # 'D' from EI to output
-        # 'ALL' all of the above
+        """
+        Randomize learned connectivity for control conditions.
+
+        Parameters
+        ----------
+        conn : str, optional
+            The type of connections to randomize. Options are:
+            'EI' all mutual NG1 and NG2 connections
+            'D' from EI to output
+            'ALL' all of the above
+
+        Returns
+        -------
+        None
+        """
 
         if conn == "EI":
             randomize_conn_list = ["CsEE", "CsEI", "CsIE", "CsII"]

@@ -432,8 +432,24 @@ class Viz(VizBase):
         savefigname=None,
     ):
         """
-        Get input, get data. Scaling. turn to df, format df, Plot curves.
+        Show output group readout together with input signal.
+
+        Parameters
+        ----------
+        results_filename : str or None
+            This name is searched from current directory, input_folder and output_folder (defined in config file). If None, the latest results file is used.
+        normalize : bool
+            If True, the input is normalized to [0, 1] and the readout is normalized to [EL, VT].
+        unit_idx_list : list[int] or None
+            If not None, only these input and corresponding output units are shown.
+        savefigname : str or None
+            If not empty, the figure is saved to this filename.
+
+        Returns
+        -------
+        lineplot with readout and input signal
         """
+
         # Get data and input
         data = self.data_io.get_data(filename=results_filename, data_type="results")
 
@@ -653,7 +669,21 @@ class Viz(VizBase):
 
         return my_cmap
 
-    def show_spikes(self, results_filename=None, savefigname=""):
+    def show_spikes(self, results_filename=None, savefigname=None):
+        """
+        Show spikes from a results file.
+
+        Parameters
+        ----------
+            results_filename : str or None
+                This name is searched from current directory, input_folder and output_folder (defined in config file). If None, the latest results file is used.
+            savefigname : str or None
+                If not empty, the figure is saved to this filename.
+
+        Returns
+        -------
+            rasterplots, one for each neuron group.
+        """
 
         data = self.data_io.get_data(filename=results_filename, data_type="results")
 
@@ -692,12 +722,32 @@ class Viz(VizBase):
     def show_analog_results(
         self,
         results_filename=None,
-        savefigname="",
+        savefigname=None,
         param_name=None,
         startswith=None,
         neuron_index=None,
     ):
-        # Shows data on filename. If filename remains None, shows the most recent data.
+        """
+        Show analog results from a results file, such as vm state monitor data.
+
+        Parameters
+        ----------
+            results_filename : str or None
+                The name of the file to be searched. If None, the latest results file is used.
+            savefigname : str or None
+                If not empty, the figure is saved to this filename.
+            param_name : str
+                The name of the parameter to be plotted.
+            startswith : str
+                Only parameters starting with this string are plotted. Use "NG" or "S".
+            neuron_index : int or None
+                If not None, only this neuron is plotted. neuron index for each neuron group must be either None, dict[group_name]=int
+                eg {"NG1_L4_CI_SS_L4" : 150} or dict[group_name]=list of ints
+
+        Returns
+        -------
+            figure with the analog results.
+        """
 
         assert param_name is not None, "Parameter param_name not defined, aborting..."
         assert (
@@ -789,7 +839,24 @@ class Viz(VizBase):
         if savefigname:
             self.figsave(figurename=savefigname)
 
-    def show_conn(self, conn_file=None, hist_from=None, savefigname=""):
+    def show_conn(self, conn_file=None, hist_from=None, savefigname=None):
+        """
+        Show connection matrix.
+
+        Parameters
+        ----------
+        conn_file : str, optional
+            File name of the connection matrix to be displayed.
+        hist_from : str, optional
+            Connection name of the connection matrix to compute the histogram from. If None, the last connection in the list is used.
+        savefigname : str, optional
+            File name to save the figure.
+
+        Returns
+        -------
+        Figure with the connection matrix.
+        """
+
 
         data = self.data_io.get_data(filename=conn_file, data_type="connections")
 

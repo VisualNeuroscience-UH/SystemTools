@@ -219,9 +219,17 @@ class ProjectUtilities:
         return anat_file_fullpath_out, phys_file_fullpath_out
 
     def multiple_cluster_metadata_compiler_and_data_transfer(self):
-        # This searches the cluster_metadata_XXX_.pkl files from the current path/cluster_run_XXX folders
-        # The list of fullpath/cluster_metadata_XXX_.pkl strings are input to cluster_metadata_compiler_and_data_transfer
-        # one-by-one
+        """
+        Search for cluster_metadata_[]_.pkl files in the current path/cluster_run_[] folders and input them one-by-one to `cluster_metadata_compiler_and_data_transfer`.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+        """
 
         # get list of cluster_run paths in temporal order, earliest first
         path_list = sorted(self.listdir_loop(self.path, "cluster_run_20", None))
@@ -271,12 +279,16 @@ class ProjectUtilities:
         self, metapath_pkl_download_fullfile
     ):
         """
-        Cluster metadata comes in partial files metadata_part_1... etc.
-        This method combines these parts to a single metadata file for analysis and visualization
+        Combine partial metadata files and add a folder with the name corresponding to the "simulation title" parameter in the anatomy csv.
 
-        It also adds folder with name corresponding to "simulation title" parameter in the anatomy csv
-        metapath_pkl_download_fullfile is full path to .pkl file containing global metadata about the cluster run.
-        It should be in the downloads folder after downloading the results from cluster.
+        Parameters
+        ----------
+        metapath_pkl_download_fullfile : str
+            Full path to the .pkl file containing global metadata about the cluster run. It should be in the downloads folder after downloading the results from the cluster.
+
+        Returns
+        -------
+        None
         """
 
         metafile_master_dict = self.get_data(metapath_pkl_download_fullfile)

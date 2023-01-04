@@ -33,6 +33,8 @@ Below :code:`if __name__ == '__main__'`
     * results_filename is searched from project folders, if :code:`None`, the latest results file is used
     * if savefigname is not empty string :code:`""`, the figure is saved to the project folder
 
+See :ref:`Reference <reference>` for more information on the *conf* file.
+
 
 Use for viewing published work
 ------------------------------
