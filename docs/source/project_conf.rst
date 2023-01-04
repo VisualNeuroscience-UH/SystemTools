@@ -1,4 +1,4 @@
-.. _reference:
+.. _project_conf:
 
 
 Reference for :mod:`data_io`

@@ -30,7 +30,8 @@ SystemTools is in active research use by the `Visual Neuroscience group <https:/
    :caption: Contents:
 
    introduction
-   reference
+   data_io
+   project_conf
 
 
 Indices and tables
