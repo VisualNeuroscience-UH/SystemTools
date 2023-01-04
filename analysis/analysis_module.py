@@ -2706,10 +2706,26 @@ class Analysis(AnalysisBase):
     def analyze_arrayrun(self, metadata_filename=None, analysis=None, iter_dict=None):
         """
         Analyze simulation parameter array run. Create csv table. Needs a metadata file.
-        :param metadata_filename: string
-        :param analysis: string, analysis name keyword
-        :param iter_dict, None or dict, if dict exists, this is parallel analysis
         Saves analysis results as [analysis name keyword]_timestamp.csv to data folder.
+
+        Parameters
+        ----------
+
+        metadata_filename : str
+            Metadata file name
+        analysis : str
+            Analysis name keyword. Allowed keywords include "Coherence", "GrCaus", "TransferEntropy", "NormError", "MeanFR".
+        iter_dict : None or dict
+            If dict is provided, this is parallel analysis and iter_dict is the iteration dictionary
+
+        Returns
+        -------
+        None
+
+        Example
+        -------
+        meta_fname = "metadata__20220615_1256589.gz"
+        PM.ana.analyze_arrayrun(metadata_filename=meta_fname, analysis='MeanFR')
         """
         # Map to standard camelcase
         assert (
@@ -2750,12 +2766,22 @@ class Analysis(AnalysisBase):
         self, metadata_filename=None, analyzes_list=None, iter_dict=None
     ):
         """
-        Analyze simulation parameter array run. Create csv table. Needs a metadata file.
-        :param metadata_filename: string
-        :param analyzes_list: list of strings, analysis name keywords
-        :param iter_dict, None or dict, if dict exists, this is parallel analysis
-        Saves results as [analysis #1 name_analysis #2 name_ ... keywords]_timestamp.gz to data folder.
-        This holds the N input x N output numpy matrix
+        Analyze parameter array run. Calculates the full array, i.e. all input-output pairs for requested analyzes. This is used for classification performance
+        as well as for getting the mean/median value. Saves results as [keyword#1_keyword#2 ...]_timestamp.gz to data folder. This holds the N input x N output numpy matrix.
+
+        Parameters
+        ----------
+        metadata_filename: str
+            The metadata file for the array run.
+        analyzes_list: list of str
+            A list of analysis keywords. Allowed keywords include "Coherence", "GrCaus", "TransferEntropy", "NormError".
+        iter_dict: dict or None
+            If a dict is provided, this is parallel analysis.
+
+        Returns
+        -------
+        analyzed_data_dict: dict
+            A dictionary of analysis results for the full array run.
         """
 
         # Map from standard camelcase to lowercase.

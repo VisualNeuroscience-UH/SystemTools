@@ -1,23 +1,6 @@
 .. _project_conf:
 
 
-Reference for :mod:`data_io`
-============================
-
-.. autofunction:: data_io.data_io_module.DataIO.listdir_loop
-
-.. autofunction:: data_io.data_io_module.DataIO.most_recent
-
-.. autofunction:: data_io.data_io_module.DataIO.parse_path
-
-.. autofunction:: data_io.data_io_module.DataIO.get_data
-
-.. autofunction:: data_io.data_io_module.DataIO.get_csv_as_df
-
-.. autofunction:: data_io.data_io_module.DataIO.read_input_matfile
-
-
-
 Reference for the :mod:`project_conf_module` script file
 ========================================================
 
@@ -182,3 +165,48 @@ file_to_display has the format "[full path to file ] [prefix]_results_[timestamp
 .. autofunction:: viz.viz_module.Viz.show_readout_on_input
 
 .. autofunction:: viz.viz_module.Viz.show_analog_results
+
+
+Analysis & Viz, array runs, single startpoint, single analysis
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. _attr_ref1:
+
+.. attribute:: save_figure_with_arrayidentifier
+
+If specified, the displayed array analysis figures are saved as arrayIdentifier_analysis_identifier.svg in the specified folder. The value should be a string containing the array identifier.
+
+.. _attr_ref2:
+
+.. attribute:: save_figure_to_folder
+
+If specified, the displayed array analysis figures are saved in the specified folder. The value should be a string containing the name of the folder.
+
+.. autofunction:: analysis.analysis_module.Analysis.analyze_IxO_array
+
+.. autofunction:: analysis.analysis_module.Analysis.analyze_arrayrun
+
+.. _meth_ref1:
+
+.. autofunction:: viz.viz_module.Viz.show_analyzed_arrayrun
+
+
+Viz, single array runs, multiple analyzes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autofunction:: viz.viz_module.Viz.system_polar_bar
+
+
+Analyze & Viz, array runs, multiple iterations
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+See :ref:`save_figure_with_arrayidentifier <attr_ref1>`, :ref:`save_figure_to_folder <attr_ref2>` and :ref:`show_analyzed_arrayrun <meth_ref1>` above for reference.
+
+.. autofunction:: viz.viz_module.Viz.show_xy_plot
+
+
+Analyze & Viz, array runs, multiple iterations, multiple paths
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autofunction:: viz.viz_module.Viz.show_catplot
+

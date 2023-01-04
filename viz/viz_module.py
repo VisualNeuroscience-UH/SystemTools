@@ -447,7 +447,7 @@ class Viz(VizBase):
 
         Returns
         -------
-        lineplot with readout and input signal
+        None
         """
 
         # Get data and input
@@ -675,14 +675,14 @@ class Viz(VizBase):
 
         Parameters
         ----------
-            results_filename : str or None
-                This name is searched from current directory, input_folder and output_folder (defined in config file). If None, the latest results file is used.
-            savefigname : str or None
-                If not empty, the figure is saved to this filename.
+        results_filename : str or None
+            This name is searched from current directory, input_folder and output_folder (defined in config file). If None, the latest results file is used.
+        savefigname : str or None
+            If not empty, the figure is saved to this filename.
 
         Returns
         -------
-            rasterplots, one for each neuron group.
+        None
         """
 
         data = self.data_io.get_data(filename=results_filename, data_type="results")
@@ -732,21 +732,21 @@ class Viz(VizBase):
 
         Parameters
         ----------
-            results_filename : str or None
-                The name of the file to be searched. If None, the latest results file is used.
-            savefigname : str or None
-                If not empty, the figure is saved to this filename.
-            param_name : str
-                The name of the parameter to be plotted.
-            startswith : str
-                Only parameters starting with this string are plotted. Use "NG" or "S".
-            neuron_index : int or None
-                If not None, only this neuron is plotted. neuron index for each neuron group must be either None, dict[group_name]=int
-                eg {"NG1_L4_CI_SS_L4" : 150} or dict[group_name]=list of ints
+        results_filename : str or None
+            The name of the file to be searched. If None, the latest results file is used.
+        savefigname : str or None
+            If not empty, the figure is saved to this filename.
+        param_name : str
+            The name of the parameter to be plotted.
+        startswith : str
+            Only parameters starting with this string are plotted. Use "NG" or "S".
+        neuron_index : int or None
+            If not None, only this neuron is plotted. neuron index for each neuron group must be either None, dict[group_name]=int
+            eg {"NG1_L4_CI_SS_L4" : 150} or dict[group_name]=list of ints
 
         Returns
         -------
-            figure with the analog results.
+        None
         """
 
         assert param_name is not None, "Parameter param_name not defined, aborting..."
@@ -793,8 +793,24 @@ class Viz(VizBase):
         if savefigname:
             self.figsave(figurename=savefigname)
 
-    def show_currents(self, results_filename=None, savefigname="", neuron_index=None):
+    def show_currents(self, results_filename=None, savefigname=None, neuron_index=None):
+        """
+        Plots the total excitatory and inhibitory current for each neuron group in the results data.
 
+        Parameters
+        ----------
+        results_filename : str, optional
+            The name of the file containing the results data. If not provided, the function will use the most recently modified file with a key substring of 'results'.
+        savefigname : str, optional
+            The name to use when saving the plot. If not provided, the plot will not be saved.
+        neuron_index : dict, optional
+            A dictionary mapping neuron group names to neuron indices. If provided, the function will plot the excitatory and inhibitory current for the specified neurons in each group. If not provided, the function will plot the mean current over all neurons in each group.
+
+        Returns
+        -------
+        None
+
+        """
         data = self.data_io.get_data(results_filename, data_type="results")
         # Visualize
         # Extract connections from data dict
@@ -854,9 +870,8 @@ class Viz(VizBase):
 
         Returns
         -------
-        Figure with the connection matrix.
+        None
         """
-
 
         data = self.data_io.get_data(filename=conn_file, data_type="connections")
 
@@ -947,13 +962,29 @@ class Viz(VizBase):
         annotate_with_p=False,
     ):
         """
-        Pseudocode
-        Get MeanFR_TIMESTAMP_.csv
-        If does not exist, calculate from metadata file list
-        Prep figure in subfunction, get axes handles
-        Table what is necessary, display
-        Plot 2D
-        Plot 3D
+        Visualize summary table from arrayrun analysis, 1D lineplot (1D data) or 2D heatmap and 3D surface plot (2D data).
+
+        Parameters
+        ----------
+        csv_filename : str, optional
+            File name of the summary table to be displayed. If None, the file is selected from the output_folder by the analysis keyword.
+        analysis : str
+            Analysis to be displayed.
+            Available analysis names: "Coherence", "GrCaus", "NormError", "TransferEntropy", "MeanFR", "EDist"
+        variable_unit : str, optional
+            Unit of the variable to be displayed.
+        NG_id_list : list, optional
+            List of neuron group IDs to be displayed. If empty, all available neuron groups are displayed as separate figures. In FCN22 project, empty list works only for MeanFR, other analyses need ["NG3"], the output neuron group id.
+        annotation_2D : bool, optional
+            If True, annotate the 2D plot with values for each cell.
+        logscale : bool, optional
+            If True, use log scale for the 2D plot.
+        annotate_with_p : bool, optional
+            If True, mark significant p-values with red asterisk. This is valid only for classification accuracy.
+
+        Returns
+        -------
+        None
         """
         if analysis is not None:
             assert (
@@ -961,6 +992,8 @@ class Viz(VizBase):
             ), "Unknown analysis, aborting..."
 
             analysisHR = self.map_ana_names[analysis.lower()]
+        else:
+            raise ValueError("Analysis name is not specified.")
 
         # Get data from analysisHR_TIMESTAMP_.csv
         try:
@@ -1335,6 +1368,18 @@ class Viz(VizBase):
             plt.legend(["Target", "Estimate"])
 
     def system_polar_bar(self, row_selection=None, folder_name=None):
+        """
+        Two-dimensional PCA of data.
+        The system_polar_bar method operates on output folder and its subfolders. It searches for csv files; only valid array
+        analysis csv files are collected. For list of rows, make one figure for each row.
+
+        Parameters
+        ----------
+        row_selection : int or list of int, optional
+            The row_selection parameter is used to select a specific row in the csv file. The default is None.
+        folder_name : str, optional
+            The folder_name parameter is used to select a specific folder. The default is None.
+        """
 
         if isinstance(row_selection, list) and len(row_selection) > 1:
             # For list of rows, make one figure for each row
@@ -1716,29 +1761,33 @@ class Viz(VizBase):
 
         outer : panel (distinct subplots) # analyzes, startpoints, parameters, controls
         inner : inside one axis (subplot) # startpoints, parameters, controls
-        inner_sub : bool, further subdivision by value, such as mean firing rate
-        inner_sub_ana : name of ana. This MUST be included into to_spa_dict "analyzes"
-        plot_type : parametric plot type # box
 
-        inner_paths : bool (only inner available for setting paths). Provide comparison from arbitrary paths, e.g. controls
-        paths : provide list of tuples of full path parts to data folder.
-        E.g. [(root_path, 'Single_narrow_iterations_control', 'Bacon_gL_compiled_results'),]
-        The number of paths MUST be the same as the number of corresponding inner variables.
+        The dictionary xy_plot_dict contains:
 
-        compiled_results : data at compiled_results folder, mean over iterations
-        param_plot_dict = {
-            "title": "parameters",  # multiple allowed => each in separate figure
-            "outer":  "analyzes",  # multiple allowed => plt subplot panels
-            "inner": "startpoints",  # multiple allowed => direct comparison
-            "inner_sub": False,  # A singular analysis => subdivisions
-            "inner_sub_ana": "Excitatory Firing Rate",  #  The singular analysis
-            "bin_edges": [[0.001, 150], [150, 300]],
-            "plot_type": "box", # "violin",  "box", "strip", "swarm", "boxen", "point", "bar"
-            "compiled_results": True,
-            'sharey' : False,
-            "inner_paths" : False,
-            "paths": [],
-        }
+        title : str
+            Title-level of plot, e.g. "parameters". Multiple allowed => each in separate figure
+        outer : str
+            Panel-level of plot, e.g. "analyzes". Multiple allowed => plt subplot panels
+        inner : str
+            Inside one axis (subplot) level of plot, e.g. "startpoints". Multiple allowed => direct comparison
+        inner_sub : bool
+            Further subdivision by value, such as mean firing rate
+        inner_sub_ana : str
+            Name of ana. This MUST be included into to_spa_dict "analyzes". E.g. "Excitatory Firing Rate"
+        bin_edges : list of lists
+            Binning of data. E.g. [[0.001, 150], [150, 300]]
+        plot_type : str
+            Parametric plot type. Allowed types include "box", "violin", "strip", "swarm", "boxen", "point" and "bar".
+        compiled_results : bool
+            Data at compiled_results folder, mean over iterations
+        sharey : bool
+            Share y-axis between subplots
+        inner_paths : bool
+            Provide comparison from arbitrary paths, e.g. controls
+        paths : list of tuples
+            Provide list of tuples of full path parts to data folder.
+            E.g. [(root_path, 'Single_narrow_iterations_control', 'Bacon_gL_compiled_results'),]
+            The number of paths MUST be the same as the number of corresponding inner variables.
         """
 
         coll_ana_df = copy.deepcopy(self.coll_spa_dict["coll_ana_df"])
@@ -2320,7 +2369,51 @@ class Viz(VizBase):
         xy_plot_dict,
     ):
 
-        """ """
+        """
+        Plot any parametric data against each other. Uses seaborn regplot or lineplot. Seaborn options easy to include into code (viz_module). All analyzes MUST be included into to_spa_dict. Same data at the x and y axis simultaneously can be used with regplot. If compiled_type is accuracy, and only mean datatype is available, uses the mean.
+
+        The dictionary xy_plot_dict contains:
+
+        x_ana, y_ana : list[str]
+            List of analyzes to be plotted on x- and y-axis.
+
+        x_start, y_start : list[str]
+            List of startpoints to be plotted on x- and y-axis.
+
+        x_para, y_para : list[str]
+            List of parameters to be plotted on x-axis.
+
+        x_ave, y_ave : bool
+            If True, calculates weighted average over NGs. Works only for kind = regplot.
+
+        hue : str
+            Startpoint or parameter names. If startpoint is selected, each line is one startpoint and parameters will be combined. And vice versa. Ignored for regplot
+
+        kind: 'regplot' or 'binned_lineplot'
+            -regplot is scatterplot, where only single startpoint and parameter should be plotted at a time. draw_regression available.
+            -binned_lineplot bins x-data, then compiles parameters/startpoints and finally shows distinct startpoints/parameters (according to "hue") with distinct hues.
+            -shading for binned_lineplot indicates 95% confidence interval, obtained by bootstrapping the data 1000 times (seaborn default).
+
+        compiled_results : bool
+            Get x and y data from folder '[prefix]_compiled_results'.
+
+        compiled_type : str
+            "mean" or "accuracy", falls back to mean if accuracy not found
+
+        draw_regression : bool
+            Available only for regplot
+
+        order : int, regression polynomial fit order, only for regplot
+
+        draw_diagonal : bool
+            Only for regplot
+
+        xlog : bool
+
+        ylog : bool
+
+        sharey : bool
+        """
 
         coll_ana_df = self.coll_spa_dict["coll_ana_df"]
 

@@ -252,7 +252,7 @@ if __name__ == "__main__":
     """
     Show spikes and continuous data such as Vm. Note that param name can be any used dynamic variable in Brian2 equations
     """
-    PM.viz.show_spikes(results_filename=file_to_display, savefigname="")
+    # PM.viz.show_spikes(results_filename=file_to_display, savefigname="")
 
     # # neuron_index = {"NG3_L4_SS_L4": [0, 1, 2]}
     # # neuron_index = {"NG1_L4_CI_SS_L4": [0, 1, 2]} # Only three neurons are monitored
@@ -277,7 +277,7 @@ if __name__ == "__main__":
     Show E and I currents: Not measured in VenDor
     """
     # neuron_index = {'NG1_L4_CI_SS_L4' : 150, 'NG2_L4_CI_BC_L4' : 37, 'NG3_L4_SS_L4' : 1} # None
-    # PM.show_currents(results_filename=None, savefigname='', neuron_index=neuron_index)
+    # PM.viz.show_currents(results_filename=None, savefigname='', neuron_index=neuron_index)
 
     ##########################################################################
     ###### Analysis & Viz, array runs, single startpoint, single analysis ######

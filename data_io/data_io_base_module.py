@@ -3,7 +3,7 @@ from abc import ABCMeta, abstractmethod
 
 class DataIOBase(metaclass=ABCMeta):
     """
-    This class defines the interface for reading and writing data and provides several abstract methods that must be implemented by derived classes.
+    This class defines the interface for reading and writing data.
 
     Properties
     ----------
