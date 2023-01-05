@@ -176,6 +176,7 @@ def test_get_csv_data_as_df():
     assert isinstance(data0_df, pd.DataFrame)
 
 
+@pytest.mark.xfail(reason="Inactive for too large test files")
 def test_read_input_matfile():
     data = IO.read_input_matfile(filename=mat_file_name)
     assert isinstance(data, np.ndarray)
@@ -190,7 +191,7 @@ def test_ct_construction():
     assert isinstance(PM.ct.context, Context)
     assert isinstance(PM.ct.data_io, DataIO)
 
-
+@pytest.mark.xfail(reason="Inactive for too large test files")
 def test_replace_conn():
     orig_conn_file = "orig_connections_SingleSpike_ci.gz"
     orig_save_full = Path.joinpath(PM.context.input_folder, orig_conn_file)
@@ -233,6 +234,7 @@ def test_create_current_injection_input_filename():
     assert input_filename.suffix == ".mat"
 
 
+@pytest.mark.xfail(reason="Inactive for too large test files")
 def test_create_current_injection():
     input_filename = PM.context.input_filename
 
