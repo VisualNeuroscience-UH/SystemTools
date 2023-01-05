@@ -1270,7 +1270,22 @@ class Viz(VizBase):
     def show_input_to_readout_coherence(
         self, results_filename=None, savefigname="", signal_pair=[0, 0]
     ):
+        '''
+        Show analysis of temporal dynamics for the input signal and the readout signal.
 
+        Parameters
+        ----------
+        results_filename : str
+            Name of the results file to be analyzed. If None, the most recent results file is used.
+        savefigname : str
+            Name of the figure to be saved. If empty, the figure is not saved.
+        signal_pair : list[int, int]
+            List of two integers, indicating the input and readout signal to be analyzed.
+
+        Returns
+        -------
+        None
+        '''
         data_dict = self.data_io.get_data(
             filename=results_filename, data_type="results"
         )
@@ -1344,7 +1359,28 @@ class Viz(VizBase):
         output_type="estimated",
         unit_idx_list=[0],
     ):
+        """
+        Plot the best possible outputsignal, given the leaky spikes in readout group.
 
+        Parameters
+        ----------
+        results_filename : str, optional
+            The file containing the simulation results. If not provided, will use the latest results in the output_folder.
+        simulation_engine : str, default "cxsystem"
+            The simulation engine used for estimation.
+        readout_group : str, default "E"
+            The group whose input was read out.
+        decoding_method : str, default "least_squares"
+            The decoding method used to obtain the estimated input.
+        output_type : str, default "estimated"
+            The type of output to plot. Can be "estimated" or "simulated".
+        unit_idx_list : list[int], optional
+            The indices of the units to plot.
+
+        Returns
+        -------
+        None
+        """
         Error, xL, xest = self.ana.get_MSE(
             results_filename=results_filename,
             simulation_engine=simulation_engine,
@@ -2622,7 +2658,6 @@ class Viz(VizBase):
                 myformat="png",
                 subfolderpath=self.save_figure_to_folder,
             )
-
 
     def show_IxO_conf_mtx(
         self,

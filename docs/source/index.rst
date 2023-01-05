@@ -4,7 +4,8 @@
    contain the root `toctree` directive.
 
 SystemTools Documentation
-=======================================
+=========================
+
 SystemTools provides python software for iterative tasks, analyzing and visualizing CxSystem2 simulations. The CxSystem2 is a high-level simulation tool housed at `CxSystem repository <https://github.com/VisualNeuroscience-UH/CxSystem2>`_  and `documented <https://cxsystem2.readthedocs.io/en/latest>`_ at readthedocs.org.
 
 The iterative tasks include creation of anatomical and physiological csv files, running simulations, and analyzing the results. 
@@ -18,6 +19,8 @@ The main visualization tools include
       * analysis results of 1D or 2D array simulations.
       * any parametric data against each other 
       * categorical plots of parametric data
+
+This documentation covers :ref:`ref research` and :ref:`ref published results` . Other functions are documented either in the code or by the code.
 
 SystemTools is in active research use by the `Visual Neuroscience group <https://www.helsinki.fi/en/researchgroups/visual-neuroscience/>`_ at the University of Helsinki. 
 

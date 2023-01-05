@@ -2499,6 +2499,33 @@ class Analysis(AnalysisBase):
         extra_points=None,
         extra_points_at_edge_of_gamut=False,
     ):
+        """
+        Perform Principal Component Analysis on the given data and return the transformed data, principal axes, explained variance ratio, and extra points if provided.
+
+        Parameters
+        ----------
+        data : ndarray, shape (n_samples, n_features)
+            The data to be transformed.
+        n_components : int, optional, default: 2
+            The number of components to keep.
+        col_names : list of str, optional, default: None
+            A list of column names for the principal axes data frame. If not provided, default to integers from 0 to n_components-1.
+        extra_points : ndarray, shape (n_extra_points, n_features), optional, default: None
+            The extra points to be transformed.
+        extra_points_at_edge_of_gamut : bool, optional, default: False
+            If True, move the extra points to the edge of the gamut.
+
+        Returns
+        -------
+        pca_data : ndarray, shape (n_samples, n_components)
+            The transformed data.
+        principal_axes_in_PC_space : DataFrame
+            The principal axes in PC space.
+        explained_variance_ratio : ndarray, shape (n_components,)
+            The explained variance ratio.
+        pca_extra_points : ndarray, shape (n_extra_points, n_components), optional
+            The transformed extra points. Returned only if extra_points is provided.
+        """
 
         # scales to zero mean, sd of one
         values_np_scaled = self.scaler(data, scale_type="standard")
@@ -2598,7 +2625,34 @@ class Analysis(AnalysisBase):
         output_type="estimated",
     ):
         """
-        Get decoding error. Allows both direct call by default method on single files and with data dictionary for array analysis.
+        Get the decoding error for a given readout group, decoding method, and simulation engine.
+        Can be called directly with a single file or with a data dictionary for array analysis.
+
+        Parameters
+        ----------
+        Input : ndarray, optional
+            The input stimulus. If not provided, will be read from the input file.
+        results_filename : str, optional
+            The .gz file containing the simulation results. If not provided, will use the latest results.
+        data_dict : dict, optional
+            A dictionary containing the simulation results. If not provided, will be read from the results file.
+        simulation_engine : str, default "CxSystem"
+            The simulation engine used to run the simulation.
+        readout_group : str, for FCN22 default "NG1"
+            The group whose input was read out.
+        decoding_method : str, default "least_squares"
+            The decoding method used to obtain the estimated input.
+        output_type : str, default "estimated"
+            The type of output to plot. Can be "estimated" or "simulated".
+
+        Returns
+        -------
+        error : float
+            The mean squared error between the target and estimated input.
+        xL : ndarray
+            The target input.
+        xest : ndarray
+            The estimated input.
         """
 
         if Input is None:
@@ -2610,12 +2664,13 @@ class Analysis(AnalysisBase):
         # Check readoutgroup name, standardize
         readout_group = self._check_readout_group(simulation_engine, readout_group)
 
+        assert (
+            results_filename is not None
+        ), 'You need to provide the workspace data as "results_filename", aborting...'
+
         # Get filtered spike train from simulation.
         if "matlab" in simulation_engine.lower():  # Not in active use.
             if data_dict is None:
-                assert (
-                    results_filename is not None
-                ), 'For matlab, you need to provide the workspace data as "results_filename", aborting...'
                 # Input scaling factor A is 2000 for matlab results
                 data_dict = self.data_io.get_data(filename=results_filename)
             # rOE missing in latest workspace, found rOEf instead
@@ -3666,7 +3721,7 @@ class Analysis(AnalysisBase):
         Parameters
         ----------
         folderpath : pathlib.Path object or str, optional
-            The path to the folder containing the CSV files to be described. 
+            The path to the folder containing the CSV files to be described.
         savename : str, optional
             The name to use when saving the description of the data. If `None` or an empty string, the description will be printed to the console.
 
