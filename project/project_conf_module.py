@@ -565,8 +565,8 @@ if __name__ == "__main__":
     files from startpoint files, running simulations in parallel subprocesses
     and running analysis with parallel threads. 
     Run optimal analysis provides values for input vs itself with given
-    delays (optimal, bas case scenario), and each input vs all other inputs 
-    with given delays (nonoptimal, worst case scenario).
+    delays (optimal, best-case scenario), and each input vs all other inputs 
+    with given delays (nonoptimal, worst-case scenario).
     """
 
     # What to do
@@ -589,9 +589,8 @@ if __name__ == "__main__":
         500,
     ]  # list, interpreted as [min, max, number of steps]. Always nonparallel.
 
-    max_n_iter = 10  # Max N repetitions in the project
-    # For single input keep n_iters = 1 and  iter_start_idx = 0
-    n_iters = max_n_iter
+    # N repetitions. For single input keep n_iters = 1 and  iter_start_idx = 0
+    n_iters = 10
     iter_start_idx = 0
 
     # N padded zeros in iterated folder names. If 2 => Bacon_C_00, if 1 => Bacon_C_0

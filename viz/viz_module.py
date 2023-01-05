@@ -2623,15 +2623,7 @@ class Viz(VizBase):
                 subfolderpath=self.save_figure_to_folder,
             )
 
-    # def show_IxO_conf_mtx(
-    #     self,
-    #     startpoint="",
-    #     parameter="",
-    #     ana_list=[],
-    #     ana_suffix_list=[],
-    #     par_value_string_list=[],
-    #     best_is_list=[],
-    # ):
+
     def show_IxO_conf_mtx(
         self,
         startpoint,

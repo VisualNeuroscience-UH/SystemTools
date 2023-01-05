@@ -278,6 +278,10 @@ class ProjectManager(ProjectBase, ProjectUtilities):
         self.coll_spa_dict = coll_spa_dict
 
     def build_iterator(self, **all_parameters):
+        """
+        Constructs iterator object. This is called from project configuration file.
+        This is similar to __init__ but allows for the iterator to be built after the project manager is instantiated.
+        """
         IT = Iterator(all_parameters)
         IT.context = self.context
         IT.data_io = self.data_io
@@ -287,6 +291,9 @@ class ProjectManager(ProjectBase, ProjectUtilities):
         self.IT = IT
 
     def run_iterator(self):
+        '''
+        Runs iterator object.
+        '''
         if hasattr(self, "IT"):
             self.IT.run_iterator()
         else:
