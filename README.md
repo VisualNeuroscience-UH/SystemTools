@@ -6,7 +6,7 @@ The main files are in the `project` directory:
 
 * `project/project_conf_module.py`: *conf* below, provides the primary interface to work with SystemTools.
 * `project/project_manager_module.py` provides a facade design pattern for the rest of the code.
-<br><br>
+<br>
 
 ## Use for research
 * Remove comment character # to activate a  *conf* statement
@@ -17,7 +17,7 @@ The main files are in the `project` directory:
         * show_spikes is a viz method showing rasterplot of spikes
 
 *  Run it as `python project/project_conf_module.py`
-<br><br>
+<br>
 
 ## Use for viewing published work
 
@@ -26,7 +26,7 @@ The `scripts` folder contains the following projects:
 ### FCN22
 
 This folder contains jupyter notebooks for creating figures for the paper entitled **Biophysical Parameters Control Signal Transfer in Spiking Network** by *Tomás Garnier Artiñano, Vafa Andalibi, Iiris Atula, Matteo Maestri and Simo Vanni*. The manuscript is currently (3rd Jan 2022) under revision for Frontiers in Computational Neuroscience.
-<br><br>
+<br>
 
 ## Environment Setup and Installation
 
@@ -79,7 +79,7 @@ This folder contains jupyter notebooks for creating figures for the paper entitl
         or http://127.0.0.1:8888/...
     ```
 * At this point, by clicking on one of the links in the output, you should have access to the notebook.
-<br><br>
+<br>
 
 ## Documentation
 
@@ -97,7 +97,7 @@ This creates `build/html` folder, where the index.html (double click or open fro
 You can access the documentation of the SystemTools at 
 [cxsystem2.readthedocs.io](https://cxsystem2.readthedocs.io).
 -->
-<br><br>
+<br>
 
 ## Citation
 
@@ -115,14 +115,14 @@ Garnier Artiñano, T., Andalibi, V., Atula, I., Maestri, M., Vanni, S., Biophysi
 ## Support
 
 You are encouraged to use <a href="https://github.com/VisualNeuroscience-UH/SystemTools/issues" target="_blank">Github's Issues</a> to report bugs, or request enhancements or new features.
-<br><br>
+<br>
 
 ## Team
 
 In alphabetical order:
 - [Vafa Andalibi](https://www.andalibi.me)
 - [Simo Vanni](https://scholar.google.fi/citations?user=nRiUf30AAAAJ&hl=en)
-<br><br>
+<br>
 
 ## License
 
