@@ -1527,6 +1527,7 @@ class Analysis(AnalysisBase):
                 decoding_method=decoding_method,
                 output_type="estimated",
             )
+
         MeanSimErr_O, target_output, output = self.get_MSE(
             source_signal, data_dict=data_dict, output_type="simulated"
         )
@@ -2664,15 +2665,15 @@ class Analysis(AnalysisBase):
         # Check readoutgroup name, standardize
         readout_group = self._check_readout_group(simulation_engine, readout_group)
 
-        assert (
-            results_filename is not None
-        ), 'You need to provide the workspace data as "results_filename", aborting...'
-
         # Get filtered spike train from simulation.
         if "matlab" in simulation_engine.lower():  # Not in active use.
             if data_dict is None:
                 # Input scaling factor A is 2000 for matlab results
                 data_dict = self.data_io.get_data(filename=results_filename)
+                assert (
+                    results_filename is not None
+                ), 'You need to provide the workspace data as "results_filename", aborting...'
+
             # rOE missing in latest workspace, found rOEf instead
             target_rO_name = f"rO{readout_group}"
             spikes_leak = data_dict[target_rO_name].T

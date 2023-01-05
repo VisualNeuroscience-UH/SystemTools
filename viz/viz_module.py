@@ -1270,7 +1270,7 @@ class Viz(VizBase):
     def show_input_to_readout_coherence(
         self, results_filename=None, savefigname="", signal_pair=[0, 0]
     ):
-        '''
+        """
         Show analysis of temporal dynamics for the input signal and the readout signal.
 
         Parameters
@@ -1285,7 +1285,7 @@ class Viz(VizBase):
         Returns
         -------
         None
-        '''
+        """
         data_dict = self.data_io.get_data(
             filename=results_filename, data_type="results"
         )
@@ -2582,8 +2582,8 @@ class Viz(VizBase):
                     """
                     if xy_plot_dict["draw_regression"] is True:
                         r, p = self.ana.stat_tests.pearson_correlation(
-                            data_df_compiled[this_x_column],
-                            data_df_compiled[this_y_column],
+                            data_df_compiled[this_x_column].values,
+                            data_df_compiled[this_y_column].values,
                         )
                         # Add r, p as text to regplot
                         axs[row_idx, col_idx].text(

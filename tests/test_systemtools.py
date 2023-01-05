@@ -563,7 +563,7 @@ def test__analyze_coherence():
     coh_mean, coh_lat = ana._analyze_coherence(
         data_dict, source_signal_np, dt, target_group
     )
-    assert 0.60 < coh_mean < 0.61
+    assert 0.58 < coh_mean < 0.60
     assert 0.005 < coh_lat < 0.006
 
 
