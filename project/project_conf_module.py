@@ -489,7 +489,7 @@ if __name__ == "__main__":
     startpoints Comrad, Bacon, HiFi; parameter 'C', 'gL', 'VT', 'EL', 'delay'
     """
     # PM.viz.show_IxO_conf_mtx(startpoint='Comrad', parameter='VT', ana_list=['Coherence', 'GrCaus', 'TransferEntropy', 'NormError'],
-    #     ana_suffix_list=['sum', 'Information', 'TransfEntropy', 'SimErr'], par_value_string_list=['-44.0', '-46.0'],
+    #     ana_suffix_list=['mean', 'Information', 'TransfEntropy', 'SimErr'], par_value_string_list=['-44.0', '-46.0'],
     #     best_is_list=['max', 'max', 'max', 'min'])
 
     ##################################################################################

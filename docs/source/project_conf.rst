@@ -4,7 +4,9 @@
 Reference for the :mod:`project_conf_module` script file
 ========================================================
 
-Use keyword substring "file" in filenames, and "folder" in folder names to assert that they are turned into pathlib objects. Path structure is assumed to be root_path/project/experiment/output_folder
+Use keyword substring "file" in filenames, and "folder" in folder names to assert that they are turned into pathlib objects. Path structure is assumed to be root_path/project/experiment/output_folder.
+
+Some lines are marked: :code:`### Housekeeping ###. Do not comment out the next two lines.` . If you comment such lines, the `conf` will not function properly.
 
 .. _abbreviations:
 
@@ -152,7 +154,14 @@ metapath = "[path to]/cluster_metadata_[timestamp].pkl"
 
 .. autofunction:: project.project_utilities_module.ProjectUtilities.multiple_cluster_metadata_compiler_and_data_transfer
 
+.. autofunction:: analysis.analysis_module.Analysis.optimal_value_analysis
 
+.. autofunction:: viz.viz_module.Viz.show_optimal_value_analysis
+
+.. autofunction:: viz.viz_module.Viz.show_iter_optimal_value_analysis
+
+.. autofunction:: analysis.analysis_module.Analysis.describe_optimal_values
+   
 Analysis & Viz, single files
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -203,6 +212,8 @@ Analyze & Viz, array runs, multiple iterations
 See :ref:`save_figure_with_arrayidentifier <attr_ref1>`, :ref:`save_figure_to_folder <attr_ref2>` and :ref:`show_analyzed_arrayrun <meth_ref1>` above for reference.
 
 .. autofunction:: viz.viz_module.Viz.show_xy_plot
+
+.. autofunction:: viz.viz_module.Viz.show_IxO_conf_mtx
 
 
 Analyze & Viz, array runs, multiple iterations, multiple paths

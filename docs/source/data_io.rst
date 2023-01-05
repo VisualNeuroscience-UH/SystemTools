@@ -1,8 +1,5 @@
 .. _data_io: 
 
-.. autoclass:: data_io.data_io_base_module.DataIOBase
-
-
 Reference for :mod:`data_io`
 ============================
 

@@ -3274,14 +3274,30 @@ class Analysis(AnalysisBase):
             )
             stat_df.to_csv(full_csv_pathname_out, index=False)
 
-    def optimal_value_analysis(self, analyze=None, delay=0, analog_input=None):
+    def optimal_value_analysis(
+        self, analyze=None, delay=0, analog_input=None, dt=0.0001
+    ):
         """
-        Analyze best possible value for each input.
-        :param analyze: string, 'Coherence', 'Granger Causality', 'GC as TE', 'Transfer Entropy', 'Simulation Error'
-        :param delay: int, delay in time steps
-        """
+        Analyze best possible value for each input. For each input, calculates information transfer metrics for itself. Delay in timepoints. Same preprocessing applied as in the data analysis. This is a recursive method, called both from conf file and from the iterative data analysis.
 
-        dt = 0.0001  # in seconds
+        Analyzes: 'Coherence', 'Granger Causality', 'Transfer Entropy', 'Simulation Error', 'GC as TE'
+        delay: integer (delay in timepoints) or list. The list will be interpreted as np.linspace(list), e.g. list=[0,1000,20] are the start, stop and number of items.
+
+        Parameters
+        ----------
+        analyze : string
+            Options: 'Coherence', 'Granger Causality', 'GC as TE', 'Transfer Entropy', 'Simulation Error'
+        delay : int, list
+            Delay in timepoints (int) or list. The list will be interpreted as np.linspace(list), e.g. list=[0,1000,20] are the start, stop and number of items.
+        analog_input : array
+            Analog input data. If None, data is loaded from input_filename file.
+        dt : float
+            Time step in seconds. For FCN22, dt=0.0001.
+
+        Returns
+        -------
+        See code for details, multiple returns depending how it is called.
+        """
 
         # NOTE whenever you request an array of delays (a.k.a. delays is a list),
         # you return from this if-statement.
@@ -3645,10 +3661,18 @@ class Analysis(AnalysisBase):
 
     def describe_optimal_values(self, folderpath=None, savename=None):
         """
-        Get csv files from folderpath as dataframe.
-        For the following analysis, use returned data_df_compiled
-        Get description of the dataframe
-        Save the description into folderpath
+        Describe optimal values of the data in `folderpath`.
+
+        Parameters
+        ----------
+        folderpath : pathlib.Path object or str, optional
+            The path to the folder containing the CSV files to be described. 
+        savename : str, optional
+            The name to use when saving the description of the data. If `None` or an empty string, the description will be printed to the console.
+
+        Returns
+        -------
+        None
         """
 
         # Get csv files from folderpath as dataframe.

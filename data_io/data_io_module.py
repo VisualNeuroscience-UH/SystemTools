@@ -62,7 +62,7 @@ class DataIO(DataIOBase):
         """
         Parameters
         ----------
-        path : str
+        path : pathlib.Path object or str
             The path to search for files and folders.
         data_type : str, optional
             A substring to search for in the names of the files and folders. Only files and folders with names
@@ -77,6 +77,10 @@ class DataIO(DataIOBase):
             A list of the full path names of the files and folders in `path` that match the criteria specified by
             `data_type` and do not contain `exclude`.
         """
+        
+        if isinstance(path, str):
+            path = Path(path)
+
         files = []
         for f in Path.iterdir(path):
             if data_type is not None and exclude is not None:

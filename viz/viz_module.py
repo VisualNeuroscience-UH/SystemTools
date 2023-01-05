@@ -1635,10 +1635,28 @@ class Viz(VizBase):
     def _build_param_plot(self, coll_ana_df_in, param_plot_dict, to_spa_dict_in):
         """
         Prepare for parametric plotting of multiple conditions.
-        This method fetch all data to
-        data_list, data_sub_list, and sub_data_list.
-        The corresponding names are in
-        outer_name_list and data_name_list. Sub name is always the same.
+
+        Parameters
+        ----------
+        coll_ana_df_in : pandas.DataFrame
+            Mapping from to_spa_dict in conf file to dataframes which include parameter and analysis details.
+        param_plot_dict : dict
+            Dictionary guiding the parametric plot. See :func:`show_catplot` for details.
+        to_spa_dict_in : dict
+            Dictionary containing the startpoints, parameters and analyzes which are active in conf file.
+
+        Returns
+        -------
+        data_list : list
+            A nested list of data for each combination of outer and inner conditions.
+        data_name_list : list
+            A nested list of names for each combination of outer and inner conditions.
+        data_sub_list : list
+            A nested list of sub data for each combination of outer and inner conditions.
+        outer_name_list : list
+            A list of names for the outer conditions.
+        sub_col_name : str
+            The short name for the sub analysis, if active.
         """
 
         sub_col_name = ""
@@ -1688,7 +1706,7 @@ class Viz(VizBase):
         for outer in outer_list:
             inner_data_list = []  # list , N items = N inner
             inner_name_list = []  # list , N items = N inner
-            inner_sub_data_list = []  # list , N items = N inner
+            inner_data_sub_list = []  # list , N items = N inner
 
             for in_idx, inner in enumerate(inner_list):
                 # Nutcracker. eval to "outer", "inner" and "title"
@@ -1730,11 +1748,11 @@ class Viz(VizBase):
                     if param_plot_dict["compiled_results"] is True:
                         sub_col = f"{sub_col}_mean"
                     df_sub = data_df_compiled[sub_col]
-                    inner_sub_data_list.append(df_sub)
+                    inner_data_sub_list.append(df_sub)
 
             data_list.append(inner_data_list)
             data_name_list.append(inner_name_list)
-            data_sub_list.append(inner_sub_data_list)
+            data_sub_list.append(inner_data_sub_list)
             outer_name_list.append(outer)
 
         return (
@@ -2347,7 +2365,7 @@ class Viz(VizBase):
 
         return df_coll, col_dict
 
-    def rename_duplicate_columns(self, x_df, y_df, data_df_compiled):
+    def _rename_duplicate_columns(self, x_df, y_df, data_df_compiled):
         """
         Check if x_df and y_df have any same column names
         If yes, rename them to avoid duplicate column names
@@ -2457,7 +2475,7 @@ class Viz(VizBase):
             )
 
             data_df_compiled = pd.concat([x_df, y_df], axis=1)  #
-            x_df, y_df, data_df_compiled = self.rename_duplicate_columns(
+            x_df, y_df, data_df_compiled = self._rename_duplicate_columns(
                 x_df, y_df, data_df_compiled
             )
 
@@ -2605,22 +2623,49 @@ class Viz(VizBase):
                 subfolderpath=self.save_figure_to_folder,
             )
 
+    # def show_IxO_conf_mtx(
+    #     self,
+    #     startpoint="",
+    #     parameter="",
+    #     ana_list=[],
+    #     ana_suffix_list=[],
+    #     par_value_string_list=[],
+    #     best_is_list=[],
+    # ):
     def show_IxO_conf_mtx(
         self,
-        startpoint="",
-        parameter="",
-        ana_list=[],
-        ana_suffix_list=[],
-        par_value_string_list=[],
-        best_is_list=[],
+        startpoint,
+        parameter,
+        ana_list,
+        ana_suffix_list,
+        par_value_string_list,
+        best_is_list,
     ):
         """
-        At the moment this works only for 2D data
+        Show input-to-output classification confusion matrix
+        At the moment this works only for 2D data -- thus the 2 values in the par_value_string_list.
+        All parameters must be defined. The ana_list, ana_suffix_list and best_is_list must have the same length.
+
+        Parameters
+        ----------
+        startpoint : str
+            Startpoint parameter space name , e.g. 'Comrad'
+        parameter : str
+            Parameter name, e.g. 'VT'
+        ana_list : list
+            List of analysis names, e.g. ['Coherence', 'GrCaus']
+        ana_suffix_list : list
+            List of analysis suffixes, e.g. ['mean', 'Information']
+        par_value_string_list : list[str]
+            List of parameter values, e.g. ['-44.0', '-46.0']
+        best_is_list : list[str]
+            List of best values, e.g. ['max', 'max'], for the highest value of the analyses
         """
+
         # Get IxO...gz data from all startpoint_parameter_iterations
         assert all(
             [startpoint, parameter, ana_list, ana_suffix_list, best_is_list]
-        ), "You need to define all input parameteres, sorry, aborting..."
+        ), "You need to define all input parameters, sorry, aborting..."
         assert (
             len(ana_list) == len(ana_suffix_list) == len(best_is_list)
         ), "The parameter lists are not of equal length, aborting..."
@@ -2750,7 +2795,14 @@ class Viz(VizBase):
 
     def show_optimal_value_analysis(self, data_for_viz, savefigname=None):
         """
-        Visualize the optimal value analysis.
+        Show the optimal value analysis.
+
+        Parameters
+        ----------
+        data_for_viz : tuple
+            Tuple from :func:`optimal_value_analysis` with data, analysis type and figure type.
+        savefigname : str, optional
+            Name of the figure to save, by default None.
         """
         data, analyze, figure_type = data_for_viz
         if figure_type == "full_mtx":
@@ -2811,7 +2863,18 @@ class Viz(VizBase):
 
     def show_iter_optimal_value_analysis(self, folderpath, savefigname=None):
         """
-        After running optimal value analyzes for iterations, show the results.
+        Show optimal value analyzes for iterations.
+
+        Parameters
+        ----------
+        folderpath : pathlib.Path or str
+            Path to the folder where the mean optimal value analysis over iterations are saved.
+        savefigname : str, optional
+            Name of the figure to save, by default None.
+
+        Returns
+        -------
+        None
         """
 
         # Get csv filenames from folderpath.

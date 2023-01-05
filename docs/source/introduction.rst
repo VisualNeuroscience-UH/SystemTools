@@ -5,13 +5,12 @@ Introduction
 
 SystemTools was developed to simplify and automate CxSystem2 array simulations, analysis of the massive amounts of simulations (e.g. 30k by one run) and visualization of the data and analyzed results at various levels of detail. It is built to be a tool for researcher and the software design aims at *simple, maintainable, extensible* and *error-free* code. 
 
-The interface is simple: run :code:`python project/project_conf_module.py` (*conf* below), the configuration script for the project. The top of the file contain imports and the path and contextual parameters, such as experiment name, data and analyses to work on, etc. The methods to execute are protected by an :code:`if __name__ == '__main__'` condition. 
-
-A ProjectManager (*PM*) instance is created at the beginning of execution. The *PM* is a facade for the rest of the code and necessary dependencies between objects are injected at the construction of the *PM*. Because complexity is hidden behind the *PM*, the *conf* is very simple and easy to understand.
+A ProjectManager (*PM*) instance is created at the beginning of execution. The *PM* is a facade for the rest of the code and necessary dependencies between objects are injected at the construction of the *PM*. Because complexity is hidden behind the *PM*, the *conf* is should remain simple and easy to understand. This has been tested with a few students and the feedback has been positive. For new projects, in practice, new modules are developed in parallel with the *conf* script. The *conf* script is then updated to use the new modules.
 
 
 Use for research
 ----------------
+The interface for researchers is the project_conf_module.py (*conf* below) script, under project folder. Instead of GUI or command line tools, such configuration script is easiest to use and maintain. After changing the parameters in the project_conf_module.py, you always run :code:`python project/project_conf_module.py`. The top of the file contain imports and the path and contextual parameters, such as experiment name, data and analyses to work on, etc. The methods to execute are protected by an :code:`if __name__ == '__main__'` condition. 
 
 Above :code:`if __name__ == '__main__'`
 
