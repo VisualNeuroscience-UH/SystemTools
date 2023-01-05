@@ -83,6 +83,16 @@ This folder contains jupyter notebooks for creating figures for the paper entitl
 
 ## Documentation
 
+You can create the html documentation locally with Sphinx using a theme provided by Read the Docs. 
+
+* Start terminal and activate the python environment FCN2
+* Go to `docs` folder.
+* Type 
+    ```
+    make html
+    ```
+This creates `build/html` folder, where the index.html (double click or open from browser) is the root documentation folder. 
+
 <!---
 You can access the documentation of the SystemTools at 
 [cxsystem2.readthedocs.io](https://cxsystem2.readthedocs.io).
