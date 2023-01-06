@@ -18,7 +18,7 @@ This folder contains jupyter notebooks for creating figures for the paper entitl
 
 
 ## Use for research
-*conf* module is a script, with context (paths etc.) parameters at the top, and executable statements at the bottom.
+*conf* module is a script, with context (paths etc.) parameters at the top, and executable statements at the bottom. The executable statements are commented by default. To use the software, uncomment a statement and run the *conf* file.
 
 #### Example *conf* statement
     * PM.viz.show_spikes(results_filename=file_to_display, savefigname="")
