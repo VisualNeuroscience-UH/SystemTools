@@ -34,6 +34,12 @@ This folder contains jupyter notebooks for creating figures for the paper entitl
 
 #### Detailed instructions to see the jupyter notebooks
 
+##### Using conda
+* Install  <a href="https://docs.conda.io/en/latest/miniconda.html" target="_blank">miniconda3</a>
+* Open Anaconda Powershell Prompt terminal and navigate to SystemTools\scripts\FCN22
+* Run the commands listed in fcn22_environment_installation_commands_conda.txt in the terminal.
+
+##### Using pip
 * Install Python3 (version 3.9 or higher) in your operating system:
   The jupyter notebook files were generated with python 3.10 running on Windows 10 and Ubuntu 22.04, and any python installation working on these environments are viable options.
   * **Windows Users**: There are a few options you can use if your main OS is windows. We strongly recommend Windows Subsystem for Linux (WSL2) shell which is one of the easiest way to get access to an integrated linux environment in Windows. A great tutorial on how to install it is available in [Ubuntu website](https://ubuntu.com/tutorials/install-ubuntu-on-wsl2-on-windows-11-with-gui-support#1-overview). 
