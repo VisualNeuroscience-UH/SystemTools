@@ -5,8 +5,7 @@ This repository provides a set of tools for CxSystem2 data analysis, visualizati
 The main files are in the `project` directory:
 
 * `project/project_conf_module.py`: *conf* below, provides the primary interface to work with SystemTools.
-* `project/project_manager_module.py` provides a facade design pattern for the rest of the code.
-
+* `project/project_manager_module.py` provides a <a href="https://refactoring.guru/design-patterns/facade" target="_blank">facade</a> for the rest of the code. 
 
 ## Use for viewing published work
 
@@ -30,6 +29,10 @@ This folder contains jupyter notebooks for creating figures for the paper entitl
 <br>
 
 ## Environment Setup and Installation
+
+* We strongly recommend creating a new clean virtual environment with python version 3.9 or higher. Then install the packages from the requirements.txt.
+
+#### Detailed instructions to see the jupyter notebooks
 
 * Install Python3 (version 3.9 or higher) in your operating system:
   The jupyter notebook files were generated with python 3.10 running on Windows 10 and Ubuntu 22.04, and any python installation working on these environments are viable options.
@@ -63,7 +66,7 @@ This folder contains jupyter notebooks for creating figures for the paper entitl
     ```
     .\FCN2\Scripts\Activate
     ```
-* Go to your SystemTools folder and install the requirements:
+* Go to your SystemTools/scripts/FCN22 folder and install the requirements:
     ```
     $ pip install -r requirements.txt
     ```
