@@ -61,3 +61,6 @@ docs/build/
 **/server_cert.key
 **/server_cert.crt
 
+# Files and folders emerging from running simulations
+scripts/*/in/*_ci.mat
+scripts/*/Figure*
