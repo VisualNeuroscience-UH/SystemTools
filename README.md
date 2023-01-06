@@ -6,18 +6,7 @@ The main files are in the `project` directory:
 
 * `project/project_conf_module.py`: *conf* below, provides the primary interface to work with SystemTools.
 * `project/project_manager_module.py` provides a facade design pattern for the rest of the code.
-<br>
 
-## Use for research
-* Remove comment character # to activate a  *conf* statement
-    #### Example
-    * PM.viz.show_spikes(results_filename=file_to_display, savefigname="")
-        * PM is a ProjectManager instance
-        * viz is a Viz (visualization) instance
-        * show_spikes is a viz method showing rasterplot of spikes
-
-*  Run it as `python project/project_conf_module.py`
-<br>
 
 ## Use for viewing published work
 
@@ -26,6 +15,18 @@ The `scripts` folder contains the following projects:
 ### FCN22
 
 This folder contains jupyter notebooks for creating figures for the paper entitled **Biophysical Parameters Control Signal Transfer in Spiking Network** by *Tomás Garnier Artiñano, Vafa Andalibi, Iiris Atula, Matteo Maestri and Simo Vanni*. The manuscript is currently (3rd Jan 2022) under revision for Frontiers in Computational Neuroscience.
+
+
+## Use for research
+*conf* module is a script, with context (paths etc.) parameters at the top, and executable statements at the bottom.
+
+#### Example *conf* statement
+    * PM.viz.show_spikes(results_filename=file_to_display, savefigname="")
+        * PM is a ProjectManager instance
+        * viz is a Viz (visualization) instance
+        * show_spikes is a viz method showing rasterplot of spikes
+
+*  Run it as `python project/project_conf_module.py`
 <br>
 
 ## Environment Setup and Installation
