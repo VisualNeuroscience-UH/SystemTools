@@ -13,8 +13,7 @@ The `scripts` folder contains the following projects:
 
 ### FCN22
 
-This folder contains jupyter notebooks for creating figures for the paper entitled **Biophysical Parameters Control Signal Transfer in Spiking Network** by *Tomás Garnier Artiñano, Vafa Andalibi, Iiris Atula, Matteo Maestri and Simo Vanni*. The manuscript is currently (3rd Jan 2022) under revision for Frontiers in Computational Neuroscience.
-
+This folder contains jupyter notebooks for creating figures for the paper [*Garnier Artiñano, Tomás, et al.* **Biophysical parameters control signal transfer in spiking network.** Frontiers in Computational Neuroscience 17 (2023) 1011814](https://www.frontiersin.org/journals/computational-neuroscience/articles/10.3389/fncom.2023.1011814/full). 
 
 ## Use for research
 *conf* module is a script, with context (paths etc.) parameters at the top, and executable statements at the bottom. The executable statements are commented by default. To use the software, uncomment a statement and run the *conf* file.
@@ -112,10 +111,7 @@ You can access the documentation of the SystemTools at
 ## Citation
 
 If you use SystemTools for your work, we kindly ask you to cite any of our related article:
-
-```
-Garnier Artiñano, T., Andalibi, V., Atula, I., Maestri, M., Vanni, S., Biophysical Parameters Control Signal Transfer in Spiking Network, 
-```
+[*Garnier Artiñano, Tomás, et al.* **Biophysical parameters control signal transfer in spiking network.** Frontiers in Computational Neuroscience 17 (2023) 1011814](https://www.frontiersin.org/journals/computational-neuroscience/articles/10.3389/fncom.2023.1011814/full).
 <!---
 2023, Frontiers in Computational Neuroscience
 -->
